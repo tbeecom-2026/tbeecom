@@ -12,8 +12,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Phone, Mail, MapPin, ExternalLink, User } from "lucide-react";
+import { ArrowLeft, Save, Phone, Mail, MapPin, ExternalLink, User, FileText, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { formatDate, formatEuros, getStatutBadge, getActiviteBadge, STATUTS_MANDAT, TYPES_MANDAT, TYPES_COMMERCE } from "@/lib/formatters";
+import { generateMandatSimple, generateMandatExclusif, generateAvenant, openMandat } from "@/lib/generateMandat";
 import type { Mandat, Activite, Contact, MandatVendeur } from "@/types/database";
 
 const emptyMandat: Partial<Mandat> = {
@@ -110,6 +112,41 @@ export default function MandatDetail() {
             </span>
           )}
         </h1>
+        {!isNew && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
+                <FileText className="mr-2 h-4 w-4" />
+                Générer le mandat
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem
+                onClick={() => openMandat(generateMandatSimple(mandat as Mandat, vendeurs))}
+                className="cursor-pointer"
+              >
+                <FileText className="mr-2 h-4 w-4 text-primary" />
+                Contrat de mission simple
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => openMandat(generateMandatExclusif(mandat as Mandat, vendeurs))}
+                className="cursor-pointer"
+              >
+                <FileText className="mr-2 h-4 w-4 text-amber-500" />
+                Mandat exclusif
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => openMandat(generateAvenant(mandat as Mandat, vendeurs))}
+                className="cursor-pointer"
+              >
+                <FileText className="mr-2 h-4 w-4 text-blue-400" />
+                Avenant au mandat
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         <Button onClick={handleSave} disabled={saving}><Save className="mr-2 h-4 w-4" />{saving ? "..." : "Enregistrer"}</Button>
       </div>
 
