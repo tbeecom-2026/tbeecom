@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Plus } from "lucide-react";
+import { ArrowLeft, Save, Phone, Mail, MapPin, ExternalLink, User } from "lucide-react";
 import { formatDate, formatEuros, getStatutBadge, getActiviteBadge, STATUTS_MANDAT, TYPES_MANDAT, TYPES_COMMERCE } from "@/lib/formatters";
 import type { Mandat, Activite, Contact, MandatVendeur } from "@/types/database";
 
@@ -172,6 +172,89 @@ export default function MandatDetail() {
               <Field label="Secteur"><Input value={mandat.secteur ?? ""} onChange={(e) => update("secteur", e.target.value)} /></Field>
             </CardContent>
           </Card>
+
+          {/* ── Carte Vendeur(s) ───────────────────────────────────────────── */}
+          {!isNew && (
+            <Card className="border-amber-700/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <User className="h-4 w-4 text-primary" />
+                  Vendeur(s)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {vendeurs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground italic">Aucun vendeur lié à ce mandat</p>
+                ) : (
+                  <div className="space-y-3">
+                    {vendeurs.map((v) => {
+                      const c = v.contact;
+                      if (!c) return null;
+                      return (
+                        <div key={v.id} className="bg-secondary/50 rounded-lg p-3 flex flex-col gap-2">
+                          {/* Nom + lien fiche */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="font-semibold text-sm">
+                                {c.prenom && `${c.prenom} `}{c.nom}
+                              </span>
+                              {c.societe && (
+                                <span className="ml-2 text-xs text-muted-foreground">— {c.societe}</span>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs text-primary hover:text-primary"
+                              onClick={() => navigate(`/contacts/${c.id}`)}
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              Voir la fiche
+                            </Button>
+                          </div>
+                          {/* Coordonnées */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                            {c.telephone && (
+                              <a
+                                href={`tel:${c.telephone}`}
+                                className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
+                              >
+                                <Phone className="h-3.5 w-3.5 text-primary shrink-0" />
+                                {c.telephone}
+                              </a>
+                            )}
+                            {c.email && (
+                              <a
+                                href={`mailto:${c.email}`}
+                                className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors truncate"
+                              >
+                                <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
+                                <span className="truncate">{c.email}</span>
+                              </a>
+                            )}
+                            {(c.adresse || c.commune) && (
+                              <div className="flex items-center gap-1.5 text-muted-foreground">
+                                <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                                <span className="truncate">
+                                  {c.adresse && `${c.adresse}, `}{c.code_postal && `${c.code_postal} `}{c.commune}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          {/* Notes du contact si présentes */}
+                          {c.notes && (
+                            <p className="text-xs text-muted-foreground border-t border-border/40 pt-2 mt-1 italic">
+                              {c.notes}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="finances" className="mt-4">
@@ -235,21 +318,6 @@ export default function MandatDetail() {
 
           {!isNew && (
             <>
-              <Card>
-                <CardHeader className="flex-row items-center justify-between">
-                  <CardTitle>Vendeur(s)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {vendeurs.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Aucun vendeur lié</p>
-                  ) : (
-                    <ul className="space-y-1 text-sm">
-                      {vendeurs.map((v) => <li key={v.id}>{v.contact?.nom} {v.contact?.prenom} — {v.contact?.telephone}</li>)}
-                    </ul>
-                  )}
-                </CardContent>
-              </Card>
-
               <Card>
                 <CardHeader className="flex-row items-center justify-between">
                   <CardTitle>Journal d'activité</CardTitle>
