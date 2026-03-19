@@ -12,8 +12,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Phone, Mail, MapPin, ExternalLink, User } from "lucide-react";
+import { ArrowLeft, Save, Phone, Mail, MapPin, ExternalLink, User, Lock } from "lucide-react";
 import { formatDate, formatEuros, getStatutBadge, getActiviteBadge, STATUTS_MANDAT, TYPES_MANDAT, TYPES_COMMERCE } from "@/lib/formatters";
+import { calcHonoraires, pctEffectif, type BaremeTranche } from "@/lib/honoraires";
 import type { Mandat, Activite, Contact, MandatVendeur } from "@/types/database";
 
 const emptyMandat: Partial<Mandat> = {
@@ -40,11 +41,18 @@ export default function MandatDetail() {
   const [mandat, setMandat] = useState<Partial<Mandat>>(emptyMandat);
   const [activites, setActivites] = useState<Activite[]>([]);
   const [vendeurs, setVendeurs] = useState<(MandatVendeur & { contact: Contact })[]>([]);
+  const [bareme, setBareme] = useState<BaremeTranche[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    loadBareme();
     if (!isNew && id) loadMandat(id);
   }, [id]);
+
+  async function loadBareme() {
+    const { data } = await supabase.from("bareme_honoraires").select("*").eq("type_trans", "fdc").order("ordre");
+    setBareme((data as BaremeTranche[]) ?? []);
+  }
 
   async function loadMandat(mandatId: string) {
     const { data } = await supabase.from("mandats").select("*").eq("id", mandatId).single();
@@ -59,8 +67,19 @@ export default function MandatDetail() {
     setMandat((prev) => ({ ...prev, [field]: value }));
   }
 
-  const honorairesCalc = mandat.prix_demande && mandat.honoraires_pct
-    ? Math.round(mandat.prix_demande * mandat.honoraires_pct / 100) : null;
+  // Calcul honoraires depuis le barème TBEECOM (auto si le barème est chargé)
+  const honResult = mandat.prix_demande && bareme.length
+    ? calcHonoraires(mandat.prix_demande, bareme)
+    : null;
+  // Fallback : calcul manuel si % saisi à la main
+  const honorairesCalc = honResult?.montant
+    ?? (mandat.prix_demande && mandat.honoraires_pct
+      ? Math.round(mandat.prix_demande * mandat.honoraires_pct / 100)
+      : null);
+  const honorairesPct = honResult?.pct
+    ?? (honorairesCalc && mandat.prix_demande
+      ? pctEffectif(honorairesCalc, mandat.prix_demande)
+      : mandat.honoraires_pct ?? null);
 
   async function handleSave() {
     setSaving(true);
@@ -126,13 +145,20 @@ export default function MandatDetail() {
             <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* N° Mandat : champ principal, obligatoire */}
               <Field label="N° Mandat ★">
-                <Input
-                  type="number"
-                  placeholder="Ex: 720"
-                  value={mandat.numero_registre ?? ""}
-                  onChange={(e) => update("numero_registre", parseInt(e.target.value) || null)}
-                  className="text-lg font-bold text-primary border-primary"
-                />
+                <div className="relative">
+                  <Input
+                    type="number"
+                    placeholder="Ex: 720"
+                    value={mandat.numero_registre ?? ""}
+                    onChange={(e) => update("numero_registre", parseInt(e.target.value) || null)}
+                    className={`text-lg font-bold text-primary border-primary ${!isNew ? "pr-8 bg-secondary/50 cursor-not-allowed opacity-80" : ""}`}
+                    readOnly={!isNew}
+                    title={!isNew ? "Le numéro de mandat ne peut pas être modifié" : undefined}
+                  />
+                  {!isNew && (
+                    <Lock className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  )}
+                </div>
               </Field>
               <Field label="Type de mandat">
                 <Select value={mandat.type_mandat} onValueChange={(v) => update("type_mandat", v)}>
@@ -257,13 +283,62 @@ export default function MandatDetail() {
           )}
         </TabsContent>
 
-        <TabsContent value="finances" className="mt-4">
+        <TabsContent value="finances" className="mt-4 space-y-4">
+          {/* Bloc honoraires automatique */}
+          <Card className="border-primary/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm text-muted-foreground font-medium uppercase tracking-wide flex items-center justify-between">
+                <span>Honoraires — Barème TBEECOM</span>
+                {honResult && (
+                  <span className="text-xs text-primary font-normal normal-case">
+                    Calculé automatiquement d'après le barème
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Field label="Prix demandé (€)">
+                <Input
+                  type="number"
+                  value={mandat.prix_demande ?? ""}
+                  onChange={(e) => update("prix_demande", Number(e.target.value) || null)}
+                  className="font-semibold"
+                  placeholder="Ex: 150000"
+                />
+              </Field>
+              <Field label="Honoraires HT (calculé auto)">
+                <div className={`flex h-10 items-center rounded-md border px-3 text-sm font-semibold ${honorairesCalc ? "text-primary border-primary/50 bg-primary/5" : "border-border text-muted-foreground"}`}>
+                  {honorairesCalc ? formatEuros(honorairesCalc) : "Saisir le prix de vente"}
+                </div>
+              </Field>
+              <Field label="Taux effectif">
+                <div className="flex h-10 items-center rounded-md border border-border px-3 text-sm text-muted-foreground">
+                  {honorairesPct != null ? `${honorairesPct} % HT` : honResult?.pct === null ? "Forfait" : "—"}
+                </div>
+              </Field>
+              <Field label="Honoraires charge (A / V)">
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={mandat.honoraires_charge ?? "acquereur"}
+                  onChange={(e) => update("honoraires_charge", e.target.value)}
+                >
+                  <option value="acquereur">À la charge de l'acquéreur</option>
+                  <option value="vendeur">À la charge du vendeur</option>
+                  <option value="partage">Partagés (50/50)</option>
+                </select>
+              </Field>
+              <Field label="Prix net vendeur (€)">
+                <Input
+                  type="number"
+                  value={mandat.prix_net_vendeur ?? ""}
+                  onChange={(e) => update("prix_net_vendeur", Number(e.target.value) || null)}
+                />
+              </Field>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Field label="Prix demandé (€)"><Input type="number" value={mandat.prix_demande ?? ""} onChange={(e) => update("prix_demande", Number(e.target.value) || null)} /></Field>
-              <Field label="Prix net vendeur (€)"><Input type="number" value={mandat.prix_net_vendeur ?? ""} onChange={(e) => update("prix_net_vendeur", Number(e.target.value) || null)} /></Field>
-              <Field label="Honoraires %"><Input type="number" value={mandat.honoraires_pct ?? ""} onChange={(e) => update("honoraires_pct", Number(e.target.value) || null)} /></Field>
-              <Field label="Honoraires montant (calculé)"><Input value={honorairesCalc ? formatEuros(honorairesCalc) : "—"} disabled /></Field>
               <Field label="CA annuel HT (€)"><Input type="number" value={mandat.ca_annuel ?? ""} onChange={(e) => update("ca_annuel", Number(e.target.value) || null)} /></Field>
               <Field label="EBE (€)"><Input type="number" value={mandat.ebe ?? ""} onChange={(e) => update("ebe", Number(e.target.value) || null)} /></Field>
               <Field label="Résultat net (€)"><Input type="number" value={mandat.resultat_net ?? ""} onChange={(e) => update("resultat_net", Number(e.target.value) || null)} /></Field>

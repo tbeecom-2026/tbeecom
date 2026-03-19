@@ -14,6 +14,7 @@ import AcquereurDetail from "@/pages/AcquereurDetail";
 import Contacts from "@/pages/Contacts";
 import ContactDetail from "@/pages/ContactDetail";
 import Activites from "@/pages/Activites";
+import Parametres from "@/pages/Parametres";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="contacts" element={<Contacts />} />
               <Route path="contacts/:id" element={<ContactDetail />} />
               <Route path="activites" element={<Activites />} />
+              <Route path="parametres" element={<Parametres />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
