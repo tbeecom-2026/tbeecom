@@ -252,80 +252,89 @@ export default function ContactDetail() {
         </TabsList>
 
         {/* ── Coordonnées ───────────────────────────────────────────── */}
-        <TabsContent value="coordonnees" className="mt-4 space-y-4">
+        <TabsContent value="coordonnees" className="mt-4">
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-2">
-                <User className="h-4 w-4" />Identité
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Field label="Nom *">
-                <Input value={contact.nom ?? ""} onChange={(e) => update("nom", e.target.value)} className="font-semibold" />
-              </Field>
-              <Field label="Prénom">
-                <Input value={contact.prenom ?? ""} onChange={(e) => update("prenom", e.target.value)} />
-              </Field>
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Rôles</Label>
-                <div className="flex flex-wrap gap-3 pt-1">
-                  {ROLES_CONTACT.map((r) => (
-                    <label key={r.value} className="flex items-center gap-2 text-sm cursor-pointer">
-                      <Checkbox checked={contact.roles?.includes(r.value) ?? false} onCheckedChange={() => toggleRole(r.value)} />
-                      <span>{r.label}</span>
-                    </label>
-                  ))}
+            <CardContent className="pt-5 space-y-5">
+
+              {/* Identité */}
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-3">
+                  <User className="h-3.5 w-3.5" />Identité
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Field label="Nom *">
+                    <Input value={contact.nom ?? ""} onChange={(e) => update("nom", e.target.value)} className="font-semibold" />
+                  </Field>
+                  <Field label="Prénom">
+                    <Input value={contact.prenom ?? ""} onChange={(e) => update("prenom", e.target.value)} />
+                  </Field>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Rôles</Label>
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 pt-0.5">
+                      {ROLES_CONTACT.map((r) => (
+                        <label key={r.value} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                          <Checkbox checked={contact.roles?.includes(r.value) ?? false} onCheckedChange={() => toggleRole(r.value)} />
+                          <span>{r.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-2">
-                <Phone className="h-4 w-4" />Contact direct
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Field label="Email">
-                <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type="email" className="pl-9" value={contact.email ?? ""} onChange={(e) => update("email", e.target.value)} />
+
+              <div className="border-t border-border/50" />
+
+              {/* Contact direct */}
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-3">
+                  <Phone className="h-3.5 w-3.5" />Contact direct
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Field label="Email">
+                    <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input type="email" className="pl-9" value={contact.email ?? ""} onChange={(e) => update("email", e.target.value)} />
+                    </div>
+                  </Field>
+                  <Field label="Téléphone mobile">
+                    <div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input className="pl-9" value={contact.telephone ?? ""} onChange={(e) => update("telephone", e.target.value)} />
+                    </div>
+                  </Field>
+                  <Field label="Téléphone fixe">
+                    <div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input className="pl-9" value={contact.telephone_fixe ?? ""} onChange={(e) => update("telephone_fixe", e.target.value)} />
+                    </div>
+                  </Field>
                 </div>
-              </Field>
-              <Field label="Téléphone mobile">
-                <div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input className="pl-9" value={contact.telephone ?? ""} onChange={(e) => update("telephone", e.target.value)} />
+              </div>
+
+              <div className="border-t border-border/50" />
+
+              {/* Adresse */}
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-3">
+                  <MapPin className="h-3.5 w-3.5" />Adresse
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <Field label="Adresse" className="md:col-span-2">
+                    <Input value={contact.adresse ?? ""} onChange={(e) => update("adresse", e.target.value)} />
+                  </Field>
+                  <Field label="Code postal">
+                    <Input value={contact.code_postal ?? ""} onChange={(e) => update("code_postal", e.target.value)} />
+                  </Field>
+                  <Field label="Commune">
+                    <Input value={contact.commune ?? ""} onChange={(e) => update("commune", e.target.value)} />
+                  </Field>
                 </div>
-              </Field>
-              <Field label="Téléphone fixe">
-                <div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input className="pl-9" value={contact.telephone_fixe ?? ""} onChange={(e) => update("telephone_fixe", e.target.value)} />
-                </div>
-              </Field>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-2">
-                <MapPin className="h-4 w-4" />Adresse
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Field label="Adresse" className="md:col-span-2">
-                <Input value={contact.adresse ?? ""} onChange={(e) => update("adresse", e.target.value)} />
-              </Field>
-              <Field label="Code postal">
-                <Input value={contact.code_postal ?? ""} onChange={(e) => update("code_postal", e.target.value)} />
-              </Field>
-              <Field label="Commune">
-                <Input value={contact.commune ?? ""} onChange={(e) => update("commune", e.target.value)} />
-              </Field>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
+              </div>
+
+              <div className="border-t border-border/50" />
+
+              {/* Notes */}
               <Field label="Notes internes">
                 <Textarea value={contact.notes ?? ""} onChange={(e) => update("notes", e.target.value)} rows={3} />
               </Field>
+
             </CardContent>
           </Card>
         </TabsContent>
