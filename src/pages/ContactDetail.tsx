@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { formatDate, formatEuros, getActiviteBadge, getStatutBadge, ROLES_CONTACT, TYPES_COMMERCE } from "@/lib/formatters";
 import { generateMandatSimple, generateMandatExclusif, generateAvenant, openMandat } from "@/lib/generateMandat";
-import { lookupSiret, sireneToContact } from "@/lib/sirene";
+import { lookupSiret, lookupSiren, sireneToContact } from "@/lib/sirene";
 import type { Contact, Mandat, MandatVendeur, Activite, Recherche, Rapprochement } from "@/types/database";
 
 const Field = ({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) => (
@@ -101,10 +101,14 @@ export default function ContactDetail() {
   }
 
   async function handleSiretSearch() {
-    if (!siretInput) return;
+    const clean = siretInput.replace(/\s/g, "");
+    if (!clean) return;
     setSearching(true);
     try {
-      const result = await lookupSiret(siretInput);
+      // Accepte SIREN (9 chiffres) ou SIRET (14 chiffres)
+      const result = clean.length === 9
+        ? await lookupSiren(clean)
+        : await lookupSiret(clean);
       const mapped = sireneToContact(result);
       setContact((prev) => ({
         ...prev, ...mapped,
@@ -350,15 +354,18 @@ export default function ContactDetail() {
             <CardContent>
               <div className="flex gap-3">
                 <Input value={siretInput} onChange={(e) => setSiretInput(e.target.value.replace(/\s/g, ""))}
-                  placeholder="14 chiffres — ex: 93332359400012" maxLength={14}
+                  placeholder="SIREN (9 chiffres) ou SIRET (14 chiffres)" maxLength={14}
                   className="font-mono text-base tracking-wider flex-1"
                   onKeyDown={(e) => e.key === "Enter" && handleSiretSearch()} />
-                <Button onClick={handleSiretSearch} disabled={searching || siretInput.length !== 14} className="shrink-0">
+                <Button
+                  onClick={handleSiretSearch}
+                  disabled={searching || (siretInput.replace(/\s/g,"").length !== 9 && siretInput.replace(/\s/g,"").length !== 14)}
+                  className="shrink-0">
                   {searching ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Recherche...</> : <><Search className="mr-2 h-4 w-4" />Rechercher</>}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Remplit automatiquement raison sociale, adresse, forme juridique, dirigeant, capital, NAF, TVA depuis la base INSEE/SIRENE.
+                Accepte le SIREN (9 chiffres) ou le SIRET (14 chiffres) — remplit automatiquement raison sociale, adresse, forme juridique, dirigeant, capital, NAF, TVA depuis la base INSEE/SIRENE.
               </p>
             </CardContent>
           </Card>

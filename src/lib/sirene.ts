@@ -28,6 +28,69 @@ export interface SireneResult {
 }
 
 /**
+ * Recherche par SIREN (9 chiffres) — retourne les infos du siège social
+ */
+export async function lookupSiren(siren: string): Promise<SireneResult> {
+  const clean = siren.replace(/\s/g, "");
+  if (clean.length !== 9 || !/^\d+$/.test(clean)) {
+    throw new Error("Le SIREN doit contenir exactement 9 chiffres.");
+  }
+
+  const res = await fetch(`${API_BASE}/entreprise/${clean}`, {
+    headers: { Accept: "application/json" },
+  });
+
+  if (!res.ok) {
+    if (res.status === 404) throw new Error(`SIREN ${clean} introuvable dans la base SIRENE.`);
+    throw new Error(`Erreur API (${res.status}) — réessayez dans quelques secondes.`);
+  }
+
+  const d = await res.json();
+
+  // Le siège social est dans d.siege
+  const siege = d.siege ?? {};
+  const siretSiege = siege.siret ?? (clean + "00001");
+
+  const adresseLigne =
+    [siege.numero_voie, siege.type_voie, siege.libelle_voie]
+      .filter(Boolean).join(" ") ||
+    siege.adresse || null;
+  const codePostal = siege.code_postal ?? null;
+  const commune = siege.libelle_commune ?? siege.commune ?? null;
+
+  const dirigeants: any[] = d.dirigeants ?? [];
+  const dirigeant = dirigeants[0] ?? null;
+  const prenomDir = dirigeant?.prenom_usuel ?? dirigeant?.prenoms ?? dirigeant?.prenom ?? null;
+  const nomDir = dirigeant?.nom ?? null;
+
+  const formeJur = d.nature_juridique ?? null;
+  const libelleFormeJur = d.libelle_nature_juridique ?? resolveFormeJuridique(formeJur);
+  const codeNaf = d.activite_principale ?? siege.activite_principale ?? null;
+  const libelleNaf = d.libelle_activite_principale ?? siege.libelle_activite_principale ?? null;
+  const capital = d.capital_social != null ? Number(d.capital_social) : null;
+  const tva = d.numero_tva_intracommunautaire ?? null;
+  const dateCrea = d.date_creation ?? null;
+
+  return {
+    societe: d.nom_complet ?? d.nom_raison_sociale ?? d.denomination ?? clean,
+    siret: siretSiege,
+    siren: clean,
+    tva_intracommunautaire: tva,
+    forme_juridique: formeJur,
+    libelle_forme_juridique: libelleFormeJur,
+    capital_social: capital,
+    code_naf: codeNaf,
+    libelle_naf: libelleNaf,
+    date_creation_societe: dateCrea,
+    adresse: adresseLigne,
+    code_postal: codePostal,
+    commune,
+    nom_dirigeant: nomDir ? `${prenomDir ?? ""} ${nomDir}`.trim() : null,
+    prenom_dirigeant: prenomDir,
+  };
+}
+
+/**
  * Recherche un établissement par SIRET (14 chiffres)
  * Retourne les champs prêts à merger dans un Contact
  */
