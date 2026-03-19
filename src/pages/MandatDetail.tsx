@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Phone, Mail, MapPin, ExternalLink, User, Lock } from "lucide-react";
+import { ArrowLeft, Save, Phone, Mail, MapPin, ExternalLink, User, Lock, FileText, Upload, Trash2 } from "lucide-react";
 import { formatDate, formatEuros, getStatutBadge, getActiviteBadge, STATUTS_MANDAT, TYPES_MANDAT, TYPES_COMMERCE } from "@/lib/formatters";
 import { calcHonoraires, pctEffectif, type BaremeTranche } from "@/lib/honoraires";
 import type { Mandat, Activite, Contact, MandatVendeur } from "@/types/database";
@@ -388,6 +388,60 @@ export default function MandatDetail() {
               <Field label="Date retiré"><Input type="date" value={mandat.date_retire ?? ""} onChange={(e) => update("date_retire", e.target.value)} /></Field>
               <Field label="Clés"><Switch checked={mandat.cles ?? false} onCheckedChange={(v) => update("cles", v)} /></Field>
               <Field label="Notes internes" className="md:col-span-3"><Textarea value={mandat.notes_internes ?? ""} onChange={(e) => update("notes_internes", e.target.value)} rows={3} /></Field>
+            </CardContent>
+          </Card>
+
+          {/* Section Documents */}
+          <Card>
+            <CardHeader className="flex-row items-center justify-between pb-3">
+              <CardTitle className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#C9A84C]" />Documents</CardTitle>
+              {!isNew && (
+                <label className="cursor-pointer">
+                  <input type="file" accept="application/pdf" className="hidden" onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file || !mandat.reference) return;
+                    const path = `${mandat.reference}/${Date.now()}_${file.name}`;
+                    const { error } = await supabase.storage.from('mandats-docs').upload(path, file, { upsert: true });
+                    if (error) { toast({ title: "Erreur upload", description: error.message, variant: "destructive" }); return; }
+                    const { data: { publicUrl } } = supabase.storage.from('mandats-docs').getPublicUrl(path);
+                    const newDoc = { type: "document", label: file.name.replace('.pdf',''), url: publicUrl, date: new Date().toISOString().split('T')[0] };
+                    const docs = [...((mandat as any).documents || []), newDoc];
+                    update("documents", docs);
+                    update("document_url", publicUrl);
+                    toast({ title: "PDF uploadé", description: file.name });
+                  }} />
+                  <Button variant="outline" size="sm" className="pointer-events-none" asChild>
+                    <span><Upload className="h-3 w-3 mr-1" />Ajouter un PDF</span>
+                  </Button>
+                </label>
+              )}
+            </CardHeader>
+            <CardContent>
+              {((mandat as any).documents?.length > 0) ? (
+                <div className="space-y-2">
+                  {((mandat as any).documents as any[]).map((doc: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between p-2 rounded bg-secondary/50 text-sm">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-[#C9A84C] shrink-0" />
+                        <div>
+                          <div className="font-medium">{doc.label}</div>
+                          <div className="text-xs text-muted-foreground">{doc.date}</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                          <Button variant="ghost" size="sm" className="h-7 text-xs"><ExternalLink className="h-3 w-3 mr-1" />Ouvrir</Button>
+                        </a>
+                        <a href={doc.url} download>
+                          <Button variant="outline" size="sm" className="h-7 text-xs border-[#C9A84C] text-[#C9A84C]">Télécharger</Button>
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Aucun document. Uploadez le mandat signé (PDF).</p>
+              )}
             </CardContent>
           </Card>
 
