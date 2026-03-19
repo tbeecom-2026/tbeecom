@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS public.contacts (
 );
 
 ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can manage own contacts" ON public.contacts FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Equipe TBEECOM" ON public.contacts FOR ALL USING (true) WITH CHECK (true);
 
 -- Mandats table
 CREATE TABLE IF NOT EXISTS public.mandats (
@@ -85,6 +85,10 @@ CREATE TABLE IF NOT EXISTS public.mandats (
   surface_commerciale NUMERIC,
   surface_reserves NUMERIC,
   surface_cuisine NUMERIC,
+  surface_totale NUMERIC,
+  nb_couverts_salle INTEGER DEFAULT 0,
+  nb_couverts_terrasse INTEGER DEFAULT 0,
+  lineaire_vitrine NUMERIC,
   conforme_erp BOOLEAN DEFAULT false,
   conforme_pmr BOOLEAN DEFAULT false,
   extraction BOOLEAN DEFAULT false,
@@ -96,12 +100,25 @@ CREATE TABLE IF NOT EXISTS public.mandats (
   cles BOOLEAN DEFAULT false,
   notes_internes TEXT,
   suivi_par TEXT,
+  -- Champs spécifiques fonds de commerce
+  numero_registre INTEGER,
+  enseigne TEXT,
+  nature_activite TEXT,
+  raison_vente TEXT,
+  honoraires_charge TEXT DEFAULT 'Acquéreur',
+  photo_principale TEXT,
+  photos TEXT[] DEFAULT '{}',
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
 ALTER TABLE public.mandats ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can manage own mandats" ON public.mandats FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Equipe TBEECOM" ON public.mandats FOR ALL USING (true) WITH CHECK (true);
+
+-- Index pour performances
+CREATE INDEX IF NOT EXISTS idx_mandats_numero_registre ON public.mandats(numero_registre);
+CREATE INDEX IF NOT EXISTS idx_mandats_statut ON public.mandats(statut);
+CREATE INDEX IF NOT EXISTS idx_mandats_type_commerce ON public.mandats(type_commerce);
 
 -- Recherches (acquéreurs)
 CREATE TABLE IF NOT EXISTS public.recherches (
@@ -129,7 +146,7 @@ CREATE TABLE IF NOT EXISTS public.recherches (
 );
 
 ALTER TABLE public.recherches ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can manage own recherches" ON public.recherches FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Equipe TBEECOM" ON public.recherches FOR ALL USING (true) WITH CHECK (true);
 
 -- Mandat-Vendeurs liaison
 CREATE TABLE IF NOT EXISTS public.mandat_vendeurs (
@@ -140,8 +157,7 @@ CREATE TABLE IF NOT EXISTS public.mandat_vendeurs (
 );
 
 ALTER TABLE public.mandat_vendeurs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can manage mandat_vendeurs" ON public.mandat_vendeurs FOR ALL
-  USING (EXISTS (SELECT 1 FROM public.mandats WHERE id = mandat_id AND user_id = auth.uid()));
+CREATE POLICY "Equipe TBEECOM" ON public.mandat_vendeurs FOR ALL USING (true) WITH CHECK (true);
 
 -- Rapprochements
 CREATE TABLE IF NOT EXISTS public.rapprochements (
@@ -154,8 +170,7 @@ CREATE TABLE IF NOT EXISTS public.rapprochements (
 );
 
 ALTER TABLE public.rapprochements ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can manage rapprochements" ON public.rapprochements FOR ALL
-  USING (EXISTS (SELECT 1 FROM public.recherches WHERE id = recherche_id AND user_id = auth.uid()));
+CREATE POLICY "Equipe TBEECOM" ON public.rapprochements FOR ALL USING (true) WITH CHECK (true);
 
 -- Activités
 CREATE TABLE IF NOT EXISTS public.activites (
@@ -169,4 +184,4 @@ CREATE TABLE IF NOT EXISTS public.activites (
 );
 
 ALTER TABLE public.activites ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can manage own activites" ON public.activites FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Equipe TBEECOM" ON public.activites FOR ALL USING (true) WITH CHECK (true);
