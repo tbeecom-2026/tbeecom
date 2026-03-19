@@ -10,12 +10,14 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { ROLES_CONTACT } from "@/lib/formatters";
 import type { Contact } from "@/types/database";
 
 export default function Contacts() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [search, setSearch] = useState("");
   const [filtreRole, setFiltreRole] = useState("all");
@@ -116,8 +118,12 @@ export default function Contacts() {
           </thead>
           <tbody>
             {contacts.map((c) => (
-              <tr key={c.id} className="border-t border-border/50 hover:bg-secondary/30">
-                <td className="p-3 font-medium">{c.nom} {c.prenom}</td>
+              <tr
+                key={c.id}
+                className="border-t border-border/50 hover:bg-secondary/30 cursor-pointer"
+                onClick={() => navigate(`/contacts/${c.id}`)}
+              >
+                <td className="p-3 font-medium text-primary hover:underline">{c.nom} {c.prenom}</td>
                 <td className="p-3">{c.societe ?? "—"}</td>
                 <td className="p-3">
                   <div className="flex flex-wrap gap-1">

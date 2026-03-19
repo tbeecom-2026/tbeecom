@@ -12,6 +12,7 @@ import MandatDetail from "@/pages/MandatDetail";
 import Acquereurs from "@/pages/Acquereurs";
 import AcquereurDetail from "@/pages/AcquereurDetail";
 import Contacts from "@/pages/Contacts";
+import ContactDetail from "@/pages/ContactDetail";
 import Activites from "@/pages/Activites";
 import NotFound from "@/pages/NotFound";
 
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="acquereurs" element={<Acquereurs />} />
               <Route path="acquereurs/:id" element={<AcquereurDetail />} />
               <Route path="contacts" element={<Contacts />} />
+              <Route path="contacts/:id" element={<ContactDetail />} />
               <Route path="activites" element={<Activites />} />
             </Route>
             <Route path="*" element={<NotFound />} />
