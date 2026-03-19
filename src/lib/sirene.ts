@@ -79,6 +79,21 @@ async function searchEntreprise(query: string): Promise<SireneResult> {
   const siren = r.siren ?? clean.substring(0, 9);
   const tva = siren ? computeTva(siren) : null;
 
+  // Capital social — tentative via l'API entreprise détaillée
+  let capital: number | null = null;
+  try {
+    const capRes = await fetch(
+      `https://api.annuaire-entreprises.data.gouv.fr/entreprise/${siren}`,
+      { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(4000) }
+    );
+    if (capRes.ok) {
+      const capData = await capRes.json();
+      if (capData?.capital_social != null) capital = Number(capData.capital_social);
+    }
+  } catch {
+    // API non accessible depuis cet environnement — capital à saisir manuellement
+  }
+
   return {
     societe: r.nom_raison_sociale ?? r.nom_complet ?? clean,
     siret: siege.siret ?? clean,
@@ -86,7 +101,7 @@ async function searchEntreprise(query: string): Promise<SireneResult> {
     tva_intracommunautaire: tva,
     forme_juridique: formeJur,
     libelle_forme_juridique: libelleFormeJur,
-    capital_social: null, // non disponible dans cette API
+    capital_social: capital,
     code_naf: codeNaf,
     libelle_naf: libelleNaf,
     date_creation_societe: r.date_creation ?? siege.date_creation ?? null,
