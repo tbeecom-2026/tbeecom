@@ -102,7 +102,14 @@ export default function MandatDetail() {
     <div className="space-y-4 max-w-5xl">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => navigate("/mandats")}><ArrowLeft className="mr-1 h-4 w-4" />Retour</Button>
-        <h1 className="text-xl font-bold flex-1">{isNew ? "Nouveau mandat" : `Mandat ${mandat.reference ?? ""}`}</h1>
+        <h1 className="text-xl font-bold flex-1">
+          {isNew ? "Nouveau mandat" : (
+            <span>
+              Mandat <span className="text-primary text-2xl">N°{mandat.numero_registre ?? "—"}</span>
+              {mandat.commune && <span className="text-muted-foreground text-base font-normal ml-2">— {mandat.commune}</span>}
+            </span>
+          )}
+        </h1>
         <Button onClick={handleSave} disabled={saving}><Save className="mr-2 h-4 w-4" />{saving ? "..." : "Enregistrer"}</Button>
       </div>
 
@@ -117,7 +124,16 @@ export default function MandatDetail() {
         <TabsContent value="general" className="space-y-4 mt-4">
           <Card>
             <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              {!isNew && <Field label="Référence"><Input value={mandat.reference ?? ""} disabled /></Field>}
+              {/* N° Mandat : champ principal, obligatoire */}
+              <Field label="N° Mandat ★">
+                <Input
+                  type="number"
+                  placeholder="Ex: 720"
+                  value={mandat.numero_registre ?? ""}
+                  onChange={(e) => update("numero_registre", parseInt(e.target.value) || null)}
+                  className="text-lg font-bold text-primary border-primary"
+                />
+              </Field>
               <Field label="Type de mandat">
                 <Select value={mandat.type_mandat} onValueChange={(v) => update("type_mandat", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>

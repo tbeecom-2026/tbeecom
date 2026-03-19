@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,8 +25,17 @@ export default function Mandats() {
     let query = supabase.from("mandats").select("*", { count: "exact" });
     if (filtreStatut !== "all") query = query.eq("statut", filtreStatut);
     if (filtreType !== "all") query = query.eq("type_commerce", filtreType);
-    if (search) query = query.or(`reference.ilike.%${search}%,commune.ilike.%${search}%`);
-    const { data, count } = await query.order("created_at", { ascending: false }).range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+    if (search) {
+      const isNum = /^\d+$/.test(search.trim());
+      if (isNum) {
+        query = query.eq("numero_registre", parseInt(search.trim()));
+      } else {
+        query = query.or(`commune.ilike.%${search}%,reference.ilike.%${search}%,type_commerce.ilike.%${search}%`);
+      }
+    }
+    const { data, count } = await query
+      .order("numero_registre", { ascending: false, nullsFirst: false })
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
     setMandats((data as Mandat[]) ?? []);
     setTotal(count ?? 0);
   }
@@ -43,7 +52,12 @@ export default function Mandats() {
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Rechercher référence, commune..." className="pl-9" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
+          <Input
+            placeholder="N° mandat, commune, type de commerce..."
+            className="pl-9"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+          />
         </div>
         <Select value={filtreStatut} onValueChange={(v) => { setFiltreStatut(v); setPage(0); }}>
           <SelectTrigger className="w-[180px]"><SelectValue placeholder="Statut" /></SelectTrigger>
@@ -65,7 +79,7 @@ export default function Mandats() {
         <table className="w-full text-sm">
           <thead className="bg-secondary/50">
             <tr className="text-left text-muted-foreground">
-              <th className="p-3">Référence</th>
+              <th className="p-3 w-32">N° Mandat</th>
               <th className="p-3">Type commerce</th>
               <th className="p-3">Commune</th>
               <th className="p-3">Prix demandé</th>
@@ -78,9 +92,14 @@ export default function Mandats() {
               const badge = getStatutBadge(m.statut);
               return (
                 <tr key={m.id} className="border-t border-border/50 hover:bg-secondary/30 cursor-pointer" onClick={() => navigate(`/mandats/${m.id}`)}>
-                  <td className="p-3 font-medium text-primary">{m.reference}</td>
-                  <td className="p-3">{m.type_commerce}</td>
-                  <td className="p-3">{m.commune}</td>
+                  <td className="p-3">
+                    {/* N° mandat : grand et gras en premier */}
+                    <span className="text-base font-bold text-primary block">
+                      {m.numero_registre ?? "—"}
+                    </span>
+                  </td>
+                  <td className="p-3">{m.type_commerce ?? "—"}</td>
+                  <td className="p-3">{m.commune ?? "—"}</td>
                   <td className="p-3">{formatEuros(m.prix_demande)}</td>
                   <td className="p-3">{formatEuros(m.ca_annuel)}</td>
                   <td className="p-3"><Badge className={badge.color}>{badge.label}</Badge></td>

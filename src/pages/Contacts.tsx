@@ -73,10 +73,11 @@ export default function Contacts() {
               </div>
               <div className="space-y-2">
                 <Label>Rôles</Label>
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-3">
                   {ROLES_CONTACT.map((r) => (
-                    <label key={r} className="flex items-center gap-2 text-sm capitalize cursor-pointer">
-                      <Checkbox checked={newContact.roles?.includes(r)} onCheckedChange={() => toggleRole(r)} />{r}
+                    <label key={r.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox checked={newContact.roles?.includes(r.value)} onCheckedChange={() => toggleRole(r.value)} />
+                      <span>{r.label}</span>
                     </label>
                   ))}
                 </div>
@@ -96,7 +97,7 @@ export default function Contacts() {
           <SelectTrigger className="w-[180px]"><SelectValue placeholder="Rôle" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous les rôles</SelectItem>
-            {ROLES_CONTACT.map((r) => <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>)}
+            {ROLES_CONTACT.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -119,7 +120,12 @@ export default function Contacts() {
                 <td className="p-3 font-medium">{c.nom} {c.prenom}</td>
                 <td className="p-3">{c.societe ?? "—"}</td>
                 <td className="p-3">
-                  <div className="flex gap-1">{c.roles?.map((r) => <Badge key={r} variant="outline" className="text-xs capitalize">{r}</Badge>)}</div>
+                  <div className="flex flex-wrap gap-1">
+                    {c.roles?.map((r) => {
+                      const role = ROLES_CONTACT.find((rc) => rc.value === r);
+                      return <Badge key={r} className={`text-xs ${role?.color ?? "bg-slate-500 text-white"}`}>{role?.label ?? r}</Badge>;
+                    })}
+                  </div>
                 </td>
                 <td className="p-3">{c.email ?? "—"}</td>
                 <td className="p-3">{c.telephone ?? "—"}</td>

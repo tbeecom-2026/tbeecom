@@ -51,7 +51,15 @@ export const TYPES_ACTIVITE = [
   { value: "rdv", label: "RDV", color: "bg-destructive text-destructive-foreground" },
 ] as const;
 
-export const ROLES_CONTACT = ["vendeur", "acquereur", "notaire", "partenaire"] as const;
+export const ROLES_CONTACT = [
+  { value: "vendeur",     label: "Vendeur",      color: "bg-amber-600 text-white" },
+  { value: "acquereur",   label: "Acquéreur",    color: "bg-blue-600 text-white" },
+  { value: "notaire",     label: "Notaire",      color: "bg-purple-600 text-white" },
+  { value: "partenaire",  label: "Partenaire",   color: "bg-green-600 text-white" },
+  { value: "bailleur",    label: "Bailleur",     color: "bg-orange-600 text-white" },
+  { value: "investisseur",label: "Investisseur", color: "bg-cyan-600 text-white" },
+  { value: "autre",       label: "Autre",        color: "bg-slate-500 text-white" },
+] as const;
 
 export function getStatutBadge(statut: string) {
   return STATUTS_MANDAT.find((s) => s.value === statut) ?? STATUTS_MANDAT[3];
