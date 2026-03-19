@@ -12,11 +12,24 @@ export interface Contact {
   societe: string | null;
   email: string | null;
   telephone: string | null;
+  telephone_fixe: string | null;
   adresse: string | null;
   code_postal: string | null;
   commune: string | null;
   roles: string[];
   notes: string | null;
+  // ── Infos juridiques (renseignées via SIRET / API Sirene) ──
+  siret: string | null;
+  siren: string | null;
+  tva_intracommunautaire: string | null;
+  forme_juridique: string | null;
+  libelle_forme_juridique: string | null;
+  capital_social: number | null;
+  code_naf: string | null;
+  libelle_naf: string | null;
+  date_creation_societe: string | null;
+  nom_dirigeant: string | null;
+  site_web: string | null;
   created_at: string;
   user_id: string;
 }

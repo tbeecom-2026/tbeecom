@@ -42,8 +42,17 @@ function fdate(d: string | null | undefined): string {
   return `${day}/${m}/${y}`;
 }
 
-function val(v: string | null | undefined, placeholder = "[ _________________ ]"): string {
-  return v && v.trim() ? v.trim() : placeholder;
+/**
+ * Retourne un <span contenteditable> :
+ * - si la valeur existe : fond légèrement coloré, éditable
+ * - si vide : placeholder visible en orange, prêt à saisir
+ */
+function val(v: string | null | undefined, placeholder = "_______________"): string {
+  const filled = v && v.trim();
+  if (filled) {
+    return `<span contenteditable="true" class="editable editable-filled">${v!.trim()}</span>`;
+  }
+  return `<span contenteditable="true" class="editable editable-empty">${placeholder}</span>`;
 }
 
 function dateExpiration(dateDebut: string | null | undefined): string {
@@ -98,6 +107,62 @@ const CSS = `
   .convention { text-align: center; font-weight: 700; font-size: 10pt; color: #1E293B;
     margin: 5mm 0 3mm; border-top: 1.5px solid #C9A84C; border-bottom: 1.5px solid #C9A84C;
     padding: 2.5mm 0; }
+
+  /* ── Champs éditables ────────────────────────────────────────── */
+  .editable {
+    display: inline-block;
+    min-width: 60px;
+    border-radius: 2px;
+    padding: 0 2px;
+    outline: none;
+    transition: background 0.15s;
+  }
+  .editable-filled {
+    background: rgba(201,168,76,0.12);
+    border-bottom: 1px dashed #C9A84C;
+    color: #1E293B;
+  }
+  .editable-filled:hover, .editable-filled:focus {
+    background: rgba(201,168,76,0.25);
+    border-bottom: 1px solid #C9A84C;
+  }
+  .editable-empty {
+    background: rgba(251,146,60,0.12);
+    border-bottom: 1.5px dashed #F97316;
+    color: #C2410C;
+    font-style: italic;
+  }
+  .editable-empty:hover, .editable-empty:focus {
+    background: rgba(251,146,60,0.22);
+    border-bottom: 1.5px solid #F97316;
+    color: #1E293B;
+    font-style: normal;
+  }
+
+  /* ── Barre d'outils impression (masquée à l'impression) ──────── */
+  .print-toolbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    background: #1E293B; border-bottom: 2px solid #C9A84C;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 20px; gap: 12px;
+    font-family: 'Inter', sans-serif; font-size: 13px; color: #F8FAFC;
+  }
+  .print-toolbar .info { font-size: 11px; color: #94A3B8; }
+  .print-toolbar button {
+    padding: 7px 18px; border: none; border-radius: 6px; cursor: pointer;
+    font-weight: 600; font-size: 13px;
+  }
+  .btn-print { background: #C9A84C; color: #1E293B; }
+  .btn-print:hover { background: #D4B86A; }
+  .btn-close { background: #334155; color: #F8FAFC; }
+  .btn-close:hover { background: #475569; }
+  @media print {
+    .print-toolbar { display: none !important; }
+    .page { padding-top: 18mm; }
+    .editable-filled { background: none; border-bottom: none; }
+    .editable-empty { background: none; border-bottom: 1px solid #999; color: #000; font-style: normal; }
+  }
+  body { padding-top: 52px; }
 
   /* Articles */
   .article { margin-bottom: 4mm; page-break-inside: avoid; }
@@ -376,7 +441,7 @@ export function generateMandatSimple(
 
     <p class="footer-note">TBEECOM / MENESGUEN Immobilier — Document confidentiel — Mandat n°&nbsp;${mandat.numero_registre ?? "___"}</p>
   </div>
-  <script>window.onload = function(){ window.print(); }</script>
+  
   </body></html>`;
 }
 
@@ -499,7 +564,7 @@ export function generateMandatExclusif(
 
     <p class="footer-note">TBEECOM / MENESGUEN Immobilier — Document confidentiel — Mandat exclusif n°&nbsp;${mandat.numero_registre ?? "___"}</p>
   </div>
-  <script>window.onload = function(){ window.print(); }</script>
+  
   </body></html>`;
 }
 
@@ -588,9 +653,25 @@ export function generateAvenant(
 
     <p class="footer-note">TBEECOM — Avenant n°${numAvenant} au Mandat n°&nbsp;${mandat.numero_registre ?? "___"}</p>
   </div>
-  <script>window.onload = function(){ window.print(); }</script>
+  
   </body></html>`;
 }
+
+// ── Barre d'outils injectée dans chaque document ───────────────────────────
+const TOOLBAR_HTML = `
+<div class="print-toolbar" id="tbeecom-toolbar">
+  <div>
+    <strong style="color:#C9A84C">TBEECOM</strong>
+    <span class="info" style="margin-left:16px">
+      Cliquez sur les champs <span style="color:#F97316;font-style:italic">en orange</span> pour les compléter,
+      sur les champs <span style="color:#C9A84C">en doré</span> pour les modifier.
+    </span>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn-close" onclick="window.close()">✕ Fermer</button>
+    <button class="btn-print" onclick="window.print()">🖨 Imprimer / PDF</button>
+  </div>
+</div>`;
 
 // ── Ouverture dans un nouvel onglet ────────────────────────────────────────
 export function openMandat(html: string): void {
@@ -599,6 +680,8 @@ export function openMandat(html: string): void {
     alert("Veuillez autoriser les pop-ups pour générer le mandat.");
     return;
   }
-  win.document.write(html);
+  // Injecte la toolbar juste après <body>
+  const htmlWithToolbar = html.replace("<body>", `<body>${TOOLBAR_HTML}`);
+  win.document.write(htmlWithToolbar);
   win.document.close();
 }
