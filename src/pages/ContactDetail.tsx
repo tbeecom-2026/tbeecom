@@ -100,6 +100,13 @@ export default function ContactDetail() {
   }
 
   const isVendeur = contact.roles?.includes("vendeur");
+  // Rôles pour lesquels on affiche le bouton "Générer un document"
+  const ROLES_AVEC_MANDAT = ["vendeur", "acquereur", "bailleur", "investisseur"];
+  const peutGenerer = !isNew && contact.roles?.some((r) => ROLES_AVEC_MANDAT.includes(r));
+
+  // Mandat vide avec seulement les infos connues pour générer un template vierge
+  const mandatVide: Partial<Mandat> = {};
+  const vendeurPourGen = [{ id: "", mandat_id: "", contact_id: contact.id ?? "", contact: contact as Contact }];
 
   return (
     <div className="space-y-4 max-w-5xl">
@@ -133,6 +140,44 @@ export default function ContactDetail() {
             </div>
           )}
         </div>
+
+        {/* ── Bouton Générer — visible pour vendeur / acquéreur / bailleur / investisseur ── */}
+        {peutGenerer && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
+                <FileText className="mr-2 h-4 w-4" />
+                Générer un document
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-60">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => openMandat(generateMandatSimple(mandatVide as Mandat, vendeurPourGen))}
+              >
+                <FileText className="mr-2 h-4 w-4 text-primary" />
+                Contrat de mission simple
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => openMandat(generateMandatExclusif(mandatVide as Mandat, vendeurPourGen))}
+              >
+                <FileText className="mr-2 h-4 w-4 text-amber-500" />
+                Mandat exclusif
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => openMandat(generateAvenant(mandatVide as Mandat, vendeurPourGen))}
+              >
+                <FileText className="mr-2 h-4 w-4 text-blue-400" />
+                Avenant au mandat
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+
         <Button onClick={handleSave} disabled={saving}>
           <Save className="mr-2 h-4 w-4" />{saving ? "..." : "Enregistrer"}
         </Button>
