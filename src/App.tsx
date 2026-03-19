@@ -9,8 +9,6 @@ import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Mandats from "@/pages/Mandats";
 import MandatDetail from "@/pages/MandatDetail";
-import Acquereurs from "@/pages/Acquereurs";
-import AcquereurDetail from "@/pages/AcquereurDetail";
 import Contacts from "@/pages/Contacts";
 import ContactDetail from "@/pages/ContactDetail";
 import Activites from "@/pages/Activites";
@@ -33,8 +31,6 @@ const App = () => (
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="mandats" element={<Mandats />} />
               <Route path="mandats/:id" element={<MandatDetail />} />
-              <Route path="acquereurs" element={<Acquereurs />} />
-              <Route path="acquereurs/:id" element={<AcquereurDetail />} />
               <Route path="contacts" element={<Contacts />} />
               <Route path="contacts/:id" element={<ContactDetail />} />
               <Route path="activites" element={<Activites />} />

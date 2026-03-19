@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, Users, Contact, Activity, LogOut, Building2, Settings } from "lucide-react";
+import { LayoutDashboard, FileText, Contact, Activity, LogOut, Building2, Settings } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,7 +10,6 @@ import {
 const navItems = [
   { title: "Tableau de bord", url: "/dashboard", icon: LayoutDashboard },
   { title: "Mandats", url: "/mandats", icon: FileText },
-  { title: "Acquéreurs", url: "/acquereurs", icon: Users },
   { title: "Contacts", url: "/contacts", icon: Contact },
   { title: "Activités", url: "/activites", icon: Activity },
 ];
