@@ -344,89 +344,101 @@ export default function ContactDetail() {
         </TabsContent>
 
         {/* ── Société ───────────────────────────────────────────────── */}
-        <TabsContent value="juridique" className="mt-4 space-y-4">
-          <Card className="border-primary/40">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Search className="h-4 w-4 text-primary" />Recherche automatique par SIRET
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-3">
-                <Input value={siretInput} onChange={(e) => setSiretInput(e.target.value.replace(/\s/g, ""))}
-                  placeholder="SIREN (9 chiffres) ou SIRET (14 chiffres)" maxLength={14}
-                  className="font-mono text-base tracking-wider flex-1"
-                  onKeyDown={(e) => e.key === "Enter" && handleSiretSearch()} />
-                <Button
-                  onClick={handleSiretSearch}
-                  disabled={searching || (siretInput.replace(/\s/g,"").length !== 9 && siretInput.replace(/\s/g,"").length !== 14)}
-                  className="shrink-0">
-                  {searching ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Recherche...</> : <><Search className="mr-2 h-4 w-4" />Rechercher</>}
-                </Button>
+        <TabsContent value="juridique" className="mt-4">
+          <Card>
+            <CardContent className="pt-5 space-y-5">
+
+              {/* Recherche automatique */}
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-3">
+                  <Search className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-primary">Recherche automatique INSEE / SIRENE</span>
+                </p>
+                <div className="flex gap-3">
+                  <Input
+                    value={siretInput}
+                    onChange={(e) => setSiretInput(e.target.value.replace(/\s/g, ""))}
+                    placeholder="SIREN (9 chiffres) ou SIRET (14 chiffres)"
+                    maxLength={14}
+                    className="font-mono tracking-wider flex-1"
+                    onKeyDown={(e) => e.key === "Enter" && handleSiretSearch()}
+                  />
+                  <Button
+                    onClick={handleSiretSearch}
+                    disabled={searching || (siretInput.replace(/\s/g,"").length !== 9 && siretInput.replace(/\s/g,"").length !== 14)}
+                    className="shrink-0">
+                    {searching
+                      ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Recherche...</>
+                      : <><Search className="mr-2 h-4 w-4" />Rechercher</>}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Remplit automatiquement tous les champs ci-dessous depuis la base officielle.
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Accepte le SIREN (9 chiffres) ou le SIRET (14 chiffres) — remplit automatiquement raison sociale, adresse, forme juridique, dirigeant, capital, NAF, TVA depuis la base INSEE/SIRENE.
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-2">
-                <Building2 className="h-4 w-4" />Identification
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Field label="Raison sociale" className="md:col-span-2">
-                <Input value={contact.societe ?? ""} onChange={(e) => update("societe", e.target.value)} className="font-semibold" />
-              </Field>
-              <Field label="SIRET">
-                <Input value={siretInput} onChange={(e) => setSiretInput(e.target.value)} maxLength={14} className="font-mono" />
-              </Field>
-              <Field label="SIREN">
-                <div className="relative"><Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input className="pl-9 font-mono" value={contact.siren ?? ""} onChange={(e) => update("siren", e.target.value)} />
+
+              <div className="border-t border-border/50" />
+
+              {/* Identification */}
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-3">
+                  <Building2 className="h-3.5 w-3.5" />Identification
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <Field label="Raison sociale" className="md:col-span-2">
+                    <Input value={contact.societe ?? ""} onChange={(e) => update("societe", e.target.value)} className="font-semibold" />
+                  </Field>
+                  <Field label="SIRET">
+                    <Input value={siretInput} onChange={(e) => setSiretInput(e.target.value)} maxLength={14} className="font-mono text-sm" />
+                  </Field>
+                  <Field label="SIREN">
+                    <Input className="font-mono text-sm" value={contact.siren ?? ""} onChange={(e) => update("siren", e.target.value)} />
+                  </Field>
+                  <Field label="N° TVA intracommunautaire" className="md:col-span-2">
+                    <Input value={contact.tva_intracommunautaire ?? ""} onChange={(e) => update("tva_intracommunautaire", e.target.value)} className="font-mono text-sm" placeholder="FR00000000000" />
+                  </Field>
+                  <Field label="Dirigeant" className="md:col-span-2">
+                    <Input value={contact.nom_dirigeant ?? ""} onChange={(e) => update("nom_dirigeant", e.target.value)} />
+                  </Field>
                 </div>
-              </Field>
-              <Field label="N° TVA">
-                <Input value={contact.tva_intracommunautaire ?? ""} onChange={(e) => update("tva_intracommunautaire", e.target.value)} className="font-mono" />
-              </Field>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-2">
-                <Euro className="h-4 w-4" />Informations légales
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Field label="Forme juridique (code)">
-                <Input value={contact.forme_juridique ?? ""} onChange={(e) => update("forme_juridique", e.target.value)} />
-              </Field>
-              <Field label="Libellé forme juridique" className="md:col-span-2">
-                <Input value={contact.libelle_forme_juridique ?? ""} onChange={(e) => update("libelle_forme_juridique", e.target.value)} placeholder="SARL, SAS, EURL..." />
-              </Field>
-              <Field label="Capital social (€)">
-                <Input type="number" value={contact.capital_social ?? ""} onChange={(e) => update("capital_social", Number(e.target.value) || null)} />
-              </Field>
-              <Field label="Code NAF">
-                <Input value={contact.code_naf ?? ""} onChange={(e) => update("code_naf", e.target.value)} className="font-mono" />
-              </Field>
-              <Field label="Libellé activité (NAF)">
-                <Input value={contact.libelle_naf ?? ""} onChange={(e) => update("libelle_naf", e.target.value)} />
-              </Field>
-              <Field label="Date de création">
-                <div className="relative"><Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type="date" className="pl-9" value={contact.date_creation_societe ?? ""} onChange={(e) => update("date_creation_societe", e.target.value)} />
+              </div>
+
+              <div className="border-t border-border/50" />
+
+              {/* Informations légales */}
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-3">
+                  <Euro className="h-3.5 w-3.5" />Informations légales
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <Field label="Forme juridique (code)">
+                    <Input value={contact.forme_juridique ?? ""} onChange={(e) => update("forme_juridique", e.target.value)} className="font-mono text-sm" placeholder="5499" />
+                  </Field>
+                  <Field label="Libellé (SARL, SAS…)" className="md:col-span-2">
+                    <Input value={contact.libelle_forme_juridique ?? ""} onChange={(e) => update("libelle_forme_juridique", e.target.value)} placeholder="SARL, SAS, EURL..." />
+                  </Field>
+                  <Field label="Capital social (€)">
+                    <Input type="number" value={contact.capital_social ?? ""} onChange={(e) => update("capital_social", Number(e.target.value) || null)} />
+                  </Field>
+                  <Field label="Code NAF">
+                    <Input value={contact.code_naf ?? ""} onChange={(e) => update("code_naf", e.target.value)} className="font-mono text-sm" />
+                  </Field>
+                  <Field label="Libellé activité (NAF)" className="md:col-span-2">
+                    <Input value={contact.libelle_naf ?? ""} onChange={(e) => update("libelle_naf", e.target.value)} />
+                  </Field>
+                  <Field label="Date de création">
+                    <div className="relative"><Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input type="date" className="pl-9" value={contact.date_creation_societe ?? ""} onChange={(e) => update("date_creation_societe", e.target.value)} />
+                    </div>
+                  </Field>
+                  <Field label="Site web" className="md:col-span-3">
+                    <div className="relative"><Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input className="pl-9" value={contact.site_web ?? ""} onChange={(e) => update("site_web", e.target.value)} placeholder="https://..." />
+                    </div>
+                  </Field>
                 </div>
-              </Field>
-              <Field label="Dirigeant">
-                <Input value={contact.nom_dirigeant ?? ""} onChange={(e) => update("nom_dirigeant", e.target.value)} />
-              </Field>
-              <Field label="Site web">
-                <div className="relative"><Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input className="pl-9" value={contact.site_web ?? ""} onChange={(e) => update("site_web", e.target.value)} placeholder="https://..." />
-                </div>
-              </Field>
+              </div>
+
             </CardContent>
           </Card>
         </TabsContent>
