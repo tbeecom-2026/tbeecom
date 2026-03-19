@@ -23,6 +23,14 @@ const emptyMandat: Partial<Mandat> = {
   extraction: false, murs_a_vendre: false, cles: false,
 };
 
+// ✅ Field défini ICI (hors du composant) pour éviter la re-création à chaque rendu
+const Field = ({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) => (
+  <div className={`space-y-1.5 ${className}`}>
+    <Label className="text-xs text-muted-foreground">{label}</Label>
+    {children}
+  </div>
+);
+
 export default function MandatDetail() {
   const { id } = useParams();
   const isNew = id === "nouveau";
@@ -89,13 +97,6 @@ export default function MandatDetail() {
       loadMandat(id);
     }
   }
-
-  const Field = ({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) => (
-    <div className={`space-y-1.5 ${className}`}>
-      <Label className="text-xs text-muted-foreground">{label}</Label>
-      {children}
-    </div>
-  );
 
   return (
     <div className="space-y-4 max-w-5xl">
