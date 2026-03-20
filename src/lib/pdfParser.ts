@@ -133,8 +133,14 @@ export async function extractTextFromPdf(file: File): Promise<string> {
 // ─── Parser principal ────────────────────────────────────────────────────────
 
 export function parseMandatText(rawText: string): ParsedMandat {
-  // Normalise les espaces multiples (pdfjs produit parfois des espaces en excès)
-  const t = rawText.replace(/\s+/g, " ");
+  // Étape 1 : supprime les caractères Unicode invisibles/zero-width que pdfjs-dist
+  // insère parfois entre les caractères (ex: \u200B entre "379" et "770").
+  // Sans ce nettoyage, les regex \s et \b échouent silencieusement.
+  const stripped = rawText.replace(/[\u200B\u200C\u200D\u00AD\uFEFF\u2060]/g, "");
+
+  // Étape 2 : normalise TOUS les types d'espaces Unicode en espace simple U+0020
+  // (no-break space \u00A0, narrow no-break \u202F, thin space \u2009, etc.)
+  const t = stripped.replace(/[\s\u00A0\u202F\u2009\u2007\u2008]+/g, " ");
 
   const result: ParsedMandat = {};
 
