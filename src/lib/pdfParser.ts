@@ -267,13 +267,30 @@ export function parseMandatText(rawText: string): ParsedMandat {
   }
 
   // ── RCS + SIREN ─────────────────────────────────────────────────────────────
-  // Stratégie en cascade : du plus précis au plus générique.
+  //
+  // Approche unifiée : compactDigits() colle itérativement les chiffres séparés
+  // par des espaces, quelle que soit la façon dont pdfjs les a découpés :
+  //   "379 770 472"          → 1 passe  → "379770472"  ✓
+  //   "3 7 9 7 7 0 4 7 2"   → 2 passes → "379770472"  ✓
+  //   "379770472"            → 0 passe  → "379770472"  ✓
+  //
+  // Après compaction, un simple \b\d{9}\b ou \b\d{14}\b suffit.
+
+  function compactDigits(s: string): string {
+    let r = s;
+    for (let i = 0; i < 5; i++) {
+      const prev = r;
+      r = r.replace(/(\d) (\d)/g, "$1$2");
+      if (r === prev) break; // stable, inutile de continuer
+    }
+    return r;
+  }
 
   let sirenLevelUsed: number | undefined;
 
-  // Niveau 1 — Format RCS classique :
+  // Niveau 1 — Contexte RCS (le plus précis — extrait aussi la ville RCS)
   // "immatriculée au RCS de NANTERRE , sous le numéro 513 834 762"
-  // "immatriculé(e) au RCS de Créteil , sous le numéro 379 770 472"
+  const compactedSection = compactDigits(sectionMandant);
   const rcsMatch = sectionMandant.match(
     /RCS\s+de\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s-]+?)\s*,?\s+sous\s+le\s+num[ée]ro\s+([\d\s]{9,14})/i
   );
@@ -290,65 +307,25 @@ export function parseMandatText(rawText: string): ParsedMandat {
     sirenLevelUsed = 1;
   }
 
-  // Niveau 2 — Mot-clé SIREN ou SIRET suivi des chiffres (avec ou sans espace/tiret)
-  // "SIREN : 379770472" / "SIRET: 37977047200012" / "numéro SIREN 379 770 472"
+  // Niveau 2 — Compaction + recherche directe dans la section mandant
+  // Gère "379 770 472", "3 7 9 7 7 0 4 7 2", "379770472" et toutes les variantes
   if (!contact.siren) {
-    const sirenKw = sectionMandant.match(
-      /\b(?:num[ée]ro\s+)?SIRE[TN]R?\s*[:\-]?\s*(\d[\d\s]{7,18}\d)/i
-    );
-    if (sirenKw) {
-      const raw = sirenKw[1].replace(/\s/g, "");
-      if (raw.length >= 14) { contact.siret = raw.slice(0, 14); contact.siren = raw.slice(0, 9); }
-      else if (raw.length >= 9) { contact.siren = raw.slice(0, 9); }
-      if (contact.siren) sirenLevelUsed = 2;
+    const m14 = compactedSection.match(/\b(\d{14})\b/);
+    if (m14) {
+      contact.siret = m14[1];
+      contact.siren = m14[1].slice(0, 9);
+      sirenLevelUsed = 2;
+    } else {
+      const m9 = compactedSection.match(/\b(\d{9})\b/);
+      if (m9) {
+        contact.siren = m9[1];
+        sirenLevelUsed = 2;
+      }
     }
   }
 
-  // Niveau 3 — Format typique français : 3 groupes de 3 chiffres (379 770 472)
-  // Éventuellement suivi de 5 chiffres → SIRET (379 770 472 00012)
-  if (!contact.siren) {
-    const grouped = sectionMandant.match(
-      /\b(\d{3})\s(\d{3})\s(\d{3})(?:\s(\d{5}))?\b/
-    );
-    if (grouped) {
-      contact.siren = grouped[1] + grouped[2] + grouped[3];
-      if (grouped[4]) contact.siret = contact.siren + grouped[4];
-      sirenLevelUsed = 3;
-    }
-  }
-
-  // Niveau 4 — Filet de sécurité : 14 ou 9 chiffres consécutifs sans espace
-  if (!contact.siren) {
-    const rawDigit =
-      sectionMandant.match(/\b(\d{14})\b/) ??
-      sectionMandant.match(/\b(\d{9})\b/);
-    if (rawDigit) {
-      const raw = rawDigit[1];
-      if (raw.length === 14) { contact.siret = raw; contact.siren = raw.slice(0, 9); }
-      else { contact.siren = raw; }
-      sirenLevelUsed = 4;
-    }
-  }
-
-  // Niveau 5 — Scanner de régions numériques (pdfjs peut découper en chiffres isolés)
-  // Ex: pdfjs produit "3 7 9 7 7 0 4 7 2" → strip spaces → "379770472" (9 chiffres)
+  // Collecte les régions numériques pour le debug (plus utilisées pour l'extraction)
   const allNumericRegions = [...sectionMandant.matchAll(/\d[\d ]{7,25}\d/g)].map(m => m[0]);
-  if (!contact.siren) {
-    for (const region of allNumericRegions) {
-      const digits = region.replace(/ /g, "");
-      if (/^\d{14}$/.test(digits)) {
-        contact.siret = digits;
-        contact.siren = digits.slice(0, 9);
-        sirenLevelUsed = 5;
-        break;
-      }
-      if (/^\d{9}$/.test(digits)) {
-        contact.siren = digits;
-        sirenLevelUsed = 5;
-        break;
-      }
-    }
-  }
 
   // ── Représentant (sociétés) ────────────────────────────────────────────────
   // "représentée par Madame Aude Anglaret , agissant en qualité Dirigeant"
