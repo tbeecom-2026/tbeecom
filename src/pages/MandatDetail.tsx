@@ -396,10 +396,12 @@ export default function MandatDetail() {
                             <Button
                               size="sm"
                               className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
-                              onClick={() => navigate(`/contacts/${c.id}`)}
+                              asChild
                             >
-                              <ExternalLink className="h-3 w-3 mr-1" />
-                              Fiche contact
+                              <a href={`/contacts/${c.id}`} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-3 w-3 mr-1" />
+                                Fiche contact
+                              </a>
                             </Button>
                           </div>
                           {/* Coordonnées */}

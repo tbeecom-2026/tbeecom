@@ -121,10 +121,28 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
       });
       setSireneEnriched(true);
 
-      // Relance la recherche de doublons avec le SIREN désormais connu
-      const dupes = await searchDuplicates({ siren: result.siren });
+      // Relance la recherche de doublons avec le contact complet (nom + siren)
+      // ⚠️ Ne PAS écraser chosenContact si l'utilisateur a déjà fait un choix :
+      //    sinon, si l'ancien contact n'avait pas de SIREN, la recherche par SIREN
+      //    revient vide → chosenContact = "new" → crée un doublon !
+      setChosenContact(prev => {
+        // Si déjà sélectionné (contact existant ou "new" confirmé), on conserve
+        if (prev !== null) return prev;
+        return null; // toujours en attente, sera mis à jour après la recherche
+      });
+      const merged = {
+        siren: result.siren,
+        nom: result.nom_dirigeant?.split(" ").pop(),
+        telephone: undefined as string | undefined,
+        email: undefined as string | undefined,
+      };
+      const dupes = await searchDuplicates(merged as any);
       setDuplicates(dupes);
-      setChosenContact(dupes.length > 0 ? null : "new");
+      // N'écrase chosenContact QUE si aucun choix n'a encore été fait
+      setChosenContact(prev => {
+        if (prev !== null) return prev; // conserve la sélection existante
+        return dupes.length > 0 ? null : "new";
+      });
 
     } catch (err: any) {
       setSireneError(err.message ?? "Entreprise introuvable");
@@ -232,26 +250,40 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
     const push = (list: any[]) =>
       list?.forEach((c: ExistingContact) => { if (!seen.has(c.id)) { found.push(c); seen.add(c.id); } });
 
-    // 1. Par SIREN (identifiant fiable)
+    const sel = "id, nom, prenom, societe, commune, siren, email, telephone";
+
+    // 1. Par SIREN (identifiant le plus fiable)
     if (contact.siren) {
-      const { data } = await supabase.from("contacts")
-        .select("id, nom, prenom, societe, commune, siren, email, telephone")
+      const { data } = await supabase.from("contacts").select(sel)
         .eq("siren", contact.siren).limit(3);
       push(data ?? []);
     }
 
-    // 2. Par nom société (si SIREN n'a rien donné)
+    // 2. Par email (identifiant unique en pratique)
+    if (!found.length && (contact as any).email) {
+      const { data } = await supabase.from("contacts").select(sel)
+        .ilike("email", (contact as any).email).limit(3);
+      push(data ?? []);
+    }
+
+    // 3. Par téléphone (très discriminant)
+    if (!found.length && (contact as any).telephone) {
+      const tel = ((contact as any).telephone as string).replace(/\s/g, "");
+      const { data } = await supabase.from("contacts").select(sel)
+        .or(`telephone.ilike.%${tel}%,telephone_fixe.ilike.%${tel}%`).limit(3);
+      push(data ?? []);
+    }
+
+    // 4. Par nom société
     if (!found.length && contact.societe) {
-      const { data } = await supabase.from("contacts")
-        .select("id, nom, prenom, societe, commune, siren, email, telephone")
+      const { data } = await supabase.from("contacts").select(sel)
         .ilike("societe", `%${contact.societe.substring(0, 10)}%`).limit(3);
       push(data ?? []);
     }
 
-    // 3. Par nom de famille du représentant
+    // 5. Par nom de famille du représentant
     if (!found.length && contact.nom) {
-      const { data } = await supabase.from("contacts")
-        .select("id, nom, prenom, societe, commune, siren, email, telephone")
+      const { data } = await supabase.from("contacts").select(sel)
         .ilike("nom", `%${contact.nom}%`).limit(3);
       push(data ?? []);
     }
