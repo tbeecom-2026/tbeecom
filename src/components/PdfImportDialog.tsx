@@ -226,6 +226,11 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
         contactId = chosenContact.id;
       } else if (chosenContact === "new" && parsed.contact) {
         const c = parsed.contact;
+        // Construit les notes à partir des champs hors schéma
+        const notesLines: string[] = [];
+        if (c.ville_rcs) notesLines.push(`RCS : ${c.ville_rcs}`);
+        if (c.qualite)   notesLines.push(`Qualité : ${c.qualite}`);
+
         const { data: newContact, error: cErr } = await supabase
           .from("contacts")
           .insert({
@@ -234,8 +239,8 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
             forme_juridique: c.forme_juridique,
             capital_social: c.capital_social ?? null,
             siren: c.siren ?? null, siret: c.siret ?? null,
-            ville_rcs: c.ville_rcs ?? null,
             adresse: c.adresse, code_postal: c.code_postal, commune: c.commune,
+            notes: notesLines.length ? notesLines.join("\n") : null,
             roles: ["vendeur"],
             user_id: user?.id,
           })
