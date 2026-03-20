@@ -195,23 +195,24 @@ export function parseMandatText(rawText: string): ParsedMandat {
   const contact: ParsedContact = {};
   let hasContact = false;
 
-  // Société : "La Société Aude Rose , SARL au capital social de 5000 euros"
+  // ── Cas 1 : Mandant = Société ─────────────────────────────────────────────
+  // "La Société Aude Rose , SARL au capital social de 5000 euros"
   const societeMatch = sectionMandant.match(
-    /[Ll]a\s+[Ss]oci[ée]t[ée]\s+([\w\s]+?)\s*,\s*(SARL|SAS|EURL|SA|SNC|EI|SASU|SCI)\s+au\s+capital/i
+    /[Ll]a\s+[Ss]oci[ée]t[ée]\s+([\w\s]+?)\s*,\s*(SARL|SAS|EURL|SA|SNC|SASU|SCI)\s+au\s+capital/i
   );
   if (societeMatch) {
-    contact.societe = clean(societeMatch[1]);
+    contact.societe         = clean(societeMatch[1]);
     contact.forme_juridique = societeMatch[2].toUpperCase();
     hasContact = true;
   }
 
-  // Capital social
-  const capitalMatch = sectionMandant.match(/capital\s+social\s+de\s+([\d\s\u00a0]+)\s+euros/i);
+  // Capital social (sociétés)
+  const capitalMatch = sectionMandant.match(/capital\s+(?:social\s+)?de\s+([\d\s\u00a0]+)\s+euros/i);
   if (capitalMatch) contact.capital_social = toInt(capitalMatch[1]);
 
   // Adresse siège social
   const siegeMatch = sectionMandant.match(
-    /si[eè]ge\s+social\s+est\s+situ[ée]\s+(.+?)\s+(\d{5})\s+([A-Z][A-Za-zÀ-ÿ\s'-]{2,30}?)\s*(?:,|immatricul)/i
+    /si[eè]ge\s+social\s+est\s+situ[ée]\s+(.+?)\s+(\d{5})\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'-]{2,30}?)\s*(?:,|immatricul)/i
   );
   if (siegeMatch) {
     contact.adresse     = clean(siegeMatch[1]);
@@ -220,9 +221,45 @@ export function parseMandatText(rawText: string): ParsedMandat {
     hasContact = true;
   }
 
-  // RCS + SIREN : "immatriculée au RCS de NANTERRE , sous le numéro 513 834 762"
+  // ── Cas 2 : Mandant = Entrepreneur individuel / personne physique ──────────
+  // "Madame Emmanuelle BADIER entrepreneur individuel (EI), dont le siège social
+  //  est situé 2 boulevard de Strasbourg 94130 Nogent sur Marne"
+  const eiMatch = sectionMandant.match(
+    /(?:Madame|Monsieur|M\.|Mme\.?)\s+([\w\s'-]+?)\s+entrepreneur\s+individuel/i
+  );
+  if (eiMatch && !contact.nom) {
+    // Heuristique : dernier mot en MAJUSCULES = nom de famille
+    const words = clean(eiMatch[1]).split(/\s+/);
+    const nomIdx = words.findIndex(w => w === w.toUpperCase() && w.length > 1);
+    if (nomIdx >= 0) {
+      contact.nom    = words[nomIdx];
+      contact.prenom = words.slice(0, nomIdx).join(" ") || words.slice(nomIdx + 1).join(" ") || undefined;
+    } else {
+      contact.nom    = words[words.length - 1];
+      contact.prenom = words.slice(0, -1).join(" ") || undefined;
+    }
+    contact.forme_juridique = "EI";
+    hasContact = true;
+
+    // Adresse EI : "dont le siège social est situé X CPVILE"
+    if (!contact.adresse) {
+      const eiAddrMatch = sectionMandant.match(
+        /dont\s+le\s+si[eè]ge\s+social\s+est\s+situ[ée]\s+(.+?)\s+(\d{5})\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'-]{2,30}?)\s*(?:,|immatricul|$)/i
+      );
+      if (eiAddrMatch) {
+        contact.adresse     = clean(eiAddrMatch[1]);
+        contact.code_postal = eiAddrMatch[2];
+        contact.commune     = clean(eiAddrMatch[3]);
+      }
+    }
+  }
+
+  // ── RCS + SIREN ────────────────────────────────────────────────────────────
+  // "immatriculée au RCS de NANTERRE , sous le numéro 513 834 762"
+  // "immatriculé(e) au RCS de Créteil , sous le numéro 379 770 472"
+  // ⚠️ La ville peut être en casse mixte (ex: "Créteil") → [A-Za-zÀ-ÿ]
   const rcsMatch = sectionMandant.match(
-    /RCS\s+de\s+([A-Z][A-Z\s]+?)\s*,?\s+sous\s+le\s+num[ée]ro\s+([\d\s]{9,14})/i
+    /RCS\s+de\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s-]+?)\s*,?\s+sous\s+le\s+num[ée]ro\s+([\d\s]{9,14})/i
   );
   if (rcsMatch) {
     contact.ville_rcs = clean(rcsMatch[1]);
@@ -236,20 +273,23 @@ export function parseMandatText(rawText: string): ParsedMandat {
     hasContact = true;
   }
 
-  // Représentant + qualité (toujours dans sectionMandant)
-  const repMatch =
-    sectionMandant.match(/repr[ée]sent[ée]e?\s+par\s+(?:Madame|Monsieur|M\.|Mme\.?)\s+([\w\s'-]+?)\s*,\s*agissant/i) ??
-    sectionMandant.match(/repr[ée]sent[ée]e?\s+par\s+(?:Madame|Monsieur|M\.|Mme\.?)\s+([\w\s'-]+?)\s+agissant/i) ??
-    sectionMandant.match(/repr[ée]sent[ée]e?\s+par\s+([\w][A-Za-zÀ-ÿ\s'-]{3,40}?)\s*,?\s*agissant/i);
+  // ── Représentant (sociétés) ────────────────────────────────────────────────
+  // "représentée par Madame Aude Anglaret , agissant en qualité Dirigeant"
+  if (!contact.nom) {
+    const repMatch =
+      sectionMandant.match(/repr[ée]sent[ée]e?\s+par\s+(?:Madame|Monsieur|M\.|Mme\.?)\s+([\w\s'-]+?)\s*,\s*agissant/i) ??
+      sectionMandant.match(/repr[ée]sent[ée]e?\s+par\s+(?:Madame|Monsieur|M\.|Mme\.?)\s+([\w\s'-]+?)\s+agissant/i) ??
+      sectionMandant.match(/repr[ée]sent[ée]e?\s+par\s+([\w][A-Za-zÀ-ÿ\s'-]{3,40}?)\s*,?\s*agissant/i);
 
-  if (repMatch) {
-    const parts = clean(repMatch[1]).split(/\s+/);
-    contact.nom    = parts[parts.length - 1];
-    contact.prenom = parts.slice(0, -1).join(" ") || undefined;
-    hasContact = true;
+    if (repMatch) {
+      const parts = clean(repMatch[1]).split(/\s+/);
+      contact.nom    = parts[parts.length - 1];
+      contact.prenom = parts.slice(0, -1).join(" ") || undefined;
+      hasContact = true;
+    }
   }
 
-  // Fallback nom si représentant non trouvé → dernier mot de la société
+  // Fallback nom → dernier mot de la société (satisfait la contrainte NOT NULL)
   if (!contact.nom && contact.societe) {
     const words = contact.societe.trim().split(/\s+/);
     contact.nom    = words[words.length - 1];
