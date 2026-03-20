@@ -187,12 +187,17 @@ export function parseMandatText(rawText: string): ParsedMandat {
   if (dureeMatch) result.duree_mois = toInt(dureeMatch[1]);
 
   // ── Contact / Mandant ─────────────────────────────────────────────────────
+  // ⚠️ IMPORTANT : toutes les recherches contact sont restreintes à la section
+  // MANDANT (avant "Le MANDATAIRE") pour éviter de capter MENESGUEN Immobilier
+  // ou tout autre info de l'agence mandataire.
+  const sectionMandant = t.split(/Le\s+MANDATAIRE/i)[0] ?? t;
+
   const contact: ParsedContact = {};
   let hasContact = false;
 
   // Société : "La Société Aude Rose , SARL au capital social de 5000 euros"
-  const societeMatch = t.match(
-    /La\s+[Ss]oci[ée]t[ée]\s+([\w\s]+?)\s*,\s*(SARL|SAS|EURL|SA|SNC|EI|SASU|SCI)\s+au\s+capital/i
+  const societeMatch = sectionMandant.match(
+    /[Ll]a\s+[Ss]oci[ée]t[ée]\s+([\w\s]+?)\s*,\s*(SARL|SAS|EURL|SA|SNC|EI|SASU|SCI)\s+au\s+capital/i
   );
   if (societeMatch) {
     contact.societe = clean(societeMatch[1]);
@@ -201,22 +206,22 @@ export function parseMandatText(rawText: string): ParsedMandat {
   }
 
   // Capital social
-  const capitalMatch = t.match(/capital\s+social\s+de\s+([\d\s\u00a0]+)\s+euros/i);
+  const capitalMatch = sectionMandant.match(/capital\s+social\s+de\s+([\d\s\u00a0]+)\s+euros/i);
   if (capitalMatch) contact.capital_social = toInt(capitalMatch[1]);
 
-  // Adresse siège social : "siège social est situé 24 avenue... 92150 Suresnes ,"
-  const siegeMatch = t.match(
+  // Adresse siège social
+  const siegeMatch = sectionMandant.match(
     /si[eè]ge\s+social\s+est\s+situ[ée]\s+(.+?)\s+(\d{5})\s+([A-Z][A-Za-zÀ-ÿ\s'-]{2,30}?)\s*(?:,|immatricul)/i
   );
   if (siegeMatch) {
-    contact.adresse    = clean(siegeMatch[1]);
+    contact.adresse     = clean(siegeMatch[1]);
     contact.code_postal = siegeMatch[2];
-    contact.commune    = clean(siegeMatch[3]);
+    contact.commune     = clean(siegeMatch[3]);
     hasContact = true;
   }
 
   // RCS + SIREN : "immatriculée au RCS de NANTERRE , sous le numéro 513 834 762"
-  const rcsMatch = t.match(
+  const rcsMatch = sectionMandant.match(
     /RCS\s+de\s+([A-Z][A-Z\s]+?)\s*,?\s+sous\s+le\s+num[ée]ro\s+([\d\s]{9,14})/i
   );
   if (rcsMatch) {
@@ -231,14 +236,11 @@ export function parseMandatText(rawText: string): ParsedMandat {
     hasContact = true;
   }
 
-  // Représentant + qualité — plusieurs patterns pour couvrir les variantes pdfjs
-  // Pattern 1 : "représentée par Madame Aude Anglaret , agissant"
+  // Représentant + qualité (toujours dans sectionMandant)
   const repMatch =
-    t.match(/repr[ée]sent[ée]e?\s+par\s+(?:Madame|Monsieur|M\.|Mme\.?)\s+([\w\s'-]+?)\s*,\s*agissant/i) ??
-    // Pattern 2 : sans virgule "représentée par Madame Aude Anglaret agissant"
-    t.match(/repr[ée]sent[ée]e?\s+par\s+(?:Madame|Monsieur|M\.|Mme\.?)\s+([\w\s'-]+?)\s+agissant/i) ??
-    // Pattern 3 : sans civilité "représentée par Aude Anglaret , agissant"
-    t.match(/repr[ée]sent[ée]e?\s+par\s+([\w][A-Za-zÀ-ÿ\s'-]{3,40?}?)\s*,?\s*agissant/i);
+    sectionMandant.match(/repr[ée]sent[ée]e?\s+par\s+(?:Madame|Monsieur|M\.|Mme\.?)\s+([\w\s'-]+?)\s*,\s*agissant/i) ??
+    sectionMandant.match(/repr[ée]sent[ée]e?\s+par\s+(?:Madame|Monsieur|M\.|Mme\.?)\s+([\w\s'-]+?)\s+agissant/i) ??
+    sectionMandant.match(/repr[ée]sent[ée]e?\s+par\s+([\w][A-Za-zÀ-ÿ\s'-]{3,40}?)\s*,?\s*agissant/i);
 
   if (repMatch) {
     const parts = clean(repMatch[1]).split(/\s+/);
@@ -247,21 +249,17 @@ export function parseMandatText(rawText: string): ParsedMandat {
     hasContact = true;
   }
 
-  // Fallback nom : dirigeant SIRENE (sera complété après si SIREN trouvé)
-  // ou à défaut le nom de la société (pour satisfaire la contrainte NOT NULL)
+  // Fallback nom si représentant non trouvé → dernier mot de la société
   if (!contact.nom && contact.societe) {
-    // Utilise le dernier mot de la société comme nom provisoire
     const words = contact.societe.trim().split(/\s+/);
     contact.nom    = words[words.length - 1];
     contact.prenom = words.slice(0, -1).join(" ") || undefined;
   }
 
-  const qualiteMatch = t.match(/agissant\s+en\s+qualit[ée]\s+([\w\s'-]+?)(?:\s{2}|,|\.)/i);
+  const qualiteMatch = sectionMandant.match(/agissant\s+en\s+qualit[ée]\s+([\w\s'-]+?)(?:\s{2}|,|\.)/i);
   if (qualiteMatch) contact.qualite = clean(qualiteMatch[1]);
 
-  // Téléphone mandant (première occurrence, avant TBEECOM)
-  // On cherche "Téléphone : XXXXXXXXXX" dans la section mandant
-  const sectionMandant = t.split(/Le MANDATAIRE/i)[0] ?? t;
+  // Téléphone mandant
   const telMatch = sectionMandant.match(/T[ée]l[ée]phone\s*:\s*([\d\s+]{8,15})/i);
   if (telMatch) {
     contact.telephone = telMatch[1].replace(/\s/g, "");
