@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Phone, Mail, MapPin, ExternalLink, User, Lock, FileText, Upload, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Phone, Mail, MapPin, ExternalLink, User, Lock, FileText, Upload, Clock, CalendarCheck, RefreshCw } from "lucide-react";
 import { formatDate, formatEuros, getStatutBadge, getActiviteBadge, STATUTS_MANDAT, TYPES_MANDAT, TYPES_COMMERCE } from "@/lib/formatters";
 import { calcHonoraires, pctEffectif, type BaremeTranche } from "@/lib/honoraires";
 import type { Mandat, Activite, Contact, MandatVendeur } from "@/types/database";
@@ -140,62 +140,153 @@ export default function MandatDetail() {
           <TabsTrigger value="suivi">Suivi</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="general" className="space-y-4 mt-4">
+        <TabsContent value="general" className="mt-4 space-y-4">
+          {/* ── Carte principale ─────────────────────────────────────── */}
           <Card>
-            <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* N° Mandat : champ principal, obligatoire */}
-              <Field label="N° Mandat ★">
-                <div className="relative">
-                  <Input
-                    type="number"
-                    placeholder="Ex: 720"
-                    value={mandat.numero_registre ?? ""}
-                    onChange={(e) => update("numero_registre", parseInt(e.target.value) || null)}
-                    className={`text-lg font-bold text-primary border-primary ${!isNew ? "pr-8 bg-secondary/50 cursor-not-allowed opacity-80" : ""}`}
-                    readOnly={!isNew}
-                    title={!isNew ? "Le numéro de mandat ne peut pas être modifié" : undefined}
-                  />
-                  {!isNew && (
-                    <Lock className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  )}
+            <CardContent className="pt-5 space-y-5">
+
+              {/* Identité du mandat */}
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-3">
+                  <FileText className="h-3.5 w-3.5" />Identité du mandat
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <Field label="N° Mandat ★">
+                    <div className="relative">
+                      <Input
+                        type="number" placeholder="Ex: 720"
+                        value={mandat.numero_registre ?? ""}
+                        onChange={(e) => update("numero_registre", parseInt(e.target.value) || null)}
+                        className={`text-lg font-bold text-primary border-primary ${!isNew ? "pr-8 bg-secondary/50 cursor-not-allowed opacity-80" : ""}`}
+                        readOnly={!isNew}
+                        title={!isNew ? "Le numéro de mandat ne peut pas être modifié" : undefined}
+                      />
+                      {!isNew && <Lock className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />}
+                    </div>
+                  </Field>
+                  <Field label="Type de mandat">
+                    <Select value={mandat.type_mandat} onValueChange={(v) => update("type_mandat", v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{TYPES_MANDAT.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Statut">
+                    <Select value={mandat.statut} onValueChange={(v) => update("statut", v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{STATUTS_MANDAT.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Confidentiel">
+                    <div className="flex items-center h-10">
+                      <Switch checked={mandat.confidentiel ?? false} onCheckedChange={(v) => update("confidentiel", v)} />
+                    </div>
+                  </Field>
                 </div>
-              </Field>
-              <Field label="Type de mandat">
-                <Select value={mandat.type_mandat} onValueChange={(v) => update("type_mandat", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{TYPES_MANDAT.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-                </Select>
-              </Field>
-              <Field label="Statut">
-                <Select value={mandat.statut} onValueChange={(v) => update("statut", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{STATUTS_MANDAT.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
-                </Select>
-              </Field>
-              <Field label="Confidentiel">
-                <Switch checked={mandat.confidentiel ?? false} onCheckedChange={(v) => update("confidentiel", v)} />
-              </Field>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Type de commerce">
-                <Select value={mandat.type_commerce} onValueChange={(v) => update("type_commerce", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{TYPES_COMMERCE.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                </Select>
-              </Field>
-              <Field label="Sous-type"><Input value={mandat.sous_type ?? ""} onChange={(e) => update("sous_type", e.target.value)} /></Field>
-              <Field label="Titre" className="md:col-span-2"><Input value={mandat.titre ?? ""} onChange={(e) => update("titre", e.target.value)} /></Field>
-              <Field label="Description" className="md:col-span-2"><Textarea value={mandat.description ?? ""} onChange={(e) => update("description", e.target.value)} rows={3} /></Field>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Field label="Adresse" className="md:col-span-2"><Input value={mandat.adresse ?? ""} onChange={(e) => update("adresse", e.target.value)} /></Field>
-              <Field label="Code postal"><Input value={mandat.code_postal ?? ""} onChange={(e) => update("code_postal", e.target.value)} /></Field>
-              <Field label="Commune"><Input value={mandat.commune ?? ""} onChange={(e) => update("commune", e.target.value)} /></Field>
-              <Field label="Secteur"><Input value={mandat.secteur ?? ""} onChange={(e) => update("secteur", e.target.value)} /></Field>
+              </div>
+
+              {/* ── Bloc Durée & Signatures ──────────────────────────── */}
+              {(() => {
+                const dateEffet = mandat.date_sur_le_marche;
+                const dureeInitiale = mandat.type_mandat === "exclusif" || mandat.type_mandat === "co_exclusif" ? 3 : mandat.type_mandat === "semi_exclusif" ? 3 : 3;
+                const dureeMax = mandat.type_mandat === "exclusif" ? 12 : null;
+                const dateExpiration = dateEffet ? (() => {
+                  const d = new Date(dateEffet);
+                  d.setMonth(d.getMonth() + (dureeMax ?? dureeInitiale));
+                  return d.toLocaleDateString("fr-FR");
+                })() : null;
+                return (
+                  <div className="bg-secondary/40 rounded-lg p-3 border border-border/60">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-3">
+                      <Clock className="h-3.5 w-3.5 text-primary" />Durée du mandat
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <Field label="Date de signature / Effet">
+                        <Input type="date" value={mandat.date_sur_le_marche ?? ""}
+                          onChange={(e) => update("date_sur_le_marche", e.target.value)} />
+                      </Field>
+                      <div className="space-y-1.5">
+                        <label className="text-xs text-muted-foreground">Durée initiale</label>
+                        <div className="flex h-10 items-center rounded-md border border-border/60 bg-secondary/60 px-3 text-sm font-medium gap-1.5">
+                          <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+                          {dureeInitiale} mois
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs text-muted-foreground">Reconduction tacite</label>
+                        <div className="flex h-10 items-center rounded-md border border-border/60 bg-secondary/60 px-3 text-sm font-medium gap-1.5">
+                          <RefreshCw className="h-3.5 w-3.5 text-primary shrink-0" />
+                          Par périodes de {dureeInitiale} mois
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs text-muted-foreground">
+                          {dureeMax ? `Expiration max (${dureeMax} mois)` : "Expiration"}
+                        </label>
+                        <div className={`flex h-10 items-center rounded-md border px-3 text-sm font-medium gap-1.5 ${dateExpiration ? "border-amber-600/50 bg-amber-900/10 text-amber-400" : "border-border/60 bg-secondary/60 text-muted-foreground"}`}>
+                          <CalendarCheck className="h-3.5 w-3.5 shrink-0" />
+                          {dateExpiration ?? "— saisir la date d'effet"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="border-t border-border/50" />
+
+              {/* Activité */}
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-3">
+                  <FileText className="h-3.5 w-3.5" />Activité & description
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Field label="Type de commerce">
+                    <Select value={mandat.type_commerce} onValueChange={(v) => update("type_commerce", v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{TYPES_COMMERCE.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Sous-type">
+                    <Input value={mandat.sous_type ?? ""} onChange={(e) => update("sous_type", e.target.value)} />
+                  </Field>
+                  <Field label="Enseigne">
+                    <Input value={(mandat as any).enseigne ?? ""} onChange={(e) => update("enseigne", e.target.value)} />
+                  </Field>
+                  <Field label="Titre" className="md:col-span-3">
+                    <Input value={mandat.titre ?? ""} onChange={(e) => update("titre", e.target.value)} />
+                  </Field>
+                  <Field label="Description" className="md:col-span-3">
+                    <Textarea value={mandat.description ?? ""} onChange={(e) => update("description", e.target.value)} rows={2} />
+                  </Field>
+                  <Field label="Raison de vente" className="md:col-span-3">
+                    <Input value={(mandat as any).raison_vente ?? ""} onChange={(e) => update("raison_vente", e.target.value)} placeholder="Ex: Retraite, changement d'activité..." />
+                  </Field>
+                </div>
+              </div>
+
+              <div className="border-t border-border/50" />
+
+              {/* Localisation */}
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-3">
+                  <MapPin className="h-3.5 w-3.5" />Localisation
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <Field label="Adresse" className="md:col-span-2">
+                    <Input value={mandat.adresse ?? ""} onChange={(e) => update("adresse", e.target.value)} />
+                  </Field>
+                  <Field label="Code postal">
+                    <Input value={mandat.code_postal ?? ""} onChange={(e) => update("code_postal", e.target.value)} />
+                  </Field>
+                  <Field label="Commune">
+                    <Input value={mandat.commune ?? ""} onChange={(e) => update("commune", e.target.value)} />
+                  </Field>
+                  <Field label="Secteur" className="md:col-span-2">
+                    <Input value={mandat.secteur ?? ""} onChange={(e) => update("secteur", e.target.value)} />
+                  </Field>
+                </div>
+              </div>
+
             </CardContent>
           </Card>
 
