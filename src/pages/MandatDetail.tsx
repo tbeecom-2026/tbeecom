@@ -393,16 +393,15 @@ export default function MandatDetail() {
                                 <span className="ml-2 text-xs text-muted-foreground hover:underline">— {c.societe}</span>
                               )}
                             </button>
-                            <Button
-                              size="sm"
-                              className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
-                              asChild
+                            <a
+                              href={`/contacts/${c.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center h-7 px-2 text-xs rounded-md bg-[#C9A84C] text-black font-medium hover:bg-[#C9A84C]/80 transition-colors"
                             >
-                              <a href={`/contacts/${c.id}`} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-3 w-3 mr-1" />
-                                Fiche contact
-                              </a>
-                            </Button>
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              Fiche contact
+                            </a>
                           </div>
                           {/* Coordonnées */}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
