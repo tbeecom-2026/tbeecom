@@ -234,7 +234,9 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
         const { data: newContact, error: cErr } = await supabase
           .from("contacts")
           .insert({
-            nom: c.nom, prenom: c.prenom, email: c.email,
+            nom: c.nom ?? c.societe ?? "À compléter",
+            prenom: c.prenom ?? null,
+            email: c.email ?? null,
             telephone: c.telephone, societe: c.societe,
             forme_juridique: c.forme_juridique,
             capital_social: c.capital_social ?? null,

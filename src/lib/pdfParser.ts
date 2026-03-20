@@ -231,17 +231,29 @@ export function parseMandatText(rawText: string): ParsedMandat {
     hasContact = true;
   }
 
-  // Représentant + qualité
-  // "représentée par Madame Aude Anglaret , agissant en qualité Dirigeant"
-  const repMatch = t.match(
-    /repr[ée]sent[ée]e?\s+par\s+(?:Madame|Monsieur|M\.|Mme\.?)\s+([\w\s'-]+?)\s*,\s*agissant/i
-  );
+  // Représentant + qualité — plusieurs patterns pour couvrir les variantes pdfjs
+  // Pattern 1 : "représentée par Madame Aude Anglaret , agissant"
+  const repMatch =
+    t.match(/repr[ée]sent[ée]e?\s+par\s+(?:Madame|Monsieur|M\.|Mme\.?)\s+([\w\s'-]+?)\s*,\s*agissant/i) ??
+    // Pattern 2 : sans virgule "représentée par Madame Aude Anglaret agissant"
+    t.match(/repr[ée]sent[ée]e?\s+par\s+(?:Madame|Monsieur|M\.|Mme\.?)\s+([\w\s'-]+?)\s+agissant/i) ??
+    // Pattern 3 : sans civilité "représentée par Aude Anglaret , agissant"
+    t.match(/repr[ée]sent[ée]e?\s+par\s+([\w][A-Za-zÀ-ÿ\s'-]{3,40?}?)\s*,?\s*agissant/i);
+
   if (repMatch) {
     const parts = clean(repMatch[1]).split(/\s+/);
-    // Heuristique : dernier mot = nom de famille
     contact.nom    = parts[parts.length - 1];
-    contact.prenom = parts.slice(0, -1).join(" ");
+    contact.prenom = parts.slice(0, -1).join(" ") || undefined;
     hasContact = true;
+  }
+
+  // Fallback nom : dirigeant SIRENE (sera complété après si SIREN trouvé)
+  // ou à défaut le nom de la société (pour satisfaire la contrainte NOT NULL)
+  if (!contact.nom && contact.societe) {
+    // Utilise le dernier mot de la société comme nom provisoire
+    const words = contact.societe.trim().split(/\s+/);
+    contact.nom    = words[words.length - 1];
+    contact.prenom = words.slice(0, -1).join(" ") || undefined;
   }
 
   const qualiteMatch = t.match(/agissant\s+en\s+qualit[ée]\s+([\w\s'-]+?)(?:\s{2}|,|\.)/i);
