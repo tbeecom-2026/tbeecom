@@ -254,10 +254,12 @@ export function parseMandatText(rawText: string): ParsedMandat {
     }
   }
 
-  // ── RCS + SIREN ────────────────────────────────────────────────────────────
+  // ── RCS + SIREN ─────────────────────────────────────────────────────────────
+  // Stratégie en cascade : du plus précis au plus générique.
+
+  // Niveau 1 — Format RCS classique :
   // "immatriculée au RCS de NANTERRE , sous le numéro 513 834 762"
   // "immatriculé(e) au RCS de Créteil , sous le numéro 379 770 472"
-  // ⚠️ La ville peut être en casse mixte (ex: "Créteil") → [A-Za-zÀ-ÿ]
   const rcsMatch = sectionMandant.match(
     /RCS\s+de\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s-]+?)\s*,?\s+sous\s+le\s+num[ée]ro\s+([\d\s]{9,14})/i
   );
@@ -271,6 +273,44 @@ export function parseMandatText(rawText: string): ParsedMandat {
       contact.siren = rawNum.substring(0, 9);
     }
     hasContact = true;
+  }
+
+  // Niveau 2 — Mot-clé SIREN ou SIRET suivi des chiffres (avec ou sans espace/tiret)
+  // "SIREN : 379770472" / "SIRET: 37977047200012" / "numéro SIREN 379 770 472"
+  if (!contact.siren) {
+    const sirenKw = sectionMandant.match(
+      /\b(?:num[ée]ro\s+)?SIRE[TN]R?\s*[:\-]?\s*(\d[\d\s]{7,18}\d)/i
+    );
+    if (sirenKw) {
+      const raw = sirenKw[1].replace(/\s/g, "");
+      if (raw.length >= 14) { contact.siret = raw.slice(0, 14); contact.siren = raw.slice(0, 9); }
+      else if (raw.length >= 9) { contact.siren = raw.slice(0, 9); }
+    }
+  }
+
+  // Niveau 3 — Format typique français : 3 groupes de 3 chiffres (379 770 472)
+  // Éventuellement suivi de 5 chiffres → SIRET (379 770 472 00012)
+  if (!contact.siren) {
+    const grouped = sectionMandant.match(
+      /\b(\d{3})\s(\d{3})\s(\d{3})(?:\s(\d{5}))?\b/
+    );
+    if (grouped) {
+      contact.siren = grouped[1] + grouped[2] + grouped[3];
+      if (grouped[4]) contact.siret = contact.siren + grouped[4];
+    }
+  }
+
+  // Niveau 4 — Filet de sécurité : 14 ou 9 chiffres consécutifs sans espace
+  // (dernier recours — évite les faux positifs de numéros de téléphone)
+  if (!contact.siren) {
+    const rawDigit =
+      sectionMandant.match(/\b(\d{14})\b/) ??
+      sectionMandant.match(/\b(\d{9})\b/);
+    if (rawDigit) {
+      const raw = rawDigit[1];
+      if (raw.length === 14) { contact.siret = raw; contact.siren = raw.slice(0, 9); }
+      else { contact.siren = raw; }
+    }
   }
 
   // ── Représentant (sociétés) ────────────────────────────────────────────────
