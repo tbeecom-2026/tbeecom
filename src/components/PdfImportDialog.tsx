@@ -13,12 +13,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   FileText, Upload, Loader2, AlertTriangle, CheckCircle2,
-  User, Building2, ExternalLink, X, ShieldAlert, ShieldCheck,
+  User, Building2, ExternalLink, X, ShieldAlert, ShieldCheck, Search,
 } from "lucide-react";
 import { extractTextFromPdf, parseMandatText, type ParsedContact } from "@/lib/pdfParser";
-import { lookupSiren, sireneToContact } from "@/lib/sirene";
+import { lookupSiren, lookupSiret, sireneToContact } from "@/lib/sirene";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -74,13 +75,62 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
   const [signatureWarning, setSignatureWarning] = useState<"ok" | "warn" | "unknown">("unknown");
   const [signatureConfirmee, setSignatureConfirmee] = useState(false);
   const [errorMsg, setErrorMsg]                 = useState<string | null>(null);
+  // ── SIREN manuel ──────────────────────────────────────────────────────────
+  const [sirenInput, setSirenInput]             = useState("");
+  const [sireneLoading, setSireneLoading]       = useState(false);
+  const [sireneError, setSireneError]           = useState<string | null>(null);
 
   // ── Reset ──────────────────────────────────────────────────────────────────
   function handleClose() {
     setStep("upload"); setParsed(null); setRawText(""); setPdfFile(null);
     setDuplicates([]); setChosenContact(null); setSireneEnriched(false);
     setSignatureWarning("unknown"); setSignatureConfirmee(false); setErrorMsg(null);
+    setSirenInput(""); setSireneError(null);
     onClose();
+  }
+
+  // ── Lookup SIRENE manuel ───────────────────────────────────────────────────
+  async function handleSireneManual() {
+    const clean = sirenInput.replace(/\s/g, "");
+    setSireneError(null);
+    setSireneLoading(true);
+    try {
+      const result = clean.length === 14
+        ? await lookupSiret(clean)
+        : await lookupSiren(clean);
+      const contactData = sireneToContact(result);
+
+      // Met à jour le contact parsé avec les données SIRENE
+      setParsed(prev => {
+        if (!prev) return prev;
+        const merged: ParsedContact = {
+          ...(prev.contact ?? {}),
+          societe:         contactData.societe         ?? prev.contact?.societe,
+          forme_juridique: contactData.libelle_forme_juridique ?? prev.contact?.forme_juridique,
+          capital_social:  contactData.capital_social  ?? prev.contact?.capital_social,
+          siren:           result.siren,
+          siret:           result.siret,
+          adresse:         contactData.adresse         ?? prev.contact?.adresse,
+          code_postal:     contactData.code_postal     ?? prev.contact?.code_postal,
+          commune:         contactData.commune         ?? prev.contact?.commune,
+          // Nom/prénom : SIRENE donne le dirigeant si pas encore trouvé
+          nom:    prev.contact?.nom    ?? (result.nom_dirigeant?.split(" ").pop() ?? undefined),
+          prenom: prev.contact?.prenom ?? (result.nom_dirigeant?.split(" ").slice(0, -1).join(" ") ?? undefined),
+        };
+        return { ...prev, contact: merged };
+      });
+      setSireneEnriched(true);
+
+      // Relance la recherche de doublons avec le SIREN désormais connu
+      const dupes = await searchDuplicates({ siren: result.siren });
+      setDuplicates(dupes);
+      setChosenContact(dupes.length > 0 ? null : "new");
+
+    } catch (err: any) {
+      setSireneError(err.message ?? "Entreprise introuvable");
+    } finally {
+      setSireneLoading(false);
+    }
   }
 
   // ── Heuristique de détection des signatures ────────────────────────────────
@@ -152,7 +202,11 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
         }
       }
 
-      // 4. Heuristique signature (option C)
+      // 4. Pré-remplit le champ SIREN si extrait du PDF
+      if (data.contact?.siren) setSirenInput(data.contact.siren);
+      else if (data.contact?.siret) setSirenInput(data.contact.siret);
+
+      // 5. Heuristique signature (option C)
       setSignatureWarning(detectSignatureStatus(text, data.contact));
 
       // 5. Recherche doublons
@@ -470,6 +524,48 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
                 <Row label="Adresse siège"   value={[parsed.contact.adresse, parsed.contact.code_postal, parsed.contact.commune].filter(Boolean).join(" ")} />
               </div>
             )}
+
+            {/* ── SIREN / enrichissement SIRENE ──────────────────────── */}
+            <div className="rounded-lg border border-border/60 bg-secondary/30 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3 flex items-center gap-1.5">
+                <Search className="h-3.5 w-3.5 text-primary" />
+                SIREN / SIRET — vérification &amp; enrichissement
+                {sireneEnriched && <Badge className="ml-1 text-[9px] bg-green-900/40 text-green-400 border-green-700/30">✓ enrichi</Badge>}
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="SIREN (9 chiffres) ou SIRET (14 chiffres)"
+                  value={sirenInput}
+                  onChange={(e) => { setSirenInput(e.target.value); setSireneError(null); }}
+                  className="flex-1 font-mono text-sm"
+                />
+                <Button
+                  size="sm"
+                  onClick={handleSireneManual}
+                  disabled={
+                    sireneLoading ||
+                    (sirenInput.replace(/\s/g, "").length !== 9 &&
+                     sirenInput.replace(/\s/g, "").length !== 14)
+                  }
+                  className="bg-primary text-primary-foreground shrink-0"
+                >
+                  {sireneLoading
+                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                    : <><Search className="h-3.5 w-3.5 mr-1.5" />Rechercher</>
+                  }
+                </Button>
+              </div>
+              {sireneError && (
+                <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
+                  <X className="h-3 w-3" />{sireneError}
+                </p>
+              )}
+              {!sirenInput && (
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  SIREN non trouvé dans le PDF — saisissez-le manuellement pour enrichir la fiche société.
+                </p>
+              )}
+            </div>
 
             {/* ── Doublons contact ────────────────────────────────────── */}
             {duplicates.length > 0 && (
