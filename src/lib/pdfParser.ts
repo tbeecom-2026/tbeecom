@@ -42,6 +42,12 @@ export interface ParsedMandat {
   honoraires_montant?: number;
   duree_mois?: number;
   contact?: ParsedContact;
+  /** Infos de diagnostic — affichées dans l'UI si SIREN non trouvé */
+  _debug?: {
+    sectionMandantPreview: string;   // 600 premiers chars de la section mandant
+    numericRegions: string[];        // toutes les séquences chiffres+espaces trouvées
+    sirenLevelUsed?: number;         // quel niveau a trouvé le SIREN (1-5), undefined si aucun
+  };
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -263,6 +269,8 @@ export function parseMandatText(rawText: string): ParsedMandat {
   // ── RCS + SIREN ─────────────────────────────────────────────────────────────
   // Stratégie en cascade : du plus précis au plus générique.
 
+  let sirenLevelUsed: number | undefined;
+
   // Niveau 1 — Format RCS classique :
   // "immatriculée au RCS de NANTERRE , sous le numéro 513 834 762"
   // "immatriculé(e) au RCS de Créteil , sous le numéro 379 770 472"
@@ -279,6 +287,7 @@ export function parseMandatText(rawText: string): ParsedMandat {
       contact.siren = rawNum.substring(0, 9);
     }
     hasContact = true;
+    sirenLevelUsed = 1;
   }
 
   // Niveau 2 — Mot-clé SIREN ou SIRET suivi des chiffres (avec ou sans espace/tiret)
@@ -291,6 +300,7 @@ export function parseMandatText(rawText: string): ParsedMandat {
       const raw = sirenKw[1].replace(/\s/g, "");
       if (raw.length >= 14) { contact.siret = raw.slice(0, 14); contact.siren = raw.slice(0, 9); }
       else if (raw.length >= 9) { contact.siren = raw.slice(0, 9); }
+      if (contact.siren) sirenLevelUsed = 2;
     }
   }
 
@@ -303,11 +313,11 @@ export function parseMandatText(rawText: string): ParsedMandat {
     if (grouped) {
       contact.siren = grouped[1] + grouped[2] + grouped[3];
       if (grouped[4]) contact.siret = contact.siren + grouped[4];
+      sirenLevelUsed = 3;
     }
   }
 
   // Niveau 4 — Filet de sécurité : 14 ou 9 chiffres consécutifs sans espace
-  // (dernier recours — évite les faux positifs de numéros de téléphone)
   if (!contact.siren) {
     const rawDigit =
       sectionMandant.match(/\b(\d{14})\b/) ??
@@ -316,6 +326,27 @@ export function parseMandatText(rawText: string): ParsedMandat {
       const raw = rawDigit[1];
       if (raw.length === 14) { contact.siret = raw; contact.siren = raw.slice(0, 9); }
       else { contact.siren = raw; }
+      sirenLevelUsed = 4;
+    }
+  }
+
+  // Niveau 5 — Scanner de régions numériques (pdfjs peut découper en chiffres isolés)
+  // Ex: pdfjs produit "3 7 9 7 7 0 4 7 2" → strip spaces → "379770472" (9 chiffres)
+  const allNumericRegions = [...sectionMandant.matchAll(/\d[\d ]{7,25}\d/g)].map(m => m[0]);
+  if (!contact.siren) {
+    for (const region of allNumericRegions) {
+      const digits = region.replace(/ /g, "");
+      if (/^\d{14}$/.test(digits)) {
+        contact.siret = digits;
+        contact.siren = digits.slice(0, 9);
+        sirenLevelUsed = 5;
+        break;
+      }
+      if (/^\d{9}$/.test(digits)) {
+        contact.siren = digits;
+        sirenLevelUsed = 5;
+        break;
+      }
     }
   }
 
@@ -362,6 +393,13 @@ export function parseMandatText(rawText: string): ParsedMandat {
   }
 
   if (hasContact) result.contact = contact;
+
+  // Debug : toujours rempli, utilisé dans l'UI si SIREN absent
+  result._debug = {
+    sectionMandantPreview: sectionMandant.slice(0, 600),
+    numericRegions: allNumericRegions,
+    sirenLevelUsed,
+  };
 
   return result;
 }

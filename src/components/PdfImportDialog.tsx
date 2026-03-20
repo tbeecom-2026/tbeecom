@@ -582,6 +582,46 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
                   SIREN non trouvé dans le PDF — saisissez-le manuellement pour enrichir la fiche société.
                 </p>
               )}
+
+              {/* ── Diagnostic PDF (visible si SIREN non extrait) ── */}
+              {!sirenInput && parsed._debug && (
+                <details className="mt-3">
+                  <summary className="text-xs text-amber-400 cursor-pointer hover:underline">
+                    🔍 Diagnostic PDF (cliquer pour voir le texte brut extrait)
+                  </summary>
+                  <div className="mt-2 space-y-2">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase">
+                        Séquences numériques trouvées dans la section mandant :
+                      </p>
+                      {parsed._debug.numericRegions.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {parsed._debug.numericRegions.map((r, i) => (
+                            <code key={i} className="text-[10px] bg-secondary px-1.5 py-0.5 rounded border border-border/60 font-mono">
+                              "{r}" → {r.replace(/ /g, "")} ({r.replace(/ /g, "").length} chiffres)
+                            </code>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[10px] text-destructive">Aucune séquence numérique trouvée — le PDF est peut-être illisible ou le SIREN est absent de la section mandant.</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1 font-semibold uppercase">
+                        Texte brut section mandant (600 premiers caractères) :
+                      </p>
+                      <pre className="text-[9px] font-mono bg-black/40 rounded p-2 overflow-x-auto whitespace-pre-wrap break-all text-slate-300 max-h-32">
+                        {parsed._debug.sectionMandantPreview}
+                      </pre>
+                    </div>
+                  </div>
+                </details>
+              )}
+              {sirenInput && parsed._debug?.sirenLevelUsed && (
+                <p className="text-[10px] text-green-500/70 mt-1.5">
+                  ✓ SIREN extrait automatiquement (niveau {parsed._debug.sirenLevelUsed}/5)
+                </p>
+              )}
             </div>
 
             {/* ── Doublons contact ────────────────────────────────────── */}
