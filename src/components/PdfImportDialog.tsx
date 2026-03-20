@@ -15,10 +15,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import {
   FileText, Upload, Loader2, AlertTriangle, CheckCircle2,
-  User, Building2, Phone, Mail, MapPin, ExternalLink, X
+  User, Building2, ExternalLink, X, ShieldAlert, ShieldCheck,
 } from "lucide-react";
-import { extractTextFromPdf, parseMandatText, type ParsedMandat, type ParsedContact } from "@/lib/pdfParser";
-import { lookupSiren } from "@/lib/sirene";
+import { extractTextFromPdf, parseMandatText, type ParsedContact } from "@/lib/pdfParser";
+import { lookupSiren, sireneToContact } from "@/lib/sirene";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,8 +37,8 @@ interface Props {
   open: boolean;
   onClose: () => void;
   mode: "list" | "detail";
-  mandatId?: string;       // requis en mode "detail"
-  onSuccess?: () => void;  // callback après sauvegarde réussie
+  mandatId?: string;
+  onSuccess?: () => void;
 }
 
 type Step = "upload" | "parsing" | "review" | "saving" | "done";
@@ -46,11 +46,11 @@ type Step = "upload" | "parsing" | "review" | "saving" | "done";
 // ─── Helpers UI ───────────────────────────────────────────────────────────────
 
 function Row({ label, value }: { label: string; value?: string | number }) {
-  if (!value && value !== 0) return null;
+  if (value === undefined || value === null || value === "") return null;
   return (
-    <div className="flex items-start gap-2 text-sm py-0.5">
-      <span className="text-muted-foreground min-w-[140px] text-xs">{label}</span>
-      <span className="font-medium text-foreground">{String(value)}</span>
+    <div className="flex items-start gap-2 py-0.5">
+      <span className="text-muted-foreground min-w-[140px] text-xs shrink-0">{label}</span>
+      <span className="font-medium text-foreground text-sm">{String(value)}</span>
     </div>
   );
 }
@@ -63,24 +63,55 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [step, setStep]                     = useState<Step>("upload");
-  const [dragOver, setDragOver]             = useState(false);
-  const [parsed, setParsed]                 = useState<ParsedMandat | null>(null);
-  const [pdfFile, setPdfFile]               = useState<File | null>(null);
-  const [duplicates, setDuplicates]         = useState<ExistingContact[]>([]);
-  const [chosenContact, setChosenContact]   = useState<ExistingContact | null | "new">(undefined as any);
-  const [sireneEnriched, setSireneEnriched] = useState(false);
-  const [errorMsg, setErrorMsg]             = useState<string | null>(null);
+  const [step, setStep]                         = useState<Step>("upload");
+  const [dragOver, setDragOver]                 = useState(false);
+  const [parsed, setParsed]                     = useState<ReturnType<typeof parseMandatText> | null>(null);
+  const [rawText, setRawText]                   = useState("");
+  const [pdfFile, setPdfFile]                   = useState<File | null>(null);
+  const [duplicates, setDuplicates]             = useState<ExistingContact[]>([]);
+  const [chosenContact, setChosenContact]       = useState<ExistingContact | "new" | null>(null);
+  const [sireneEnriched, setSireneEnriched]     = useState(false);
+  const [signatureWarning, setSignatureWarning] = useState<"ok" | "warn" | "unknown">("unknown");
+  const [signatureConfirmee, setSignatureConfirmee] = useState(false);
+  const [errorMsg, setErrorMsg]                 = useState<string | null>(null);
 
-  // ── Reset état interne à la fermeture ─────────────────────────────────────
+  // ── Reset ──────────────────────────────────────────────────────────────────
   function handleClose() {
-    setStep("upload"); setParsed(null); setPdfFile(null);
-    setDuplicates([]); setChosenContact(undefined as any);
-    setSireneEnriched(false); setErrorMsg(null);
+    setStep("upload"); setParsed(null); setRawText(""); setPdfFile(null);
+    setDuplicates([]); setChosenContact(null); setSireneEnriched(false);
+    setSignatureWarning("unknown"); setSignatureConfirmee(false); setErrorMsg(null);
     onClose();
   }
 
-  // ── Traitement du fichier PDF ──────────────────────────────────────────────
+  // ── Heuristique de détection des signatures ────────────────────────────────
+  // Cherche si le nom/email du mandant apparaît dans la section signature du PDF
+  function detectSignatureStatus(text: string, contact?: ParsedContact): "ok" | "warn" | "unknown" {
+    const t = text.replace(/\s+/g, " ");
+    const sigIdx = t.search(/DATE ET SIGNATURES/i);
+    if (sigIdx === -1) return "unknown";
+
+    const afterSig = t.slice(sigIdx).toLowerCase();
+
+    // Indices positifs : le mail ou le nom du mandant apparaît après la section signature
+    const identifiers = [
+      contact?.email?.toLowerCase(),
+      contact?.nom?.toLowerCase(),
+      contact?.prenom?.toLowerCase(),
+    ].filter(Boolean) as string[];
+
+    const found = identifiers.some(id => afterSig.includes(id));
+
+    // Indices négatifs : document "en attente"
+    if (/en attente|not signed|awaiting|pending/i.test(afterSig)) return "warn";
+
+    // Si on trouve l'identifiant du mandant près des signatures → OK
+    if (found) return "ok";
+
+    // Sinon on avertit sans bloquer
+    return "warn";
+  }
+
+  // ── Traitement du PDF ──────────────────────────────────────────────────────
   async function processPdf(file: File) {
     if (!file.type.includes("pdf")) {
       setErrorMsg("Le fichier sélectionné n'est pas un PDF."); return;
@@ -92,37 +123,44 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
     try {
       // 1. Extraction texte
       const text = await extractTextFromPdf(file);
+      setRawText(text);
 
       // 2. Parsing regex
       const data = parseMandatText(text);
-      setParsed(data);
 
-      // 3. Enrichissement SIRENE si SIREN trouvé
+      // 3. Enrichissement SIRENE si SIREN trouvé dans le PDF
       if (data.contact?.siren) {
         try {
-          const { lookupSiren: ls } = await import("@/lib/sirene");
-          const sireneData = await ls(data.contact.siren);
-          if (sireneData) {
-            // Fusionne les données SIRENE (priorité aux données du PDF)
-            data.contact = {
-              ...sireneData,            // données SIRENE comme base
-              ...data.contact,          // données PDF écrasent si présentes
-              forme_juridique: data.contact.forme_juridique ?? sireneData.forme_juridique,
-              siren: data.contact.siren,
-            } as ParsedContact;
-            setSireneEnriched(true);
-          }
+          const sireneResult = await lookupSiren(data.contact.siren);
+          const sireneContact = sireneToContact(sireneResult);
+
+          // Fusionne : données PDF (plus précises) > données SIRENE (complément)
+          data.contact = {
+            ...data.contact,
+            // Complète avec SIRENE uniquement si le PDF n'a pas la valeur
+            societe:          data.contact.societe          ?? sireneContact.societe         ?? undefined,
+            forme_juridique:  data.contact.forme_juridique  ?? sireneContact.libelle_forme_juridique ?? undefined,
+            capital_social:   data.contact.capital_social   ?? (sireneContact.capital_social != null ? sireneContact.capital_social : undefined),
+            siret:            data.contact.siret             ?? sireneContact.siret            ?? undefined,
+            adresse:          data.contact.adresse           ?? sireneContact.adresse          ?? undefined,
+            code_postal:      data.contact.code_postal       ?? sireneContact.code_postal      ?? undefined,
+            commune:          data.contact.commune           ?? sireneContact.commune          ?? undefined,
+          };
+          setSireneEnriched(true);
         } catch {
-          // SIRENE non disponible → on continue sans enrichissement
+          // API SIRENE indisponible — on continue avec les données du PDF seulement
         }
       }
 
-      // 4. Recherche doublons contact
+      // 4. Heuristique signature (option C)
+      setSignatureWarning(detectSignatureStatus(text, data.contact));
+
+      // 5. Recherche doublons
       const dupes = await searchDuplicates(data.contact);
       setDuplicates(dupes);
+      setChosenContact(dupes.length > 0 ? null : "new");
 
-      // Si doublons → attendre le choix. Sinon → "new" par défaut.
-      setChosenContact(dupes.length > 0 ? undefined as any : "new");
+      setParsed(data);
       setStep("review");
 
     } catch (err: any) {
@@ -131,154 +169,170 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
     }
   }
 
-  // ── Recherche de doublons dans Supabase ────────────────────────────────────
+  // ── Recherche doublons ─────────────────────────────────────────────────────
   async function searchDuplicates(contact?: ParsedContact): Promise<ExistingContact[]> {
     if (!contact) return [];
     const found: ExistingContact[] = [];
     const seen = new Set<string>();
 
-    // Recherche par SIREN (identifiant fiable)
+    const push = (list: any[]) =>
+      list?.forEach((c: ExistingContact) => { if (!seen.has(c.id)) { found.push(c); seen.add(c.id); } });
+
+    // 1. Par SIREN (identifiant fiable)
     if (contact.siren) {
-      const { data } = await supabase
-        .from("contacts")
+      const { data } = await supabase.from("contacts")
         .select("id, nom, prenom, societe, commune, siren, email, telephone")
-        .eq("siren", contact.siren)
-        .limit(5);
-      (data ?? []).forEach((c: ExistingContact) => { if (!seen.has(c.id)) { found.push(c); seen.add(c.id); } });
+        .eq("siren", contact.siren).limit(3);
+      push(data ?? []);
     }
 
-    // Recherche par nom de société (si pas déjà trouvé par SIREN)
-    if (contact.societe && found.length === 0) {
-      const { data } = await supabase
-        .from("contacts")
+    // 2. Par nom société (si SIREN n'a rien donné)
+    if (!found.length && contact.societe) {
+      const { data } = await supabase.from("contacts")
         .select("id, nom, prenom, societe, commune, siren, email, telephone")
-        .ilike("societe", `%${contact.societe.substring(0, 12)}%`)
-        .limit(5);
-      (data ?? []).forEach((c: ExistingContact) => { if (!seen.has(c.id)) { found.push(c); seen.add(c.id); } });
+        .ilike("societe", `%${contact.societe.substring(0, 10)}%`).limit(3);
+      push(data ?? []);
     }
 
-    // Recherche par nom + prénom du représentant
-    if (contact.nom && found.length === 0) {
-      const { data } = await supabase
-        .from("contacts")
+    // 3. Par nom de famille du représentant
+    if (!found.length && contact.nom) {
+      const { data } = await supabase.from("contacts")
         .select("id, nom, prenom, societe, commune, siren, email, telephone")
-        .ilike("nom", `%${contact.nom}%`)
-        .limit(5);
-      (data ?? []).forEach((c: ExistingContact) => { if (!seen.has(c.id)) { found.push(c); seen.add(c.id); } });
+        .ilike("nom", `%${contact.nom}%`).limit(3);
+      push(data ?? []);
     }
 
     return found;
   }
 
-  // ── Sauvegarde en base ─────────────────────────────────────────────────────
+  // ── Sauvegarde ─────────────────────────────────────────────────────────────
   async function handleSave() {
     if (!parsed) return;
-    if (duplicates.length > 0 && chosenContact === undefined) {
-      toast({ title: "Action requise", description: "Veuillez choisir si vous utilisez un contact existant ou en créez un nouveau.", variant: "destructive" });
+    if (duplicates.length > 0 && !chosenContact) {
+      toast({ title: "Action requise", description: "Choisissez un contact existant ou créez-en un nouveau.", variant: "destructive" });
       return;
     }
-    setStep("saving");
+    if (!signatureConfirmee) {
+      toast({ title: "Confirmation requise", description: "Veuillez confirmer que le document est bien signé.", variant: "destructive" });
+      return;
+    }
 
+    setStep("saving");
     try {
+      // ── Contact ──────────────────────────────────────────────────────────
       let contactId: string | null = null;
 
-      // ── Contact ────────────────────────────────────────────────────────
       if (chosenContact && chosenContact !== "new") {
-        // Utilise le contact existant choisi
         contactId = chosenContact.id;
       } else if (chosenContact === "new" && parsed.contact) {
-        // Crée un nouveau contact
         const c = parsed.contact;
         const { data: newContact, error: cErr } = await supabase
           .from("contacts")
           .insert({
             nom: c.nom, prenom: c.prenom, email: c.email,
             telephone: c.telephone, societe: c.societe,
-            forme_juridique: c.forme_juridique, capital_social: c.capital_social,
-            siren: c.siren, siret: c.siret, ville_rcs: c.ville_rcs,
+            forme_juridique: c.forme_juridique,
+            capital_social: c.capital_social ?? null,
+            siren: c.siren ?? null, siret: c.siret ?? null,
+            ville_rcs: c.ville_rcs ?? null,
             adresse: c.adresse, code_postal: c.code_postal, commune: c.commune,
             roles: ["vendeur"],
             user_id: user?.id,
           })
-          .select("id")
-          .single();
+          .select("id").single();
         if (cErr) throw new Error("Erreur création contact : " + cErr.message);
         contactId = newContact.id;
       }
 
-      // ── Mandat ─────────────────────────────────────────────────────────
+      // ── Mandat ───────────────────────────────────────────────────────────
       let finalMandatId = mandatId;
 
       const mandatPayload = {
-        numero_registre: parsed.numero_registre,
-        type_mandat:    parsed.type_mandat,
-        type_commerce:  parsed.type_commerce,
-        sous_type:      parsed.sous_type,
-        adresse:        parsed.adresse,
-        code_postal:    parsed.code_postal,
-        commune:        parsed.commune,
-        prix_demande:   parsed.prix_demande,
-        honoraires_pct: parsed.honoraires_pct,
-        honoraires_montant: parsed.honoraires_montant,
+        numero_registre:     parsed.numero_registre    ?? null,
+        type_mandat:         parsed.type_mandat        ?? null,
+        type_commerce:       parsed.type_commerce      ?? null,
+        sous_type:           parsed.sous_type          ?? null,
+        adresse:             parsed.adresse            ?? null,
+        code_postal:         parsed.code_postal        ?? null,
+        commune:             parsed.commune            ?? null,
+        prix_demande:        parsed.prix_demande       ?? null,
+        honoraires_pct:      parsed.honoraires_pct     ?? null,
+        honoraires_montant:  parsed.honoraires_montant ?? null,
         user_id: user?.id,
       };
 
       if (mode === "list") {
-        // Crée un nouveau mandat
         const ref = `FDC-${Date.now().toString(36).toUpperCase()}`;
         const { data: newMandat, error: mErr } = await supabase
           .from("mandats")
           .insert({ ...mandatPayload, statut: "sur_le_marche", reference: ref })
-          .select("id")
-          .single();
+          .select("id").single();
         if (mErr) throw new Error("Erreur création mandat : " + mErr.message);
         finalMandatId = newMandat.id;
 
       } else if (mode === "detail" && mandatId) {
-        // Mode "detail" : enrichit les champs vides uniquement
-        // Récupère d'abord le mandat existant
-        const { data: existing } = await supabase
-          .from("mandats").select("*").eq("id", mandatId).single();
-
-        // Ne met à jour que les champs null/vides
+        // Enrichit uniquement les champs vides
+        const { data: existing } = await supabase.from("mandats").select("*").eq("id", mandatId).single();
         const updatePayload: Record<string, any> = {};
         for (const [key, val] of Object.entries(mandatPayload)) {
-          if (val !== undefined && val !== null && !existing?.[key]) {
+          if (val !== null && val !== undefined && !(existing as any)?.[key]) {
             updatePayload[key] = val;
           }
         }
         if (Object.keys(updatePayload).length > 0) {
-          const { error: mErr } = await supabase
-            .from("mandats").update(updatePayload).eq("id", mandatId);
+          const { error: mErr } = await supabase.from("mandats").update(updatePayload).eq("id", mandatId);
           if (mErr) throw new Error("Erreur mise à jour mandat : " + mErr.message);
         }
       }
 
-      // ── Lien mandat ↔ contact (mandat_vendeurs) ────────────────────────
+      // ── Lien mandat_vendeurs ─────────────────────────────────────────────
       if (contactId && finalMandatId) {
-        // Vérifie qu'il n'y a pas déjà un lien
-        const { data: existing } = await supabase
-          .from("mandat_vendeurs")
-          .select("id")
-          .eq("mandat_id", finalMandatId)
-          .eq("contact_id", contactId)
-          .maybeSingle();
-
+        const { data: existing } = await supabase.from("mandat_vendeurs")
+          .select("id").eq("mandat_id", finalMandatId).eq("contact_id", contactId).maybeSingle();
         if (!existing) {
-          await supabase.from("mandat_vendeurs").insert({
-            mandat_id: finalMandatId, contact_id: contactId,
-          });
+          await supabase.from("mandat_vendeurs").insert({ mandat_id: finalMandatId, contact_id: contactId });
         }
       }
 
-      // ── Upload du PDF dans le bucket ───────────────────────────────────
+      // ── Upload PDF → Storage → mise à jour mandat.documents ─────────────
       if (pdfFile && finalMandatId) {
-        const path = `${finalMandatId}/${pdfFile.name}`;
-        await supabase.storage.from("mandats-docs").upload(path, pdfFile, { upsert: true });
+        const path = `${finalMandatId}/${Date.now()}_${pdfFile.name}`;
+        const { error: upErr } = await supabase.storage
+          .from("mandats-docs").upload(path, pdfFile, { upsert: true });
+
+        if (!upErr) {
+          // Récupère l'URL publique
+          const { data: { publicUrl } } = supabase.storage
+            .from("mandats-docs").getPublicUrl(path);
+
+          // Construit l'entrée document
+          const newDoc = {
+            type: "document",
+            label: pdfFile.name.replace(/\.pdf$/i, ""),
+            url: publicUrl,
+            date: new Date().toISOString().split("T")[0],
+          };
+
+          // Fusionne avec les documents existants
+          const { data: existingMandat } = await supabase
+            .from("mandats").select("documents").eq("id", finalMandatId).single();
+          const existingDocs: any[] = (existingMandat as any)?.documents ?? [];
+          const updatedDocs = [...existingDocs, newDoc];
+
+          await supabase.from("mandats").update({
+            documents: updatedDocs,
+            document_url: publicUrl,
+          }).eq("id", finalMandatId);
+        }
       }
 
       setStep("done");
-      toast({ title: "Import réussi !", description: mode === "list" ? `Mandat N°${parsed.numero_registre ?? "?"} créé.` : "Fiche mandat enrichie." });
+      toast({
+        title: "Import réussi !",
+        description: mode === "list"
+          ? `Mandat N°${parsed.numero_registre ?? "?"} créé.`
+          : "Fiche mandat enrichie.",
+      });
 
       setTimeout(() => {
         handleClose();
@@ -299,7 +353,13 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
     if (file) processPdf(file);
   }
 
-  // ─── Rendu ─────────────────────────────────────────────────────────────────
+  // ── Canvalider ? ──────────────────────────────────────────────────────────
+  const canSubmit =
+    !!parsed &&
+    (duplicates.length === 0 || !!chosenContact) &&
+    signatureConfirmee;
+
+  // ─── Rendu ──────────────────────────────────────────────────────────────────
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -310,7 +370,7 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
           </DialogTitle>
         </DialogHeader>
 
-        {/* ── STEP : upload ─────────────────────────────────────────── */}
+        {/* ── UPLOAD ─────────────────────────────────────────────────── */}
         {step === "upload" && (
           <div className="space-y-4">
             <div
@@ -334,7 +394,7 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
           </div>
         )}
 
-        {/* ── STEP : parsing ────────────────────────────────────────── */}
+        {/* ── PARSING ────────────────────────────────────────────────── */}
         {step === "parsing" && (
           <div className="flex flex-col items-center gap-4 py-10">
             <Loader2 className="h-10 w-10 text-primary animate-spin" />
@@ -342,37 +402,59 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
           </div>
         )}
 
-        {/* ── STEP : review ─────────────────────────────────────────── */}
+        {/* ── REVIEW ─────────────────────────────────────────────────── */}
         {step === "review" && parsed && (
-          <div className="space-y-5">
+          <div className="space-y-4">
 
-            {/* Données mandat extraites */}
-            <div className="rounded-lg border border-border/60 bg-secondary/30 p-4 space-y-1">
+            {/* ── Alerte signature (Option C — heuristique) ───────────── */}
+            {signatureWarning === "warn" && (
+              <div className="flex items-start gap-3 rounded-lg border border-amber-600/40 bg-amber-900/10 p-3">
+                <ShieldAlert className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-400">Signature incomplète possible</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    L'analyse du document ne permet pas de confirmer que <strong>les deux parties ont signé</strong>.
+                    Vérifiez visuellement le PDF avant de continuer.
+                  </p>
+                </div>
+              </div>
+            )}
+            {signatureWarning === "ok" && (
+              <div className="flex items-center gap-2 rounded-lg border border-green-700/40 bg-green-900/10 p-3 text-sm text-green-400">
+                <ShieldCheck className="h-4 w-4 shrink-0" />
+                Signature des deux parties détectée dans le document.
+              </div>
+            )}
+
+            {/* ── Données mandat ──────────────────────────────────────── */}
+            <div className="rounded-lg border border-border/60 bg-secondary/30 p-4 space-y-0.5">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 flex items-center gap-1.5">
                 <FileText className="h-3.5 w-3.5 text-primary" />Mandat extrait
               </p>
-              <Row label="N° mandat"       value={parsed.numero_registre} />
-              <Row label="Type"            value={parsed.type_mandat} />
+              <Row label="N° mandat"        value={parsed.numero_registre} />
+              <Row label="Type"             value={parsed.type_mandat} />
               <Row label="Type de commerce" value={parsed.type_commerce} />
-              <Row label="Sous-type"       value={parsed.sous_type} />
-              <Row label="Adresse"         value={parsed.adresse} />
-              <Row label="Code postal"     value={parsed.code_postal} />
-              <Row label="Commune"         value={parsed.commune} />
-              <Row label="Prix demandé"    value={parsed.prix_demande ? `${parsed.prix_demande.toLocaleString("fr-FR")} €` : undefined} />
-              <Row label="Honoraires %"    value={parsed.honoraires_pct ? `${parsed.honoraires_pct}%` : undefined} />
-              <Row label="Honoraires HT"   value={parsed.honoraires_montant ? `${parsed.honoraires_montant.toLocaleString("fr-FR")} €` : undefined} />
+              <Row label="Sous-type"        value={parsed.sous_type} />
+              <Row label="Adresse"          value={[parsed.adresse, parsed.code_postal, parsed.commune].filter(Boolean).join(" ")} />
+              <Row label="Prix demandé"     value={parsed.prix_demande ? `${parsed.prix_demande.toLocaleString("fr-FR")} €` : undefined} />
+              <Row label="Honoraires"       value={parsed.honoraires_pct ? `${parsed.honoraires_pct} % HT` : undefined} />
             </div>
 
-            {/* Données contact extraites */}
+            {/* ── Données contact ─────────────────────────────────────── */}
             {parsed.contact && (
-              <div className="rounded-lg border border-border/60 bg-secondary/30 p-4 space-y-1">
+              <div className="rounded-lg border border-border/60 bg-secondary/30 p-4 space-y-0.5">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 flex items-center gap-1.5">
                   <Building2 className="h-3.5 w-3.5 text-primary" />
-                  Contact / Mandant{sireneEnriched && <Badge className="ml-2 text-[9px] bg-green-900/40 text-green-400 border-green-700/30">+ SIRENE enrichi</Badge>}
+                  Contact / Mandant
+                  {sireneEnriched && (
+                    <Badge className="ml-2 text-[9px] bg-green-900/40 text-green-400 border-green-700/30">
+                      + enrichi SIRENE
+                    </Badge>
+                  )}
                 </p>
-                <Row label="Société"        value={parsed.contact.societe} />
+                <Row label="Société"         value={parsed.contact.societe} />
                 <Row label="Forme juridique" value={parsed.contact.forme_juridique} />
-                <Row label="Capital social"  value={parsed.contact.capital_social ? `${parsed.contact.capital_social.toLocaleString("fr-FR")} €` : undefined} />
+                <Row label="Capital social"  value={parsed.contact.capital_social != null ? `${Number(parsed.contact.capital_social).toLocaleString("fr-FR")} €` : undefined} />
                 <Row label="SIREN"           value={parsed.contact.siren} />
                 <Row label="Représentant"    value={[parsed.contact.prenom, parsed.contact.nom].filter(Boolean).join(" ")} />
                 <Row label="Qualité"         value={parsed.contact.qualite} />
@@ -382,44 +464,43 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
               </div>
             )}
 
-            {/* ── Gestion des doublons ─────────────────────────────────── */}
+            {/* ── Doublons contact ────────────────────────────────────── */}
             {duplicates.length > 0 && (
               <div className="rounded-lg border border-amber-600/40 bg-amber-900/10 p-4 space-y-3">
                 <p className="text-sm font-semibold text-amber-400 flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4" />
-                  {duplicates.length === 1
-                    ? "Un contact existant pourrait correspondre"
-                    : `${duplicates.length} contacts existants pourraient correspondre`}
+                  {duplicates.length === 1 ? "Un contact existant pourrait correspondre" : `${duplicates.length} contacts existants pourraient correspondre`}
                 </p>
 
-                {duplicates.map((c) => (
-                  <div key={c.id}
-                    className={`flex items-center gap-3 rounded-lg border p-3 transition-colors cursor-default ${chosenContact && (chosenContact as ExistingContact).id === c.id ? "border-primary/60 bg-primary/10" : "border-border/40 bg-secondary/30"}`}
-                  >
-                    <User className="h-8 w-8 text-muted-foreground shrink-0 bg-secondary rounded-full p-1.5" />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{c.prenom} {c.nom}</p>
-                      <p className="text-xs text-muted-foreground truncate">{c.societe}{c.commune ? ` — ${c.commune}` : ""}</p>
-                      {c.siren && <p className="text-xs text-muted-foreground">SIREN {c.siren}</p>}
+                {duplicates.map((c) => {
+                  const isSelected = chosenContact && chosenContact !== "new" && (chosenContact as ExistingContact).id === c.id;
+                  return (
+                    <div key={c.id}
+                      className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${isSelected ? "border-primary/60 bg-primary/10" : "border-border/40 bg-secondary/30"}`}
+                    >
+                      <User className="h-8 w-8 text-muted-foreground shrink-0 bg-secondary rounded-full p-1.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm">{c.prenom} {c.nom}</p>
+                        <p className="text-xs text-muted-foreground truncate">{c.societe}{c.commune ? ` — ${c.commune}` : ""}</p>
+                        {c.siren && <p className="text-xs text-muted-foreground">SIREN {c.siren}</p>}
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <Button size="sm" variant="outline" asChild>
+                          <a href={`/contacts/${c.id}`} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <ExternalLink className="h-3 w-3" />Voir
+                          </a>
+                        </Button>
+                        <Button size="sm"
+                          className={isSelected ? "bg-primary text-primary-foreground" : ""}
+                          onClick={() => setChosenContact(c)}
+                        >
+                          {isSelected ? <><CheckCircle2 className="h-3.5 w-3.5 mr-1" />Sélectionné</> : "Utiliser ce contact"}
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2 shrink-0">
-                      <Button size="sm" variant="outline" asChild>
-                        <a href={`/contacts/${c.id}`} target="_blank" rel="noopener noreferrer"
-                          className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                          <ExternalLink className="h-3 w-3" />Voir
-                        </a>
-                      </Button>
-                      <Button size="sm"
-                        className={chosenContact && (chosenContact as ExistingContact).id === c.id ? "bg-primary" : ""}
-                        onClick={() => setChosenContact(c)}
-                      >
-                        {chosenContact && (chosenContact as ExistingContact).id === c.id
-                          ? <><CheckCircle2 className="h-3.5 w-3.5 mr-1" />Sélectionné</>
-                          : "Utiliser ce contact"}
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 <div className="pt-1 border-t border-amber-800/30">
                   <Button size="sm" variant="ghost"
@@ -433,27 +514,41 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
               </div>
             )}
 
+            {/* ── Option C : confirmation signature (obligatoire) ──────── */}
+            <div className={`rounded-lg border p-4 transition-colors ${signatureConfirmee ? "border-green-700/40 bg-green-900/10" : "border-border/60 bg-secondary/30"}`}>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={signatureConfirmee}
+                  onChange={(e) => setSignatureConfirmee(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-yellow-500 shrink-0"
+                />
+                <span className="text-sm">
+                  <span className="font-medium">Je confirme que ce mandat est signé par les deux parties</span>
+                  <span className="block text-xs text-muted-foreground mt-0.5">
+                    Le mandant (vendeur) ET le mandataire (TBEECOM) ont tous deux apposé leur signature.
+                  </span>
+                </span>
+              </label>
+            </div>
+
             {errorMsg && (
               <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-lg p-3">
                 <X className="h-4 w-4 shrink-0" />{errorMsg}
               </div>
             )}
 
-            {/* Boutons de validation */}
-            <div className="flex justify-end gap-3 pt-2">
+            {/* Boutons */}
+            <div className="flex justify-end gap-3 pt-1">
               <Button variant="outline" onClick={handleClose}>Annuler</Button>
-              <Button
-                onClick={handleSave}
-                disabled={duplicates.length > 0 && !chosenContact}
-                className="bg-primary text-primary-foreground"
-              >
+              <Button onClick={handleSave} disabled={!canSubmit} className="bg-primary text-primary-foreground">
                 {mode === "list" ? "Créer le mandat" : "Enrichir la fiche"}
               </Button>
             </div>
           </div>
         )}
 
-        {/* ── STEP : saving ─────────────────────────────────────────── */}
+        {/* ── SAVING ─────────────────────────────────────────────────── */}
         {step === "saving" && (
           <div className="flex flex-col items-center gap-4 py-10">
             <Loader2 className="h-10 w-10 text-primary animate-spin" />
@@ -461,7 +556,7 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
           </div>
         )}
 
-        {/* ── STEP : done ───────────────────────────────────────────── */}
+        {/* ── DONE ───────────────────────────────────────────────────── */}
         {step === "done" && (
           <div className="flex flex-col items-center gap-4 py-10">
             <CheckCircle2 className="h-12 w-12 text-green-500" />
