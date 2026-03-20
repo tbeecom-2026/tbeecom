@@ -12,7 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Phone, Mail, MapPin, ExternalLink, User, Lock, FileText, Upload, Clock, CalendarCheck, RefreshCw } from "lucide-react";
+import { ArrowLeft, Save, Phone, Mail, MapPin, ExternalLink, User, Lock, FileText, Upload, Clock, CalendarCheck, RefreshCw, FileUp } from "lucide-react";
+import PdfImportDialog from "@/components/PdfImportDialog";
 import { formatDate, formatEuros, getStatutBadge, getActiviteBadge, STATUTS_MANDAT, TYPES_MANDAT, TYPES_COMMERCE } from "@/lib/formatters";
 import { calcHonoraires, pctEffectif, type BaremeTranche } from "@/lib/honoraires";
 import type { Mandat, Activite, Contact, MandatVendeur } from "@/types/database";
@@ -43,6 +44,7 @@ export default function MandatDetail() {
   const [vendeurs, setVendeurs] = useState<(MandatVendeur & { contact: Contact })[]>([]);
   const [bareme, setBareme] = useState<BaremeTranche[]>([]);
   const [saving, setSaving] = useState(false);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
 
   useEffect(() => {
     loadBareme();
@@ -129,8 +131,24 @@ export default function MandatDetail() {
             </span>
           )}
         </h1>
+        {!isNew && (
+          <Button variant="outline" onClick={() => setPdfDialogOpen(true)}>
+            <FileUp className="mr-2 h-4 w-4" />Importer PDF
+          </Button>
+        )}
         <Button onClick={handleSave} disabled={saving}><Save className="mr-2 h-4 w-4" />{saving ? "..." : "Enregistrer"}</Button>
       </div>
+
+      {/* Dialog import PDF — mode "detail" */}
+      {!isNew && id && (
+        <PdfImportDialog
+          open={pdfDialogOpen}
+          onClose={() => setPdfDialogOpen(false)}
+          mode="detail"
+          mandatId={id}
+          onSuccess={() => { setPdfDialogOpen(false); loadMandat(id); }}
+        />
+      )}
 
       <Tabs defaultValue="general">
         <TabsList className="bg-secondary">

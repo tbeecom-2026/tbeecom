@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, FileUp } from "lucide-react";
 import { formatEuros, getStatutBadge, STATUTS_MANDAT, TYPES_COMMERCE } from "@/lib/formatters";
 import type { Mandat } from "@/types/database";
+import PdfImportDialog from "@/components/PdfImportDialog";
 
 export default function Mandats() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function Mandats() {
   const [filtreType, setFiltreType] = useState("all");
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const PAGE_SIZE = 20;
 
   useEffect(() => { loadMandats(); }, [search, filtreStatut, filtreType, page]);
@@ -46,8 +48,22 @@ export default function Mandats() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Mandats</h1>
-        <Button onClick={() => navigate("/mandats/nouveau")}><Plus className="mr-2 h-4 w-4" />Nouveau mandat</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setPdfDialogOpen(true)}>
+            <FileUp className="mr-2 h-4 w-4" />Importer un PDF
+          </Button>
+          <Button onClick={() => navigate("/mandats/nouveau")}>
+            <Plus className="mr-2 h-4 w-4" />Nouveau mandat
+          </Button>
+        </div>
       </div>
+
+      <PdfImportDialog
+        open={pdfDialogOpen}
+        onClose={() => setPdfDialogOpen(false)}
+        mode="list"
+        onSuccess={loadMandats}
+      />
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
