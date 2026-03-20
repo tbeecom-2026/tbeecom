@@ -553,17 +553,24 @@ export default function ContactDetail() {
                         const badge = getStatutBadge(r.mandat?.statut);
                         return (
                           <tr key={r.id} className="border-b border-border/50 hover:bg-secondary/20">
-                            <td className="py-2 pr-4 font-mono text-primary font-semibold">
-                              {r.mandat?.numero_registre ? `N°${r.mandat.numero_registre}` : r.mandat?.reference}
+                            <td className="py-2 pr-4">
+                              <button
+                                onClick={() => navigate(`/mandats/${r.mandat_id}`)}
+                                className="font-mono font-bold text-primary hover:underline hover:text-primary/80 transition-colors cursor-pointer"
+                              >
+                                {r.mandat?.numero_registre ? `N°${r.mandat.numero_registre}` : r.mandat?.reference}
+                              </button>
                             </td>
                             <td className="py-2 pr-4">{r.mandat?.type_commerce ?? "—"}</td>
                             <td className="py-2 pr-4">{r.mandat?.commune ?? "—"}</td>
                             <td className="py-2 pr-4">{r.mandat?.prix_demande ? formatEuros(r.mandat.prix_demande) : "—"}</td>
                             <td className="py-2 pr-4"><Badge className={`text-xs ${badge.color}`}>{badge.label}</Badge></td>
                             <td className="py-2">
-                              <Button variant="ghost" size="sm" className="h-7 text-xs"
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
                                 onClick={() => navigate(`/mandats/${r.mandat_id}`)}>
-                                <ExternalLink className="h-3 w-3 mr-1" />Fiche
+                                <ExternalLink className="h-3 w-3 mr-1" />Voir le mandat
                               </Button>
                             </td>
                           </tr>
@@ -603,8 +610,13 @@ export default function ContactDetail() {
                           const badge = getStatutBadge(m.statut);
                           return (
                             <tr key={m.id} className="border-b border-border/30 hover:bg-secondary/20">
-                              <td className="py-3 pr-4 font-mono text-primary font-semibold">
-                                {m.numero_registre ? `N°${m.numero_registre}` : m.reference}
+                              <td className="py-3 pr-4">
+                                <button
+                                  onClick={() => navigate(`/mandats/${m.id}`)}
+                                  className="font-mono font-bold text-primary hover:underline hover:text-primary/80 transition-colors cursor-pointer"
+                                >
+                                  {m.numero_registre ? `N°${m.numero_registre}` : m.reference}
+                                </button>
                               </td>
                               <td className="py-3 pr-4">{m.type_commerce ?? "—"}</td>
                               <td className="py-3 pr-4">{m.commune ?? "—"}</td>
@@ -612,9 +624,11 @@ export default function ContactDetail() {
                               <td className="py-3 pr-4"><Badge className={`text-xs ${badge.color}`}>{badge.label}</Badge></td>
                               <td className="py-3">
                                 <div className="flex items-center gap-2">
-                                  <Button variant="ghost" size="sm" className="h-7 text-xs"
+                                  <Button
+                                    size="sm"
+                                    className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
                                     onClick={() => navigate(`/mandats/${m.id}`)}>
-                                    <ExternalLink className="h-3 w-3 mr-1" />Fiche
+                                    <ExternalLink className="h-3 w-3 mr-1" />Voir le mandat
                                   </Button>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>

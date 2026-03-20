@@ -220,18 +220,20 @@ export default function MandatDetail() {
                         <div key={v.id} className="bg-secondary/50 rounded-lg p-3 flex flex-col gap-2">
                           {/* Nom + lien fiche */}
                           <div className="flex items-center justify-between">
-                            <div>
-                              <span className="font-semibold text-sm">
+                            <button
+                              onClick={() => navigate(`/contacts/${c.id}`)}
+                              className="text-left hover:opacity-80 transition-opacity cursor-pointer"
+                            >
+                              <span className="font-semibold text-sm hover:underline text-primary">
                                 {c.prenom && `${c.prenom} `}{c.nom}
                               </span>
                               {c.societe && (
-                                <span className="ml-2 text-xs text-muted-foreground">— {c.societe}</span>
+                                <span className="ml-2 text-xs text-muted-foreground hover:underline">— {c.societe}</span>
                               )}
-                            </div>
+                            </button>
                             <Button
-                              variant="ghost"
                               size="sm"
-                              className="h-7 text-xs text-primary hover:text-primary"
+                              className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
                               onClick={() => navigate(`/contacts/${c.id}`)}
                             >
                               <ExternalLink className="h-3 w-3 mr-1" />
