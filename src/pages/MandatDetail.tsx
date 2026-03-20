@@ -563,16 +563,19 @@ export default function MandatDetail() {
                 <label className="cursor-pointer">
                   <input type="file" accept="application/pdf" className="hidden" onChange={async (e) => {
                     const file = e.target.files?.[0];
-                    if (!file || !mandat.reference) return;
-                    const path = `${mandat.reference}/${Date.now()}_${file.name}`;
-                    const { error } = await supabase.storage.from('mandats-docs').upload(path, file, { upsert: true });
-                    if (error) { toast({ title: "Erreur upload", description: error.message, variant: "destructive" }); return; }
+                    if (!file || !id) return;
+                    const path = `${id}/${Date.now()}_${file.name}`;
+                    const { error: upErr } = await supabase.storage.from('mandats-docs').upload(path, file, { upsert: true });
+                    if (upErr) { toast({ title: "Erreur upload Storage", description: upErr.message, variant: "destructive" }); return; }
                     const { data: { publicUrl } } = supabase.storage.from('mandats-docs').getPublicUrl(path);
-                    const newDoc = { type: "document", label: file.name.replace('.pdf',''), url: publicUrl, date: new Date().toISOString().split('T')[0] };
+                    const newDoc = { type: "document", label: file.name.replace(/\.pdf$/i, ''), url: publicUrl, date: new Date().toISOString().split('T')[0] };
                     const docs = [...((mandat as any).documents || []), newDoc];
+                    // Persist immédiatement en base (ne pas attendre "Enregistrer")
+                    const { error: dbErr } = await supabase.from('mandats').update({ documents: docs, document_url: publicUrl }).eq('id', id);
+                    if (dbErr) { toast({ title: "Erreur sauvegarde", description: dbErr.message, variant: "destructive" }); return; }
                     update("documents", docs);
                     update("document_url", publicUrl);
-                    toast({ title: "PDF uploadé", description: file.name });
+                    toast({ title: "✅ Document ajouté", description: file.name });
                   }} />
                   <Button variant="outline" size="sm" className="pointer-events-none" asChild>
                     <span><Upload className="h-3 w-3 mr-1" />Ajouter un PDF</span>

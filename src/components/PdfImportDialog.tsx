@@ -361,7 +361,15 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
         const { error: upErr } = await supabase.storage
           .from("mandats-docs").upload(path, pdfFile, { upsert: true });
 
-        if (!upErr) {
+        if (upErr) {
+          // Storage upload failed — on continue mais on avertit
+          console.error("[PdfImport] Storage upload failed:", upErr.message);
+          toast({
+            title: "Avertissement : PDF non stocké",
+            description: `Erreur Storage : ${upErr.message}`,
+            variant: "destructive",
+          });
+        } else {
           // Récupère l'URL publique
           const { data: { publicUrl } } = supabase.storage
             .from("mandats-docs").getPublicUrl(path);
@@ -380,10 +388,19 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
           const existingDocs: any[] = (existingMandat as any)?.documents ?? [];
           const updatedDocs = [...existingDocs, newDoc];
 
-          await supabase.from("mandats").update({
+          const { error: docErr } = await supabase.from("mandats").update({
             documents: updatedDocs,
             document_url: publicUrl,
           }).eq("id", finalMandatId);
+
+          if (docErr) {
+            console.error("[PdfImport] documents update failed:", docErr.message);
+            toast({
+              title: "Avertissement : document non enregistré",
+              description: `Erreur colonne documents : ${docErr.message}`,
+              variant: "destructive",
+            });
+          }
         }
       }
 
