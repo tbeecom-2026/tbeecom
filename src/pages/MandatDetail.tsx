@@ -187,18 +187,71 @@ export default function MandatDetail() {
               {/* ── Bloc Durée & Signatures ──────────────────────────── */}
               {(() => {
                 const dateEffet = mandat.date_sur_le_marche;
-                const dureeInitiale = mandat.type_mandat === "exclusif" || mandat.type_mandat === "co_exclusif" ? 3 : mandat.type_mandat === "semi_exclusif" ? 3 : 3;
+                const dureeInitiale = 3;
                 const dureeMax = mandat.type_mandat === "exclusif" ? 12 : null;
-                const dateExpiration = dateEffet ? (() => {
+                const dureeBareme = dureeMax ?? dureeInitiale;
+
+                const expirationDateObj = dateEffet ? (() => {
                   const d = new Date(dateEffet);
-                  d.setMonth(d.getMonth() + (dureeMax ?? dureeInitiale));
-                  return d.toLocaleDateString("fr-FR");
+                  d.setMonth(d.getMonth() + dureeBareme);
+                  return d;
                 })() : null;
+                const dateExpiration = expirationDateObj ? expirationDateObj.toLocaleDateString("fr-FR") : null;
+
+                const progressPct = dateEffet && expirationDateObj ? (() => {
+                  const start = new Date(dateEffet).getTime();
+                  const end = expirationDateObj.getTime();
+                  const now = Date.now();
+                  return Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
+                })() : null;
+
                 return (
                   <div className="bg-secondary/40 rounded-lg p-3 border border-border/60">
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-3">
-                      <Clock className="h-3.5 w-3.5 text-primary" />Durée du mandat
-                    </p>
+                    {/* Titre + barre de vie sur la même ligne */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+                      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Durée du mandat</span>
+
+                      {/* ── Barre de vie ── */}
+                      {progressPct !== null && dateEffet && expirationDateObj ? (
+                        <div className="ml-auto flex flex-col gap-1 w-56">
+                          {/* Barre gradient */}
+                          <div className="relative h-3 rounded-full overflow-hidden shadow-inner">
+                            {/* Fond gradient vert → jaune → rouge */}
+                            <div className="absolute inset-0"
+                              style={{ background: "linear-gradient(to right, #16a34a 0%, #ca8a04 55%, #dc2626 100%)" }} />
+                            {/* Partie "à venir" assombrie */}
+                            <div className="absolute top-0 right-0 h-full rounded-r-full bg-black/55 transition-all duration-700"
+                              style={{ width: `${100 - progressPct}%` }} />
+                            {/* Curseur "aujourd'hui" — barre blanche pulsante */}
+                            <div
+                              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[3px] h-5 rounded-full bg-white shadow-[0_0_8px_3px_rgba(255,255,255,0.7)]"
+                              style={{ left: `${progressPct}%`, animation: "mandatPulse 2s ease-in-out infinite" }}
+                            />
+                          </div>
+                          {/* Dates sous la barre */}
+                          <div className="flex w-full justify-between" style={{ marginTop: 2 }}>
+                            <span className="text-[9px] text-green-500/70 font-medium">
+                              {new Date(dateEffet).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                            </span>
+                            <span className="text-[9px] font-medium" style={{ color: progressPct > 75 ? "#ef4444" : progressPct > 50 ? "#f59e0b" : "#86efac" }}>
+                              {expirationDateObj.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="ml-auto text-[10px] text-muted-foreground/50 italic">← saisir la date d'effet</span>
+                      )}
+                    </div>
+
+                    {/* Keyframe animation injectée inline (une seule fois) */}
+                    <style>{`
+                      @keyframes mandatPulse {
+                        0%, 100% { opacity: 1; box-shadow: 0 0 8px 3px rgba(255,255,255,0.7); }
+                        50% { opacity: 0.6; box-shadow: 0 0 4px 1px rgba(255,255,255,0.3); }
+                      }
+                    `}</style>
+
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <Field label="Date de signature / Effet">
                         <Input type="date" value={mandat.date_sur_le_marche ?? ""}
