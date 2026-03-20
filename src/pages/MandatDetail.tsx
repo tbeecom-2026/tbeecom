@@ -237,7 +237,7 @@ export default function MandatDetail() {
                               onClick={() => navigate(`/contacts/${c.id}`)}
                             >
                               <ExternalLink className="h-3 w-3 mr-1" />
-                              Voir la fiche
+                              Fiche contact
                             </Button>
                           </div>
                           {/* Coordonnées */}

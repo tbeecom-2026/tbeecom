@@ -570,7 +570,7 @@ export default function ContactDetail() {
                                 size="sm"
                                 className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
                                 onClick={() => navigate(`/mandats/${r.mandat_id}`)}>
-                                <ExternalLink className="h-3 w-3 mr-1" />Voir le mandat
+                                <ExternalLink className="h-3 w-3 mr-1" />Fiche mandat
                               </Button>
                             </td>
                           </tr>
@@ -628,7 +628,7 @@ export default function ContactDetail() {
                                     size="sm"
                                     className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
                                     onClick={() => navigate(`/mandats/${m.id}`)}>
-                                    <ExternalLink className="h-3 w-3 mr-1" />Voir le mandat
+                                    <ExternalLink className="h-3 w-3 mr-1" />Fiche mandat
                                   </Button>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
