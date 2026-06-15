@@ -80,6 +80,20 @@ export interface Mandat {
   cles: boolean;
   notes_internes: string | null;
   suivi_par: string | null;
+  // Spécifiques fonds de commerce / import Netty
+  numero_registre: number | null;
+  enseigne: string | null;
+  nature_activite: string | null;
+  raison_vente: string | null;
+  honoraires_charge: string | null;
+  surface_totale: number | null;
+  nb_couverts_salle: number | null;
+  nb_couverts_terrasse: number | null;
+  lineaire_vitrine: number | null;
+  photo_principale: string | null;
+  photos: string[] | null;
+  documents: unknown[] | null;
+  document_url: string | null;
   created_at: string;
   user_id: string;
 }
