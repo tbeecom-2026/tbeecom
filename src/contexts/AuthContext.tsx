@@ -20,6 +20,7 @@ interface AuthContextType {
   session: AuthSession | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (name: string, email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -119,6 +120,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [applySession, refreshSession]
   );
 
+  const signUp = useCallback(
+    async (name: string, email: string, password: string) => {
+      try {
+        const result = await auth.signUp.email({ email, password, name });
+        const error = getAuthError(result);
+        if (error) return { error };
+        applySession(result);
+        await refreshSession();
+        return { error: null };
+      } catch (e: any) {
+        return { error: new Error(e?.message ?? "Erreur d'inscription") };
+      }
+    },
+    [applySession, refreshSession]
+  );
+
   const signOut = useCallback(async () => {
     try {
       await auth.signOut();
@@ -130,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
