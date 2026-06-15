@@ -1,8 +1,6 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { client } from "@/lib/neonClient";
 
-// Types souples : Better Auth expose une session/user dont le shape exact
-// dépend de la config serveur. On reste permissif côté front.
 export interface AuthUser {
   id: string;
   email?: string;
@@ -26,21 +24,35 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+const auth = client.auth as any;
 
-function extractSession(raw: unknown): AuthSession | null {
+function normalizeSession(raw: unknown): AuthSession | null {
   if (!raw || typeof raw !== "object") return null;
-  // Better Auth renvoie typiquement { data: { session, user } } ou { session, user }
-  const r = raw as Record<string, any>;
-  const inner = r.data ?? r;
-  if (!inner) return null;
-  const user = inner.user ?? inner.session?.user;
+
+  const response = raw as Record<string, any>;
+  const value = response.data ?? response;
+  if (!value || typeof value !== "object") return null;
+
+  const data = value.data ?? value;
+  if (!data || typeof data !== "object") return null;
+
+  const user = data.user ?? data.session?.user;
   if (!user) return null;
+
+  const session = data.session ?? data;
   return {
     user: user as AuthUser,
-    token: inner.session?.token ?? inner.token,
-    expiresAt: inner.session?.expiresAt ?? inner.expiresAt,
-    ...inner,
+    token: session.token ?? data.token,
+    expiresAt: session.expiresAt ?? data.expiresAt,
+    ...data,
   };
+}
+
+function getAuthError(raw: unknown): Error | null {
+  if (!raw || typeof raw !== "object") return null;
+  const error = (raw as Record<string, any>).error;
+  if (!error) return null;
+  return new Error(error.message ?? String(error));
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -48,44 +60,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refreshSession = useCallback(async () => {
-    try {
-      const raw = await (client.auth as any).getSession();
-      const s = extractSession(raw);
-      setSession(s);
-      setUser(s?.user ?? null);
-    } catch (e) {
-      console.error("[AuthContext] getSession error:", e);
-      setSession(null);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
+  const applySession = useCallback((raw: unknown) => {
+    const nextSession = normalizeSession(raw);
+    setSession(nextSession);
+    setUser(nextSession?.user ?? null);
   }, []);
 
+  const refreshSession = useCallback(async () => {
+    const result = await auth.getSession();
+    const error = getAuthError(result);
+    if (error) throw error;
+    applySession(result);
+  }, [applySession]);
+
   useEffect(() => {
-    void refreshSession();
-  }, [refreshSession]);
+    let mounted = true;
+    let unsubscribe: (() => void) | undefined;
+
+    if (auth.useSession?.subscribe) {
+      unsubscribe = auth.useSession.subscribe((value: unknown) => {
+        if (!mounted) return;
+        applySession(value);
+        setLoading(false);
+      });
+    }
+
+    refreshSession()
+      .catch((error) => {
+        console.error("[AuthContext] getSession error:", error);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+        }
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+      unsubscribe?.();
+    };
+  }, [applySession, refreshSession]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
       try {
-        const res: any = await (client.auth as any).signIn.email({ email, password });
-        if (res?.error) {
-          return { error: new Error(res.error.message ?? String(res.error)) };
-        }
+        const result = await auth.signIn.email({ email, password });
+        const error = getAuthError(result);
+        if (error) return { error };
+        applySession(result);
         await refreshSession();
         return { error: null };
       } catch (e: any) {
         return { error: new Error(e?.message ?? "Erreur de connexion") };
       }
     },
-    [refreshSession]
+    [applySession, refreshSession]
   );
 
   const signOut = useCallback(async () => {
     try {
-      await (client.auth as any).signOut();
+      await auth.signOut();
     } catch (e) {
       console.error("[AuthContext] signOut error:", e);
     }
