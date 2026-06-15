@@ -1,7 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = 'https://kxzywcfioxqburzobhdd.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4enl3Y2Zpb3hxYnVyem9iaGRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTgyOTksImV4cCI6MjA4OTQ5NDI5OX0.7Ih5CfGm35XFK1Cb21QSOMaMnvbpitqr90-yV8soclA';
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Compat shim : l'app a été migrée de Supabase vers Neon.
+// Toutes les pages continuent à importer `supabase` depuis ce module,
+// mais c'est en réalité le client Neon (Data API PostgREST + Neon Auth).
+// La surface .from().select()/.insert()/.update()/.delete()/.eq()/.order()/…
+// est identique (PostgREST).
+//
+// TODO (cleanup) : renommer progressivement les imports vers `@/lib/neonClient`
+// puis supprimer ce fichier.
+export { client as supabase } from './neonClient';
 export const isSupabaseConfigured = true;
