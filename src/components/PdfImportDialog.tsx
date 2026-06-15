@@ -387,54 +387,36 @@ export default function PdfImportDialog({ open, onClose, mode, mandatId, onSucce
         }
       }
 
-      // ── Upload PDF → Storage → mise à jour mandat.documents ─────────────
+      // ── Référencement PDF (sans Storage) → mise à jour mandat.documents ──
+      // TODO: rebrancher le stockage fichiers (R2/Neon/hybride)
+      // On conserve uniquement le nom du fichier pour l'instant.
       if (pdfFile && finalMandatId) {
-        const path = `${finalMandatId}/${Date.now()}_${pdfFile.name}`;
-        const { error: upErr } = await supabase.storage
-          .from("mandats-docs").upload(path, pdfFile, { upsert: true });
+        const newDoc = {
+          type: "document",
+          label: pdfFile.name.replace(/\.pdf$/i, ""),
+          url: null,
+          date: new Date().toISOString().split("T")[0],
+        };
 
-        if (upErr) {
-          // Storage upload failed — on continue mais on avertit
-          console.error("[PdfImport] Storage upload failed:", upErr.message);
+        const { data: existingMandat } = await supabase
+          .from("mandats").select("documents").eq("id", finalMandatId).single();
+        const existingDocs: any[] = (existingMandat as any)?.documents ?? [];
+        const updatedDocs = [...existingDocs, newDoc];
+
+        const { error: docErr } = await supabase.from("mandats").update({
+          documents: updatedDocs,
+        }).eq("id", finalMandatId);
+
+        if (docErr) {
+          console.error("[PdfImport] documents update failed:", docErr.message);
           toast({
-            title: "Avertissement : PDF non stocké",
-            description: `Erreur Storage : ${upErr.message}`,
+            title: "Avertissement : document non référencé",
+            description: `Erreur colonne documents : ${docErr.message}`,
             variant: "destructive",
           });
-        } else {
-          // Récupère l'URL publique
-          const { data: { publicUrl } } = supabase.storage
-            .from("mandats-docs").getPublicUrl(path);
-
-          // Construit l'entrée document
-          const newDoc = {
-            type: "document",
-            label: pdfFile.name.replace(/\.pdf$/i, ""),
-            url: publicUrl,
-            date: new Date().toISOString().split("T")[0],
-          };
-
-          // Fusionne avec les documents existants
-          const { data: existingMandat } = await supabase
-            .from("mandats").select("documents").eq("id", finalMandatId).single();
-          const existingDocs: any[] = (existingMandat as any)?.documents ?? [];
-          const updatedDocs = [...existingDocs, newDoc];
-
-          const { error: docErr } = await supabase.from("mandats").update({
-            documents: updatedDocs,
-            document_url: publicUrl,
-          }).eq("id", finalMandatId);
-
-          if (docErr) {
-            console.error("[PdfImport] documents update failed:", docErr.message);
-            toast({
-              title: "Avertissement : document non enregistré",
-              description: `Erreur colonne documents : ${docErr.message}`,
-              variant: "destructive",
-            });
-          }
         }
       }
+
 
       setStep("done");
       toast({
