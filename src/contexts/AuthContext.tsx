@@ -1,11 +1,25 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabaseClient";
-import { useNavigate } from "react-router-dom";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
+import { client } from "@/lib/neonClient";
+
+// Types souples : Better Auth expose une session/user dont le shape exact
+// dépend de la config serveur. On reste permissif côté front.
+export interface AuthUser {
+  id: string;
+  email?: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
+export interface AuthSession {
+  user: AuthUser;
+  token?: string;
+  expiresAt?: string | number | Date;
+  [key: string]: unknown;
+}
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: AuthUser | null;
+  session: AuthSession | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -13,35 +27,71 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function extractSession(raw: unknown): AuthSession | null {
+  if (!raw || typeof raw !== "object") return null;
+  // Better Auth renvoie typiquement { data: { session, user } } ou { session, user }
+  const r = raw as Record<string, any>;
+  const inner = r.data ?? r;
+  if (!inner) return null;
+  const user = inner.user ?? inner.session?.user;
+  if (!user) return null;
+  return {
+    user: user as AuthUser,
+    token: inner.session?.token ?? inner.token,
+    expiresAt: inner.session?.expiresAt ?? inner.expiresAt,
+    ...inner,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+  const refreshSession = useCallback(async () => {
+    try {
+      const raw = await (client.auth as any).getSession();
+      const s = extractSession(raw);
+      setSession(s);
+      setUser(s?.user ?? null);
+    } catch (e) {
+      console.error("[AuthContext] getSession error:", e);
+      setSession(null);
+      setUser(null);
+    } finally {
       setLoading(false);
-    });
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    }
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error as Error | null };
-  };
+  useEffect(() => {
+    void refreshSession();
+  }, [refreshSession]);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      try {
+        const res: any = await (client.auth as any).signIn.email({ email, password });
+        if (res?.error) {
+          return { error: new Error(res.error.message ?? String(res.error)) };
+        }
+        await refreshSession();
+        return { error: null };
+      } catch (e: any) {
+        return { error: new Error(e?.message ?? "Erreur de connexion") };
+      }
+    },
+    [refreshSession]
+  );
+
+  const signOut = useCallback(async () => {
+    try {
+      await (client.auth as any).signOut();
+    } catch (e) {
+      console.error("[AuthContext] signOut error:", e);
+    }
+    setSession(null);
+    setUser(null);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, session, loading, signIn, signOut }}>
