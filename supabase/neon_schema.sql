@@ -11,8 +11,7 @@
 --     connexion côté app, voir AuthContext.tsx)
 --   • rôles anon/authenticated        → anonymous/authenticated (Neon)
 --   • GRANT explicites pour authenticated sur chaque table
---   • Toute référence au schéma storage : SUPPRIMÉE (Neon n'a pas de Storage,
---     les uploads sont à rebrancher ultérieurement)
+--   • Les uploads fichiers sont reportés et à rebrancher ultérieurement
 -- ──────────────────────────────────────────────────────────────────────────
 
 -- ── profiles ──────────────────────────────────────────────────────────────
