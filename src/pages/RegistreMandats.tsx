@@ -1,54 +1,70 @@
 // src/pages/RegistreMandats.tsx
-// Onglet "Mandats" = le REGISTRE des contrats de mandat (table registre_mandats).
-// 1 ligne = 1 mandat (N°, type/objet, mandant, bien concerné, dates début→fin, négociateur).
-// + colonne "État" : badge rouge (dépassé) / orange (fin proche) / vert (en cours).
-import { useEffect, useState } from "react";
+// REGISTRE LÉGAL des mandats (table registre_mandats).
+// Exigences : voir TOUS les mandats (aucun masqué, aucun dédoublonnage), dans
+// l'ORDRE DU N° DE MANDAT (croissant, continu) — registre juridiquement fidèle.
+// 1 ligne = 1 mandat (N°, type/objet, mandant, bien, dates début→fin, négociateur).
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
-import { getMandatDateState, retirerMandatsExpires } from "@/lib/mandatStatus";
+import { retirerMandatsExpires, nettyLabel, getIssueBadgeClass } from "@/lib/mandatStatus";
 import type { RegistreMandat } from "@/types/database";
 
+// N° de mandat -> entier pour un tri numérique fiable ("99" doit venir avant "471").
+function numeroInt(numero: string | null): number {
+  const n = parseInt(String(numero ?? "").replace(/\D/g, ""), 10);
+  return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n; // sans n° = en fin
+}
+
 export default function RegistreMandats() {
-  const [mandats, setMandats] = useState<RegistreMandat[]>([]);
+  const [all, setAll] = useState<RegistreMandat[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
-  const [total, setTotal] = useState(0);
-  const PAGE_SIZE = 25;
+  const PAGE_SIZE = 50;
 
   useEffect(() => {
     load();
-  }, [search, page]);
-  // Retrait auto des biens dont le mandat est dépassé (au montage).
+  }, []);
   useEffect(() => {
     retirerMandatsExpires();
   }, []);
+  useEffect(() => {
+    setPage(0);
+  }, [search]);
 
   async function load() {
-    let query = supabase.from("registre_mandats").select("*", { count: "exact" });
-    if (search) {
-      const t = search.trim();
-      query = query.or(
-        `numero.ilike.%${t}%,mandant_nom.ilike.%${t}%,reference_bien.ilike.%${t}%,objet.ilike.%${t}%,negociateur.ilike.%${t}%`,
-      );
-    }
-    const { data, count } = await query
-      .order("date_debut", { ascending: false, nullsFirst: false })
-      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-    setMandats((data as RegistreMandat[]) ?? []);
-    setTotal(count ?? 0);
+    // On récupère TOUT le registre (471 lignes), puis on trie par N° côté client.
+    const { data } = await supabase.from("registre_mandats").select("*").limit(5000);
+    const rows = (data as RegistreMandat[]) ?? [];
+    rows.sort((a, b) => numeroInt(a.numero) - numeroInt(b.numero)); // N° croissant (ordre légal)
+    setAll(rows);
   }
 
+  // Filtre de recherche (sans casser l'ordre global)
+  const filtered = useMemo(() => {
+    const t = search.trim().toLowerCase();
+    if (!t) return all;
+    return all.filter((m) =>
+      [m.numero, m.mandant_nom, m.reference_bien, m.objet, m.negociateur].some((v) =>
+        String(v ?? "")
+          .toLowerCase()
+          .includes(t),
+      ),
+    );
+  }, [all, search]);
+
+  const total = filtered.length;
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  const pageRows = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Registre des mandats</h1>
-        <span className="text-sm text-muted-foreground">{total} mandat(s)</span>
+        <span className="text-sm text-muted-foreground">{total} mandat(s) — triés par N°</span>
       </div>
 
       <div className="relative">
@@ -57,10 +73,7 @@ export default function RegistreMandats() {
           placeholder="N° mandat, mandant, référence du bien, objet, négociateur..."
           className="pl-9"
           value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(0);
-          }}
+          onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
@@ -78,8 +91,7 @@ export default function RegistreMandats() {
             </tr>
           </thead>
           <tbody>
-            {mandats.map((m) => {
-              const etat = getMandatDateState(m.date_fin);
+            {pageRows.map((m) => {
               return (
                 <tr key={m.id} className="border-t border-border/50 hover:bg-secondary/30">
                   <td className="p-3">
@@ -101,17 +113,17 @@ export default function RegistreMandats() {
                       : (m.dates_mandat ?? (m.date_debut ? formatDate(m.date_debut) : "—"))}
                   </td>
                   <td className="p-3">
-                    {etat.level === "none" ? (
-                      <span className="text-muted-foreground">—</span>
+                    {m.observations ? (
+                      <Badge className={getIssueBadgeClass(m.observations)}>{nettyLabel(m.observations)}</Badge>
                     ) : (
-                      <Badge className={etat.className}>{etat.label}</Badge>
+                      <span className="text-muted-foreground">—</span>
                     )}
                   </td>
                   <td className="p-3">{m.negociateur ?? "—"}</td>
                 </tr>
               );
             })}
-            {mandats.length === 0 && (
+            {total === 0 && (
               <tr>
                 <td colSpan={7} className="p-8 text-center text-muted-foreground">
                   Aucun mandat trouvé
