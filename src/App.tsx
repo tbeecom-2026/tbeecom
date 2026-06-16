@@ -8,6 +8,7 @@ import AppLayout from "@/components/AppLayout";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Biens from "@/pages/Biens";
+import NouveauBien from "@/pages/NouveauBien";
 import MandatDetail from "@/pages/MandatDetail";
 import RegistreMandats from "@/pages/RegistreMandats";
 import Contacts from "@/pages/Contacts";
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="dashboard" element={<Dashboard />} />
               {/* Biens = catalogue des biens (l'objet) */}
               <Route path="biens" element={<Biens />} />
+              <Route path="biens/nouveau" element={<NouveauBien />} />
               <Route path="biens/:id" element={<MandatDetail />} />
               {/* Mandats = registre des contrats de mandat */}
               <Route path="mandats" element={<RegistreMandats />} />
