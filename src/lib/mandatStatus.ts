@@ -37,7 +37,7 @@ export function getMandatDateState(dateFin: string | null | undefined): MandatDa
   if (jours < 0) {
     return {
       level: "expired",
-      label: "Date de fin de mandat dépassée",
+      label: "Date de mandat dépassée",
       className: "bg-red-600 text-white hover:bg-red-600",
       jours,
     };
@@ -66,6 +66,48 @@ export function getMandatDateState(dateFin: string | null | undefined): MandatDa
 export function getVenduClass(issue?: string | null): string {
   const votreVente = issue === "Réalisé par l'agence" || issue === "Réalisé en inter-agences";
   return votreVente ? "bg-violet-600 text-white hover:bg-violet-600" : "bg-blue-500 text-white hover:bg-blue-500";
+}
+
+// Libellés Netty reconnus (colonne J / observations du registre).
+const TERMES_NETTY = [
+  "Arrivé à terme",
+  "Mandat saisi",
+  "Réalisé par l'agence",
+  "Réalisé en inter-agences",
+  "Réalisé par un confrère",
+  "Réalisé entre particuliers",
+  "Annulé",
+  "Non signé",
+];
+
+/** Ramène une observation brute (avec notes éventuelles) au libellé Netty court. */
+export function nettyLabel(obs?: string | null): string {
+  const s = String(obs ?? "").trim();
+  const low = s.toLowerCase();
+  for (const t of TERMES_NETTY) if (low.startsWith(t.toLowerCase())) return t;
+  return s || "—";
+}
+
+/** Couleur d'un badge selon le libellé Netty. */
+export function getIssueBadgeClass(obs?: string | null): string {
+  const t = nettyLabel(obs);
+  switch (t) {
+    case "Réalisé par l'agence":
+    case "Réalisé en inter-agences":
+      return "bg-violet-600 text-white hover:bg-violet-600"; // votre vente
+    case "Réalisé par un confrère":
+    case "Réalisé entre particuliers":
+      return "bg-blue-500 text-white hover:bg-blue-500"; // vendu hors agence
+    case "Mandat saisi":
+      return "bg-emerald-600 text-white hover:bg-emerald-600"; // actif
+    case "Arrivé à terme":
+      return "bg-slate-500 text-white hover:bg-slate-500"; // expiré
+    case "Annulé":
+    case "Non signé":
+      return "bg-zinc-500 text-white hover:bg-zinc-500"; // sans suite
+    default:
+      return "bg-secondary text-secondary-foreground";
+  }
 }
 
 /**
