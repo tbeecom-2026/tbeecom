@@ -7,17 +7,15 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
-import Mandats from "@/pages/Mandats";
 import Biens from "@/pages/Biens";
 import MandatDetail from "@/pages/MandatDetail";
+import RegistreMandats from "@/pages/RegistreMandats";
 import Contacts from "@/pages/Contacts";
 import ContactDetail from "@/pages/ContactDetail";
 import Activites from "@/pages/Activites";
 import Parametres from "@/pages/Parametres";
 import NotFound from "@/pages/NotFound";
-
 const queryClient = new QueryClient();
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -30,8 +28,12 @@ const App = () => (
             <Route path="/" element={<AppLayout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
+              {/* Biens = catalogue des biens (l'objet) */}
               <Route path="biens" element={<Biens />} />
-              <Route path="mandats" element={<Mandats />} />
+              <Route path="biens/:id" element={<MandatDetail />} />
+              {/* Mandats = registre des contrats de mandat */}
+              <Route path="mandats" element={<RegistreMandats />} />
+              {/* Compat : anciennes URLs /mandats/:id -> fiche bien */}
               <Route path="mandats/:id" element={<MandatDetail />} />
               <Route path="contacts" element={<Contacts />} />
               <Route path="contacts/:id" element={<ContactDetail />} />
@@ -45,5 +47,4 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 );
-
 export default App;
