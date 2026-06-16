@@ -1,28 +1,49 @@
 // src/pages/RegistreMandats.tsx
 // REGISTRE LÉGAL des mandats (table registre_mandats).
-// Exigences : voir TOUS les mandats (aucun masqué, aucun dédoublonnage), dans
-// l'ORDRE DU N° DE MANDAT (croissant, continu) — registre juridiquement fidèle.
-// 1 ligne = 1 mandat (N°, type/objet, mandant, bien, dates début→fin, négociateur).
+// Exigences :
+//  - voir TOUS les mandats, en ordre DÉCROISSANT par N° (du plus récent au plus ancien) ;
+//  - la numérotation doit être CONTINUE : tout N° manquant apparaît quand même,
+//    avec un bouton « Saisir » pour le renseigner (registre sans trou) ;
+//  - le registre commence au N° de départ de l'agence (DEBUT_REGISTRE) ; les N° hors
+//    séquence (ex. le N°30) restent affichés en bas pour ne rien perdre.
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { formatDate } from "@/lib/formatters";
 import { retirerMandatsExpires, nettyLabel, getIssueBadgeClass } from "@/lib/mandatStatus";
 import type { RegistreMandat } from "@/types/database";
 
-// N° de mandat -> entier pour un tri numérique fiable ("99" doit venir avant "471").
+// 1er numéro de mandat de l'agence (le registre démarre ici).
+const DEBUT_REGISTRE = 222;
+const TYPES_MANDAT = ["Simple", "Exclusif", "Semi-exclusif", "Délégation"];
+const OBSERVATIONS = [
+  "Mandat saisi",
+  "Arrivé à terme",
+  "Réalisé par l'agence",
+  "Réalisé en inter-agences",
+  "Réalisé par un confrère",
+  "Réalisé entre particuliers",
+  "Annulé",
+  "Non signé",
+];
+
 function numeroInt(numero: string | null): number {
   const n = parseInt(String(numero ?? "").replace(/\D/g, ""), 10);
-  return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n; // sans n° = en fin
+  return Number.isNaN(n) ? -1 : n;
 }
+
+type DisplayRow = { numero: number; row: RegistreMandat | null };
 
 export default function RegistreMandats() {
   const [all, setAll] = useState<RegistreMandat[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [saisie, setSaisie] = useState<number | null>(null); // N° en cours de saisie (modal)
   const PAGE_SIZE = 50;
 
   useEffect(() => {
@@ -36,27 +57,51 @@ export default function RegistreMandats() {
   }, [search]);
 
   async function load() {
-    // On récupère TOUT le registre (471 lignes), puis on trie par N° côté client.
     const { data } = await supabase.from("registre_mandats").select("*").limit(5000);
-    const rows = (data as RegistreMandat[]) ?? [];
-    rows.sort((a, b) => numeroInt(a.numero) - numeroInt(b.numero)); // N° croissant (ordre légal)
-    setAll(rows);
+    setAll((data as RegistreMandat[]) ?? []);
   }
 
-  // Filtre de recherche (sans casser l'ordre global)
+  // Map N° -> mandat
+  const byNum = useMemo(() => {
+    const m = new Map<number, RegistreMandat>();
+    for (const r of all) {
+      const n = numeroInt(r.numero);
+      if (n >= 0) m.set(n, r);
+    }
+    return m;
+  }, [all]);
+
+  // Séquence continue décroissante + entrées hors séquence en bas
+  const displayAll = useMemo<DisplayRow[]>(() => {
+    const presentNums = [...byNum.keys()];
+    const maxN = presentNums.length ? Math.max(...presentNums, DEBUT_REGISTRE) : DEBUT_REGISTRE;
+    const seq: DisplayRow[] = [];
+    for (let n = maxN; n >= DEBUT_REGISTRE; n--) seq.push({ numero: n, row: byNum.get(n) ?? null });
+    const below = presentNums
+      .filter((n) => n < DEBUT_REGISTRE)
+      .sort((a, b) => b - a)
+      .map((n) => ({ numero: n, row: byNum.get(n)! }));
+    return [...seq, ...below];
+  }, [byNum]);
+
+  // Recherche : ne garde que les mandats réels correspondants (les "manquants" sont masqués).
   const filtered = useMemo(() => {
     const t = search.trim().toLowerCase();
-    if (!t) return all;
-    return all.filter((m) =>
-      [m.numero, m.mandant_nom, m.reference_bien, m.objet, m.negociateur].some((v) =>
-        String(v ?? "")
-          .toLowerCase()
-          .includes(t),
-      ),
+    if (!t) return displayAll;
+    return displayAll.filter(
+      ({ row }) =>
+        row &&
+        [row.numero, row.mandant_nom, row.reference_bien, row.objet, row.negociateur].some((v) =>
+          String(v ?? "")
+            .toLowerCase()
+            .includes(t),
+        ),
     );
-  }, [all, search]);
+  }, [displayAll, search]);
 
   const total = filtered.length;
+  const nbReels = useMemo(() => all.length, [all]);
+  const nbManquants = useMemo(() => displayAll.filter((d) => !d.row).length, [displayAll]);
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const pageRows = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
@@ -64,7 +109,9 @@ export default function RegistreMandats() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Registre des mandats</h1>
-        <span className="text-sm text-muted-foreground">{total} mandat(s) — triés par N°</span>
+        <span className="text-sm text-muted-foreground">
+          {nbReels} mandat(s) · {nbManquants} N° manquant(s) — ordre décroissant
+        </span>
       </div>
 
       <div className="relative">
@@ -91,7 +138,32 @@ export default function RegistreMandats() {
             </tr>
           </thead>
           <tbody>
-            {pageRows.map((m) => {
+            {pageRows.map(({ numero, row }) => {
+              if (!row) {
+                // Numéro manquant : ligne à saisir (continuité du registre)
+                return (
+                  <tr key={`m-${numero}`} className="border-t border-border/50 bg-amber-500/5">
+                    <td className="p-3">
+                      <span className="text-base font-bold text-muted-foreground">{numero}</span>
+                    </td>
+                    <td className="p-3 text-muted-foreground italic" colSpan={4}>
+                      Numéro manquant — à renseigner
+                    </td>
+                    <td className="p-3">
+                      <Badge variant="outline" className="border-amber-500 text-amber-600">
+                        Manquant
+                      </Badge>
+                    </td>
+                    <td className="p-3">
+                      <Button size="sm" variant="outline" onClick={() => setSaisie(numero)}>
+                        <Plus className="mr-1 h-3.5 w-3.5" />
+                        Saisir
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              }
+              const m = row;
               return (
                 <tr key={m.id} className="border-t border-border/50 hover:bg-secondary/30">
                   <td className="p-3">
@@ -136,7 +208,7 @@ export default function RegistreMandats() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>{total} résultat(s)</span>
+          <span>{total} ligne(s)</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
               Précédent
@@ -150,6 +222,125 @@ export default function RegistreMandats() {
           </div>
         </div>
       )}
+
+      {saisie !== null && (
+        <SaisieMandat
+          numero={saisie}
+          onClose={() => setSaisie(null)}
+          onSaved={() => {
+            setSaisie(null);
+            load();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// --- Modal de saisie d'un mandat manquant -------------------------------
+function SaisieMandat({ numero, onClose, onSaved }: { numero: number; onClose: () => void; onSaved: () => void }) {
+  const [f, setF] = useState<Record<string, any>>({ objet: "Mandat de vente", type_mandat: "Simple" });
+  const [saving, setSaving] = useState(false);
+  const set = (k: string, v: any) => setF((p) => ({ ...p, [k]: v }));
+
+  async function save() {
+    setSaving(true);
+    const payload: Record<string, any> = { numero: String(numero) };
+    for (const k of [
+      "date_debut",
+      "date_fin",
+      "mandant_nom",
+      "objet",
+      "type_mandat",
+      "reference_bien",
+      "observations",
+      "negociateur",
+    ]) {
+      if (f[k] !== undefined && f[k] !== "") payload[k] = f[k];
+    }
+    const { error } = await supabase.from("registre_mandats").insert(payload);
+    setSaving(false);
+    if (error) {
+      toast.error("Erreur : " + error.message);
+      return;
+    }
+    toast.success(`Mandat N° ${numero} enregistré.`);
+    onSaved();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-lg space-y-3 rounded-lg border border-border bg-background p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-lg font-semibold">Saisir le mandat N° {numero}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Field label="Date de début">
+            <Input type="date" value={f.date_debut ?? ""} onChange={(e) => set("date_debut", e.target.value)} />
+          </Field>
+          <Field label="Date de fin">
+            <Input type="date" value={f.date_fin ?? ""} onChange={(e) => set("date_fin", e.target.value)} />
+          </Field>
+          <Field label="Mandant">
+            <Input value={f.mandant_nom ?? ""} onChange={(e) => set("mandant_nom", e.target.value)} />
+          </Field>
+          <Field label="Référence du bien">
+            <Input value={f.reference_bien ?? ""} onChange={(e) => set("reference_bien", e.target.value)} />
+          </Field>
+          <Field label="Objet">
+            <Input value={f.objet ?? ""} onChange={(e) => set("objet", e.target.value)} />
+          </Field>
+          <Field label="Type de mandat">
+            <Select value={f.type_mandat ?? ""} onValueChange={(v) => set("type_mandat", v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choisir..." />
+              </SelectTrigger>
+              <SelectContent>
+                {TYPES_MANDAT.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="État (observation)">
+            <Select value={f.observations ?? ""} onValueChange={(v) => set("observations", v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choisir..." />
+              </SelectTrigger>
+              <SelectContent>
+                {OBSERVATIONS.map((o) => (
+                  <SelectItem key={o} value={o}>
+                    {o}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Négociateur">
+            <Input value={f.negociateur ?? ""} onChange={(e) => set("negociateur", e.target.value)} />
+          </Field>
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="outline" onClick={onClose}>
+            Annuler
+          </Button>
+          <Button onClick={save} disabled={saving}>
+            {saving ? "Enregistrement..." : "Enregistrer"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <label className="block text-sm font-medium">{label}</label>
+      {children}
     </div>
   );
 }
