@@ -8,6 +8,7 @@ import AppLayout from "@/components/AppLayout";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Mandats from "@/pages/Mandats";
+import Biens from "@/pages/Biens";
 import MandatDetail from "@/pages/MandatDetail";
 import Contacts from "@/pages/Contacts";
 import ContactDetail from "@/pages/ContactDetail";
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/" element={<AppLayout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
+              <Route path="biens" element={<Biens />} />
               <Route path="mandats" element={<Mandats />} />
               <Route path="mandats/:id" element={<MandatDetail />} />
               <Route path="contacts" element={<Contacts />} />
