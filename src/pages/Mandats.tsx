@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, FileUp } from "lucide-react";
-import { formatEuros, getStatutBadge, STATUTS_MANDAT, TYPES_COMMERCE } from "@/lib/formatters";
+import { formatEuros, formatDate, getStatutBadge, STATUTS_MANDAT, TYPES_COMMERCE } from "@/lib/formatters";
 import type { Mandat } from "@/types/database";
 import PdfImportDialog from "@/components/PdfImportDialog";
 
@@ -16,30 +16,39 @@ export default function Mandats() {
   const [search, setSearch] = useState("");
   const [filtreStatut, setFiltreStatut] = useState("all");
   const [filtreType, setFiltreType] = useState("all");
+  const [filtreCategorie, setFiltreCategorie] = useState("all");
+  const [categories, setCategories] = useState<string[]>([]);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const PAGE_SIZE = 20;
 
-  useEffect(() => { loadMandats(); }, [search, filtreStatut, filtreType, page]);
+  useEffect(() => { loadMandats(); }, [search, filtreStatut, filtreType, filtreCategorie, page]);
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
   async function loadMandats() {
     let query = supabase.from("mandats").select("*", { count: "exact" });
     if (filtreStatut !== "all") query = query.eq("statut", filtreStatut);
     if (filtreType !== "all") query = query.eq("type_commerce", filtreType);
+    if (filtreCategorie !== "all") query = query.eq("categorie", filtreCategorie);
     if (search) {
-      const isNum = /^\d+$/.test(search.trim());
-      if (isNum) {
-        query = query.eq("numero_registre", parseInt(search.trim()));
-      } else {
-        query = query.or(`commune.ilike.%${search}%,reference.ilike.%${search}%,type_commerce.ilike.%${search}%`);
-      }
+      const term = search.trim();
+      query = query.or(`mandat_numero.ilike.%${term}%,commune.ilike.%${term}%,type_commerce.ilike.%${term}%,enseigne.ilike.%${term}%,nature_activite.ilike.%${term}%`);
     }
     const { data, count } = await query
-      .order("numero_registre", { ascending: false, nullsFirst: false })
+      .order("mandat_numero", { ascending: false, nullsFirst: false })
       .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
     setMandats((data as Mandat[]) ?? []);
     setTotal(count ?? 0);
+  }
+
+  async function loadCategories() {
+    const { data } = await supabase.from("mandats").select("categorie");
+    const distinct = [...new Set((data ?? []).map((d: any) => d.categorie).filter(Boolean))].sort();
+    setCategories(distinct);
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -69,7 +78,7 @@ export default function Mandats() {
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="N° mandat, commune, type de commerce..."
+            placeholder="N° mandat, commune, type, enseigne, activité..."
             className="pl-9"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
@@ -89,6 +98,13 @@ export default function Mandats() {
             {TYPES_COMMERCE.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={filtreCategorie} onValueChange={(v) => { setFiltreCategorie(v); setPage(0); }}>
+          <SelectTrigger className="w-[220px]"><SelectValue placeholder="Catégorie" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes les catégories</SelectItem>
+            {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border">
@@ -96,10 +112,12 @@ export default function Mandats() {
           <thead className="bg-secondary/50">
             <tr className="text-left text-muted-foreground">
               <th className="p-3 w-32">N° Mandat</th>
+              <th className="p-3">Catégorie</th>
               <th className="p-3">Type commerce</th>
               <th className="p-3">Commune</th>
               <th className="p-3">Prix demandé</th>
               <th className="p-3">CA annuel</th>
+              <th className="p-3">Mandat (début → fin)</th>
               <th className="p-3">Statut</th>
             </tr>
           </thead>
@@ -109,21 +127,28 @@ export default function Mandats() {
               return (
                 <tr key={m.id} className="border-t border-border/50 hover:bg-secondary/30 cursor-pointer" onClick={() => navigate(`/mandats/${m.id}`)}>
                   <td className="p-3">
-                    {/* N° mandat : grand et gras en premier */}
                     <span className="text-base font-bold text-primary block">
-                      {m.numero_registre ?? "—"}
+                      {m.mandat_numero ?? "—"}
                     </span>
                   </td>
+                  <td className="p-3">{m.categorie ?? "—"}</td>
                   <td className="p-3">{m.type_commerce ?? "—"}</td>
                   <td className="p-3">{m.commune ?? "—"}</td>
                   <td className="p-3">{formatEuros(m.prix_demande)}</td>
                   <td className="p-3">{formatEuros(m.ca_annuel)}</td>
+                  <td className="p-3">
+                    {m.mandat_date_debut && m.mandat_date_fin
+                      ? `${formatDate(m.mandat_date_debut)} → ${formatDate(m.mandat_date_fin)}`
+                      : m.mandat_date_debut
+                        ? formatDate(m.mandat_date_debut)
+                        : "—"}
+                  </td>
                   <td className="p-3"><Badge className={badge.color}>{badge.label}</Badge></td>
                 </tr>
               );
             })}
             {mandats.length === 0 && (
-              <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Aucun mandat trouvé</td></tr>
+              <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Aucun mandat trouvé</td></tr>
             )}
           </tbody>
         </table>
