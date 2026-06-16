@@ -3,10 +3,18 @@ import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
-
 const navItems = [
   { title: "Tableau de bord", url: "/dashboard", icon: LayoutDashboard },
   { title: "Biens", url: "/biens", icon: Store },
@@ -14,17 +22,12 @@ const navItems = [
   { title: "Contacts", url: "/contacts", icon: Contact },
   { title: "Activités", url: "/activites", icon: Activity },
 ];
-
-const adminItems = [
-  { title: "Paramètres", url: "/parametres", icon: Settings },
-];
-
+const adminItems = [{ title: "Paramètres", url: "/parametres", icon: Settings }];
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { signOut, user } = useAuth();
-
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border pb-4">
@@ -35,7 +38,6 @@ export function AppSidebar() {
           {!collapsed && <span className="font-bold text-base text-sidebar-accent-foreground">FDC Manager</span>}
         </div>
       </SidebarHeader>
-
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
@@ -44,7 +46,11 @@ export function AppSidebar() {
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild isActive={location.pathname.startsWith(item.url)}>
-                    <NavLink to={item.url} className="hover:bg-sidebar-accent" activeClassName="bg-sidebar-accent text-primary font-medium">
+                    <NavLink
+                      to={item.url}
+                      className="hover:bg-sidebar-accent"
+                      activeClassName="bg-sidebar-accent text-primary font-medium"
+                    >
                       <item.icon className="mr-2 h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
@@ -61,7 +67,11 @@ export function AppSidebar() {
               {adminItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild isActive={location.pathname.startsWith(item.url)}>
-                    <NavLink to={item.url} className="hover:bg-sidebar-accent" activeClassName="bg-sidebar-accent text-primary font-medium">
+                    <NavLink
+                      to={item.url}
+                      className="hover:bg-sidebar-accent"
+                      activeClassName="bg-sidebar-accent text-primary font-medium"
+                    >
                       <item.icon className="mr-2 h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
@@ -72,11 +82,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
       <SidebarFooter className="border-t border-sidebar-border pt-4">
-        {!collapsed && (
-          <p className="text-xs text-sidebar-foreground/60 px-2 truncate">{user?.email}</p>
-        )}
+        {!collapsed && <p className="text-xs text-sidebar-foreground/60 px-2 truncate">{user?.email}</p>}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={signOut} className="hover:bg-sidebar-accent text-destructive">
