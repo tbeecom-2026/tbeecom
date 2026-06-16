@@ -59,16 +59,27 @@ export function getMandatDateState(dateFin: string | null | undefined): MandatDa
 }
 
 /**
+ * Couleur d'un bien "vendu" selon QUI a réalisé la vente (libellé Netty).
+ *  - Réalisé par l'agence OU en inter-agences -> violet (VOTRE vente, mise en avant)
+ *  - Réalisé par un confrère / entre particuliers -> bleu (vendu hors agence)
+ */
+export function getVenduClass(issue?: string | null): string {
+  const votreVente = issue === "Réalisé par l'agence" || issue === "Réalisé en inter-agences";
+  return votreVente ? "bg-violet-600 text-white hover:bg-violet-600" : "bg-blue-500 text-white hover:bg-blue-500";
+}
+
+/**
  * Passe en "Retiré" tout bien dont le mandat est depasse et qui etait encore "Sur le marché".
  * Idempotent : ne touche pas aux biens Vendu / Sous compromis / Archivé / deja Retiré.
  * A appeler au chargement des listes.
  */
 export async function retirerMandatsExpires(): Promise<void> {
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  // NB : le statut est stocké en CODE ('sur_le_marche', 'retire'...), pas en libellé.
   const { error } = await supabase
     .from("mandats")
-    .update({ statut: "Retiré", date_retire: today })
+    .update({ statut: "retire", date_retire: today })
     .lt("mandat_date_fin", today)
-    .eq("statut", "Sur le marché");
+    .eq("statut", "sur_le_marche");
   if (error) console.error("retirerMandatsExpires:", error.message);
 }
