@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,6 +106,8 @@ function StatusStepper({ statut }: { statut: string | null }) {
 export default function MandatDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const fromMandat = params.get("fromMandat");
   const [mandat, setMandat] = useState<Mandat | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -140,10 +142,21 @@ export default function MandatDetail() {
     <div className="space-y-4 max-w-6xl">
       {/* Retour */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/mandats")}>
+        <Button variant="ghost" size="sm" onClick={() => navigate("/biens")}>
           <ArrowLeft className="mr-1 h-4 w-4" />
-          Retour à la liste
+          Retour aux biens
         </Button>
+        {fromMandat && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-primary/15 text-primary hover:bg-primary/25 border-primary/30"
+            onClick={() => navigate(`/mandats?focus=${fromMandat}`)}
+          >
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            Retour au mandat N° {fromMandat}
+          </Button>
+        )}
       </div>
       {/* 1. EN-TÊTE */}
       <Card>
