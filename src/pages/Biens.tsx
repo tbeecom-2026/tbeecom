@@ -1,5 +1,6 @@
 // src/pages/Biens.tsx
 // Onglet "Biens" = le CATALOGUE des biens (l'objet à vendre), tous statuts/catégories.
+// + colonne "Échéance mandat" : badge rouge (dépassé) / orange (fin proche) / vert (en cours).
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
@@ -9,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, FileUp } from "lucide-react";
 import { formatEuros, formatDate, getStatutBadge, STATUTS_MANDAT, TYPES_COMMERCE } from "@/lib/formatters";
+import { getMandatDateState, retirerMandatsExpires } from "@/lib/mandatStatus";
 import type { Mandat } from "@/types/database";
 import PdfImportDialog from "@/components/PdfImportDialog";
 
@@ -25,8 +27,16 @@ export default function Biens() {
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const PAGE_SIZE = 20;
 
-  useEffect(() => { loadBiens(); }, [search, filtreStatut, filtreType, filtreCategorie, page]);
-  useEffect(() => { loadCategories(); }, []);
+  useEffect(() => {
+    loadBiens();
+  }, [search, filtreStatut, filtreType, filtreCategorie, page]);
+  useEffect(() => {
+    loadCategories();
+  }, []);
+  // Retrait auto des biens dont le mandat est dépassé, puis rechargement de la liste.
+  useEffect(() => {
+    retirerMandatsExpires().then(() => loadBiens());
+  }, []);
 
   async function loadBiens() {
     let query = supabase.from("mandats").select("*", { count: "exact" });
@@ -36,7 +46,7 @@ export default function Biens() {
     if (search) {
       const term = search.trim();
       query = query.or(
-        `mandat_numero.ilike.%${term}%,reference.ilike.%${term}%,commune.ilike.%${term}%,type_commerce.ilike.%${term}%,enseigne.ilike.%${term}%,nature_activite.ilike.%${term}%`
+        `mandat_numero.ilike.%${term}%,reference.ilike.%${term}%,commune.ilike.%${term}%,type_commerce.ilike.%${term}%,enseigne.ilike.%${term}%,nature_activite.ilike.%${term}%`,
       );
     }
     const { data, count } = await query
@@ -60,10 +70,12 @@ export default function Biens() {
         <h1 className="text-2xl font-bold">Biens</h1>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setPdfDialogOpen(true)}>
-            <FileUp className="mr-2 h-4 w-4" />Importer un PDF
+            <FileUp className="mr-2 h-4 w-4" />
+            Importer un PDF
           </Button>
           <Button onClick={() => navigate("/biens/nouveau")}>
-            <Plus className="mr-2 h-4 w-4" />Nouveau bien
+            <Plus className="mr-2 h-4 w-4" />
+            Nouveau bien
           </Button>
         </div>
       </div>
@@ -75,28 +87,67 @@ export default function Biens() {
             placeholder="Référence, N° mandat, commune, type, enseigne, activité..."
             className="pl-9"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
           />
         </div>
-        <Select value={filtreStatut} onValueChange={(v) => { setFiltreStatut(v); setPage(0); }}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Statut" /></SelectTrigger>
+        <Select
+          value={filtreStatut}
+          onValueChange={(v) => {
+            setFiltreStatut(v);
+            setPage(0);
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Statut" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous les statuts</SelectItem>
-            {STATUTS_MANDAT.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+            {STATUTS_MANDAT.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-        <Select value={filtreType} onValueChange={(v) => { setFiltreType(v); setPage(0); }}>
-          <SelectTrigger className="w-[200px]"><SelectValue placeholder="Type commerce" /></SelectTrigger>
+        <Select
+          value={filtreType}
+          onValueChange={(v) => {
+            setFiltreType(v);
+            setPage(0);
+          }}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Type commerce" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous les types</SelectItem>
-            {TYPES_COMMERCE.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            {TYPES_COMMERCE.map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-        <Select value={filtreCategorie} onValueChange={(v) => { setFiltreCategorie(v); setPage(0); }}>
-          <SelectTrigger className="w-[220px]"><SelectValue placeholder="Catégorie" /></SelectTrigger>
+        <Select
+          value={filtreCategorie}
+          onValueChange={(v) => {
+            setFiltreCategorie(v);
+            setPage(0);
+          }}
+        >
+          <SelectTrigger className="w-[220px]">
+            <SelectValue placeholder="Catégorie" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Toutes les catégories</SelectItem>
-            {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            {categories.map((c) => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -111,27 +162,53 @@ export default function Biens() {
               <th className="p-3">Prix demandé</th>
               <th className="p-3">CA annuel</th>
               <th className="p-3 w-24">N° Mandat</th>
+              <th className="p-3">Échéance mandat</th>
               <th className="p-3">Statut</th>
             </tr>
           </thead>
           <tbody>
             {biens.map((m) => {
               const badge = getStatutBadge(m.statut);
+              const etat = getMandatDateState(m.mandat_date_fin);
               return (
-                <tr key={m.id} className="border-t border-border/50 hover:bg-secondary/30 cursor-pointer" onClick={() => navigate(`/biens/${m.id}`)}>
-                  <td className="p-3"><span className="font-bold text-primary">{m.reference ?? "—"}</span></td>
+                <tr
+                  key={m.id}
+                  className="border-t border-border/50 hover:bg-secondary/30 cursor-pointer"
+                  onClick={() => navigate(`/biens/${m.id}`)}
+                >
+                  <td className="p-3">
+                    <span className="font-bold text-primary">{m.reference ?? "—"}</span>
+                  </td>
                   <td className="p-3">{m.categorie ?? "—"}</td>
                   <td className="p-3">{m.type_commerce ?? "—"}</td>
                   <td className="p-3">{m.commune ?? "—"}</td>
                   <td className="p-3">{formatEuros(m.prix_demande)}</td>
                   <td className="p-3">{formatEuros(m.ca_annuel)}</td>
                   <td className="p-3">{m.mandat_numero ?? "—"}</td>
-                  <td className="p-3"><Badge className={badge.color}>{badge.label}</Badge></td>
+                  <td className="p-3">
+                    {etat.level === "none" ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      <Badge
+                        className={etat.className}
+                        title={m.mandat_date_fin ? formatDate(m.mandat_date_fin) : undefined}
+                      >
+                        {etat.label}
+                      </Badge>
+                    )}
+                  </td>
+                  <td className="p-3">
+                    <Badge className={badge.color}>{badge.label}</Badge>
+                  </td>
                 </tr>
               );
             })}
             {biens.length === 0 && (
-              <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Aucun bien trouvé</td></tr>
+              <tr>
+                <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                  Aucun bien trouvé
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -140,9 +217,15 @@ export default function Biens() {
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>{total} résultat(s)</span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>Précédent</Button>
-            <span className="flex items-center px-2">Page {page + 1} / {totalPages}</span>
-            <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Suivant</Button>
+            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
+              Précédent
+            </Button>
+            <span className="flex items-center px-2">
+              Page {page + 1} / {totalPages}
+            </span>
+            <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
+              Suivant
+            </Button>
           </div>
         </div>
       )}
