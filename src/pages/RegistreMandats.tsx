@@ -7,6 +7,7 @@
 //  - le registre commence au N° de départ de l'agence (DEBUT_REGISTRE) ; les N° hors
 //    séquence (ex. le N°30) restent affichés en bas pour ne rien perdre.
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,9 @@ function numeroInt(numero: string | null): number {
 type DisplayRow = { numero: number; row: RegistreMandat | null };
 
 export default function RegistreMandats() {
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const focusN = params.get("focus") ? parseInt(params.get("focus")!, 10) : null;
   const [all, setAll] = useState<RegistreMandat[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -59,6 +63,17 @@ export default function RegistreMandats() {
   async function load() {
     const { data } = await supabase.from("registre_mandats").select("*").limit(5000);
     setAll((data as RegistreMandat[]) ?? []);
+  }
+
+  // Ouvre la fiche du bien correspondant à une référence (depuis le registre).
+  async function ouvrirBien(refBien: string, numero: number) {
+    const { data } = await supabase.from("mandats").select("id").eq("reference", refBien).limit(1);
+    const bien = (data as any[])?.[0];
+    if (!bien) {
+      toast.error(`Aucun bien avec la référence ${refBien}`);
+      return;
+    }
+    navigate(`/biens/${bien.id}?fromMandat=${numero}`);
   }
 
   // Map N° -> mandat
@@ -83,6 +98,13 @@ export default function RegistreMandats() {
       .map((n) => ({ numero: n, row: byNum.get(n)! }));
     return [...seq, ...below];
   }, [byNum]);
+
+  // Retour depuis une fiche : se placer sur la page contenant le N° ciblé.
+  useEffect(() => {
+    if (focusN == null) return;
+    const idx = displayAll.findIndex((d) => d.numero === focusN);
+    if (idx >= 0) setPage(Math.floor(idx / PAGE_SIZE));
+  }, [focusN, displayAll]);
 
   // Recherche : ne garde que les mandats réels correspondants (les "manquants" sont masqués).
   const filtered = useMemo(() => {
@@ -142,7 +164,10 @@ export default function RegistreMandats() {
               if (!row) {
                 // Numéro manquant : ligne à saisir (continuité du registre)
                 return (
-                  <tr key={`m-${numero}`} className="border-t border-border/50 bg-amber-500/5">
+                  <tr
+                    key={`m-${numero}`}
+                    className={`border-t border-border/50 bg-amber-500/5 ${focusN === numero ? "ring-2 ring-primary/60" : ""}`}
+                  >
                     <td className="p-3">
                       <span className="text-base font-bold text-muted-foreground">{numero}</span>
                     </td>
@@ -165,7 +190,10 @@ export default function RegistreMandats() {
               }
               const m = row;
               return (
-                <tr key={m.id} className="border-t border-border/50 hover:bg-secondary/30">
+                <tr
+                  key={m.id}
+                  className={`border-t border-border/50 hover:bg-secondary/30 ${focusN === numero ? "ring-2 ring-primary/60 bg-primary/5" : ""}`}
+                >
                   <td className="p-3">
                     <span className="text-base font-bold text-primary">{m.numero ?? "—"}</span>
                   </td>
@@ -177,7 +205,18 @@ export default function RegistreMandats() {
                   </td>
                   <td className="p-3">{m.mandant_nom ?? "—"}</td>
                   <td className="p-3">
-                    {m.reference_bien ? <Badge variant="outline">{m.reference_bien}</Badge> : "—"}
+                    {m.reference_bien ? (
+                      <button
+                        type="button"
+                        onClick={() => ouvrirBien(m.reference_bien!, numero)}
+                        className="rounded-md bg-primary/15 px-2 py-1 text-sm font-semibold text-primary hover:bg-primary/25 transition-colors"
+                        title={`Voir la fiche du bien ${m.reference_bien}`}
+                      >
+                        {m.reference_bien}
+                      </button>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td className="p-3">
                     {m.date_debut && m.date_fin
