@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, FileUp } from "lucide-react";
 import { formatEuros, formatDate, getStatutBadge, STATUTS_MANDAT, TYPES_COMMERCE } from "@/lib/formatters";
-import { getMandatDateState, retirerMandatsExpires } from "@/lib/mandatStatus";
+import { getMandatDateState, retirerMandatsExpires, getVenduClass } from "@/lib/mandatStatus";
 import type { Mandat } from "@/types/database";
 import PdfImportDialog from "@/components/PdfImportDialog";
 
@@ -162,7 +162,6 @@ export default function Biens() {
               <th className="p-3">Prix demandé</th>
               <th className="p-3">CA annuel</th>
               <th className="p-3 w-24">N° Mandat</th>
-              <th className="p-3">Échéance mandat</th>
               <th className="p-3">Statut</th>
             </tr>
           </thead>
@@ -170,6 +169,33 @@ export default function Biens() {
             {biens.map((m) => {
               const badge = getStatutBadge(m.statut);
               const etat = getMandatDateState(m.mandat_date_fin);
+              const surLeMarche = m.statut === "sur_le_marche";
+              // Libellé Netty exact (issue_mandat) si présent, sinon libellé du statut.
+              const issue = (m.attributs as any)?.issue_mandat as string | undefined;
+              const label = issue ?? badge.label;
+              // Vendu : couleur selon qui a réalisé (violet = votre vente, bleu = hors agence).
+              const baseClass = m.statut === "vendu" ? getVenduClass(issue) : badge.color;
+              // Une seule colonne Statut : le mandat dépassé prime sur "sur le marché".
+              const statutCell =
+                surLeMarche && etat.level === "expired" ? (
+                  <Badge
+                    className="bg-red-600 text-white hover:bg-red-600"
+                    title={m.mandat_date_fin ? formatDate(m.mandat_date_fin) : undefined}
+                  >
+                    Date de fin de mandat dépassée
+                  </Badge>
+                ) : surLeMarche && etat.level === "soon" ? (
+                  <Badge
+                    className="bg-orange-500 text-white hover:bg-orange-500"
+                    title={m.mandat_date_fin ? formatDate(m.mandat_date_fin) : undefined}
+                  >
+                    {label} — fin dans {etat.jours} j
+                  </Badge>
+                ) : (
+                  <Badge className={baseClass} title={m.mandat_date_fin ? formatDate(m.mandat_date_fin) : undefined}>
+                    {label}
+                  </Badge>
+                );
               return (
                 <tr
                   key={m.id}
@@ -185,27 +211,13 @@ export default function Biens() {
                   <td className="p-3">{formatEuros(m.prix_demande)}</td>
                   <td className="p-3">{formatEuros(m.ca_annuel)}</td>
                   <td className="p-3">{m.mandat_numero ?? "—"}</td>
-                  <td className="p-3">
-                    {etat.level === "none" ? (
-                      <span className="text-muted-foreground">—</span>
-                    ) : (
-                      <Badge
-                        className={etat.className}
-                        title={m.mandat_date_fin ? formatDate(m.mandat_date_fin) : undefined}
-                      >
-                        {etat.label}
-                      </Badge>
-                    )}
-                  </td>
-                  <td className="p-3">
-                    <Badge className={badge.color}>{badge.label}</Badge>
-                  </td>
+                  <td className="p-3">{statutCell}</td>
                 </tr>
               );
             })}
             {biens.length === 0 && (
               <tr>
-                <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                <td colSpan={8} className="p-8 text-center text-muted-foreground">
                   Aucun bien trouvé
                 </td>
               </tr>
