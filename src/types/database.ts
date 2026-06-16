@@ -36,6 +36,10 @@ export interface Contact {
 
 export interface Mandat {
   id: string;
+  mandat_numero: string | null;
+  mandat_date_debut: string | null;
+  mandat_date_fin: string | null;
+  categorie: string | null;
   reference: string;
   type_mandat: string;
   statut: string;
