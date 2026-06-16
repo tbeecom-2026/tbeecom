@@ -1,0 +1,422 @@
+{
+  "_meta": {
+    "titre": "Questionnaires dynamiques par métier - Fonds de commerce TBEECOM",
+    "version": "1.0",
+    "date": "2026-06-16",
+    "description": "Config pilotant le formulaire d'ajout de bien. Les champs metier sont stockes dans la colonne JSONB 'attributs' de la table mandats. Les champs communs correspondent aux colonnes existantes.",
+    "usage": "Le formulaire affiche d'abord type_bien (categorie). Si categorie = 'Fonds de commerce en vente', on affiche le selecteur 'famille_metier'. Le choix de la famille charge le bloc de champs correspondant dans 'metiers'. Tous les champs communs s'affichent quel que soit le metier.",
+    "types_champ": {
+      "number": "saisie numerique",
+      "text": "texte libre court",
+      "textarea": "texte libre long",
+      "boolean": "oui / non",
+      "select": "liste deroulante (mono-choix)",
+      "multiselect": "liste a choix multiples",
+      "date": "date"
+    }
+  },
+
+  "type_bien": {
+    "key": "categorie",
+    "label": "Type de bien",
+    "type": "select",
+    "required": true,
+    "options": [
+      "Fonds de commerce en vente",
+      "Droit au bail en vente",
+      "Immobilier Pro en vente",
+      "Immobilier Pro en location",
+      "Murs commerciaux en vente",
+      "Appartement en vente",
+      "Maison en vente",
+      "Immeuble en vente",
+      "Terrain en vente",
+      "Stationnement en vente",
+      "Entreprise en vente"
+    ],
+    "declenche_questionnaire_metier_si": "Fonds de commerce en vente"
+  },
+
+  "famille_metier": {
+    "key": "famille_metier",
+    "label": "Nature du fonds de commerce",
+    "type": "select",
+    "required": true,
+    "stockage": "attributs.famille_metier",
+    "options": [
+      { "valeur": "restauration_assise", "label": "Restauration assise (restaurant, brasserie, pizzeria, creperie, bistrot)" },
+      { "valeur": "bar_cafe_tabac", "label": "Bar / Cafe / Pub / Tabac" },
+      { "valeur": "restauration_rapide", "label": "Restauration rapide (fast-food, kebab, burger, sandwicherie)" },
+      { "valeur": "boulangerie_patisserie", "label": "Boulangerie / Patisserie / Chocolaterie / Salon de the" },
+      { "valeur": "garage_carrosserie", "label": "Garage / Carrosserie / Reparation auto" },
+      { "valeur": "fleuriste", "label": "Fleuriste" },
+      { "valeur": "coiffure_esthetique", "label": "Coiffure / Esthetique / Beaute" },
+      { "valeur": "autre", "label": "Autre commerce (questionnaire generique)" }
+    ]
+  },
+
+  "champs_communs": {
+    "description": "Champs valables pour tout fonds de commerce. La plupart existent deja comme colonnes de la table mandats.",
+    "blocs": [
+      {
+        "titre": "Identite du bien",
+        "champs": [
+          { "key": "reference", "label": "Reference du bien", "type": "text", "colonne": "reference", "aide": "Code interne, ex: VF797. Laisser vide pour completer plus tard." },
+          { "key": "titre", "label": "Titre de l'annonce", "type": "text", "required": true, "colonne": "titre" },
+          { "key": "enseigne", "label": "Enseigne", "type": "text", "colonne": "enseigne" },
+          { "key": "nature_activite", "label": "Nature precise de l'activite", "type": "text", "colonne": "nature_activite", "aide": "Ex: Boulangerie-patisserie artisanale. Champ libre, en plus de la famille." },
+          { "key": "description", "label": "Description", "type": "textarea", "colonne": "description" },
+          { "key": "raison_vente", "label": "Raison de la vente", "type": "select", "colonne": "raison_vente", "options": ["Depart retraite", "Changement de vie", "Reconversion", "Sante", "Demenagement", "Autre projet", "Cession multi-etablissements", "Autre"] }
+        ]
+      },
+      {
+        "titre": "Localisation",
+        "champs": [
+          { "key": "adresse", "label": "Adresse", "type": "text", "colonne": "adresse" },
+          { "key": "code_postal", "label": "Code postal", "type": "text", "colonne": "code_postal" },
+          { "key": "commune", "label": "Commune", "type": "text", "colonne": "commune" },
+          { "key": "secteur", "label": "Secteur / quartier", "type": "text", "colonne": "secteur" },
+          { "key": "type_emplacement", "label": "Type d'emplacement", "type": "select", "stockage": "attributs", "options": ["Centre-ville", "Quartier residentiel", "Zone commerciale", "Centre commercial / galerie", "Axe passant", "Rural", "Touristique"] }
+        ]
+      },
+      {
+        "titre": "Surfaces",
+        "champs": [
+          { "key": "surface_totale", "label": "Surface totale", "type": "number", "unite": "m2", "colonne": "surface_totale" },
+          { "key": "surface_commerciale", "label": "Surface commerciale / vente", "type": "number", "unite": "m2", "colonne": "surface_commerciale" },
+          { "key": "surface_reserves", "label": "Surface reserves / stockage", "type": "number", "unite": "m2", "colonne": "surface_reserves" },
+          { "key": "repartition_surface", "label": "Repartition des surfaces (detail)", "type": "textarea", "colonne": "repartition_surface" }
+        ]
+      },
+      {
+        "titre": "Finances",
+        "champs": [
+          { "key": "ca_annuel", "label": "Chiffre d'affaires annuel", "type": "number", "unite": "EUR", "colonne": "ca_annuel" },
+          { "key": "resultat_net", "label": "Resultat net / EBE", "type": "number", "unite": "EUR", "colonne": "resultat_net" },
+          { "key": "ca_n1", "label": "CA exercice N-1", "type": "number", "unite": "EUR", "stockage": "attributs" },
+          { "key": "ca_n2", "label": "CA exercice N-2", "type": "number", "unite": "EUR", "stockage": "attributs" },
+          { "key": "ebe_retraite", "label": "EBE retraite", "type": "number", "unite": "EUR", "stockage": "attributs" },
+          { "key": "effectif", "label": "Effectif repris (ETP)", "type": "number", "unite": "salaries", "colonne": "effectif" }
+        ]
+      },
+      {
+        "titre": "Prix & honoraires",
+        "champs": [
+          { "key": "prix_demande", "label": "Prix demande (FAI)", "type": "number", "unite": "EUR", "colonne": "prix_demande" },
+          { "key": "prix_net_vendeur", "label": "Prix net vendeur", "type": "number", "unite": "EUR", "colonne": "prix_net_vendeur" },
+          { "key": "honoraires_montant", "label": "Honoraires", "type": "number", "unite": "EUR", "colonne": "honoraires_montant" },
+          { "key": "honoraires_charge", "label": "Honoraires a charge", "type": "select", "colonne": "honoraires_charge", "options": ["Acquereur", "Vendeur", "Partage"] }
+        ]
+      },
+      {
+        "titre": "Bail & murs",
+        "champs": [
+          { "key": "loyer_annuel", "label": "Loyer annuel", "type": "number", "unite": "EUR", "stockage": "attributs" },
+          { "key": "bail_annees_restantes", "label": "Annees restantes du bail", "type": "number", "unite": "annees", "stockage": "attributs" },
+          { "key": "bail_destination", "label": "Destination du bail", "type": "text", "stockage": "attributs", "aide": "Activites autorisees par le bail." },
+          { "key": "depot_garantie", "label": "Depot de garantie", "type": "number", "unite": "EUR", "stockage": "attributs" },
+          { "key": "murs_a_vendre", "label": "Murs a vendre", "type": "boolean", "colonne": "murs_a_vendre" },
+          { "key": "prix_murs", "label": "Prix des murs", "type": "number", "unite": "EUR", "colonne": "prix_murs", "affiche_si": "murs_a_vendre = true" },
+          { "key": "logement_attache", "label": "Logement de fonction attache", "type": "boolean", "stockage": "attributs" }
+        ]
+      },
+      {
+        "titre": "Exploitation",
+        "champs": [
+          { "key": "horaires_ouverture", "label": "Horaires / jours d'ouverture", "type": "textarea", "colonne": "horaires_ouverture" },
+          { "key": "type_mandat", "label": "Type de mandat", "type": "select", "colonne": "type_mandat", "options": ["Simple", "Exclusif", "Semi-exclusif", "Delegation"] },
+          { "key": "statut", "label": "Statut commercial", "type": "select", "colonne": "statut", "options": ["Prospection", "Sur le marche", "Sous compromis", "Vendu", "Retire", "Archive"] }
+        ]
+      },
+      {
+        "titre": "Proprietaire / mandant",
+        "champs": [
+          { "key": "proprietaire_nom", "label": "Nom du proprietaire", "type": "text", "colonne": "proprietaire_nom" },
+          { "key": "proprietaire_societe", "label": "Societe", "type": "text", "colonne": "proprietaire_societe" },
+          { "key": "proprietaire_email", "label": "Email", "type": "text", "colonne": "proprietaire_email" },
+          { "key": "proprietaire_tel", "label": "Telephone", "type": "text", "colonne": "proprietaire_tel" }
+        ]
+      }
+    ]
+  },
+
+  "metiers": {
+
+    "restauration_assise": {
+      "label": "Restauration assise",
+      "nat_variants": ["restaurant", "brasserie", "pizzeria", "creperie", "bistrot", "restaurant traditionnel", "restaurant de chef", "restaurant marocain", "restauration asiatique", "restauration italienne", "grillades", "restaurant pizzeria", "hotel bar restaurant", "restaurant spa"],
+      "champs": [
+        { "key": "nb_couverts_salle", "label": "Nombre de couverts en salle", "type": "number", "unite": "couverts", "colonne": "nb_couverts_salle", "required": true },
+        { "key": "nb_couverts_terrasse", "label": "Nombre de couverts en terrasse", "type": "number", "unite": "couverts", "colonne": "nb_couverts_terrasse" },
+        { "key": "terrasse_type", "label": "Type de terrasse", "type": "select", "options": ["Aucune", "Privative", "Domaine public"] },
+        { "key": "aot_terrasse", "label": "Autorisation occupation domaine public (terrasse)", "type": "boolean", "affiche_si": "terrasse_type = Domaine public" },
+        { "key": "redevance_terrasse", "label": "Redevance terrasse", "type": "number", "unite": "EUR/an", "affiche_si": "terrasse_type = Domaine public" },
+        { "key": "type_cuisine", "label": "Type de cuisine / positionnement", "type": "text" },
+        { "key": "ticket_moyen", "label": "Ticket moyen", "type": "number", "unite": "EUR" },
+        { "key": "nb_services_jour", "label": "Services par jour", "type": "select", "options": ["Midi seul", "Soir seul", "Midi + soir", "Continu"] },
+        { "key": "jours_ouverture_semaine", "label": "Jours d'ouverture / semaine", "type": "number", "unite": "jours" },
+        { "key": "jour_fermeture", "label": "Jour(s) de fermeture", "type": "multiselect", "options": ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"] },
+        { "key": "cuisine_equipee_incluse", "label": "Cuisine equipee incluse dans le fonds", "type": "boolean", "required": true },
+        { "key": "extraction_conforme", "label": "Extraction / hotte conforme", "type": "boolean", "required": true, "aide": "Facteur de valeur majeur." },
+        { "key": "extraction_type", "label": "Type d'extraction", "type": "select", "options": ["Extraction en toiture", "Filtration charbon", "Aucune"] },
+        { "key": "conformite_gaz", "label": "Conformite gaz", "type": "boolean" },
+        { "key": "conformite_electrique", "label": "Conformite electrique", "type": "boolean" },
+        { "key": "conformite_pmr", "label": "Accessibilite PMR", "type": "boolean" },
+        { "key": "classement_erp", "label": "Categorie ERP", "type": "select", "options": ["1", "2", "3", "4", "5", "Non classe"] },
+        { "key": "capacite_erp", "label": "Capacite d'accueil autorisee (ERP)", "type": "number", "unite": "personnes" },
+        { "key": "part_emporter_livraison", "label": "Part vente a emporter / livraison", "type": "number", "unite": "% du CA" },
+        { "key": "licence_boissons", "label": "Licence debit de boissons", "type": "select", "options": ["Aucune", "Petite licence restaurant", "Licence restaurant", "Licence III", "Licence IV"], "required": true },
+        { "key": "permis_exploitation", "label": "Permis d'exploitation (valide)", "type": "boolean" },
+        { "key": "formation_haccp", "label": "Formation hygiene HACCP", "type": "boolean" },
+        { "key": "valeur_materiel", "label": "Valeur du materiel inclus", "type": "number", "unite": "EUR" }
+      ],
+      "licences": ["Permis d'exploitation (20h, valable 10 ans)", "Licence III ou IV si alcool hors repas", "Petite licence restaurant / Licence restaurant pour alcool pendant repas", "Formation hygiene HACCP", "Classement et conformite ERP"],
+      "valorisation": {
+        "pct_ca": "50 a 120 % du CA HT (moyenne ~77 %)",
+        "multiple_ebe": "3 a 5 x EBE retraite",
+        "notes": "Brasserie avec licence IV + extraction + terrasse: 150 a 200 % du CA. Licence IV = +30 % environ."
+      }
+    },
+
+    "bar_cafe_tabac": {
+      "label": "Bar / Cafe / Pub / Tabac",
+      "nat_variants": ["bar", "bar de nuit", "bar tabac", "brasserie / tabac", "brasserie tabac", "pub", "cafe brasserie", "bar brasserie", "bistrot", "bar, brasserie, pub"],
+      "champs": [
+        { "key": "nb_places_assises", "label": "Places assises (interieur)", "type": "number", "unite": "places" },
+        { "key": "nb_places_terrasse", "label": "Places en terrasse", "type": "number", "unite": "places" },
+        { "key": "aot_terrasse", "label": "Autorisation occupation domaine public (terrasse)", "type": "boolean" },
+        { "key": "redevance_terrasse", "label": "Redevance terrasse", "type": "number", "unite": "EUR/an" },
+        { "key": "linaire_comptoir", "label": "Linaire de comptoir / bar", "type": "number", "unite": "m" },
+        { "key": "licence_boissons", "label": "Licence debit de boissons", "type": "select", "options": ["Aucune", "Licence III", "Licence IV"], "required": true },
+        { "key": "licence_iv_exploitee", "label": "Licence IV exploitee depuis moins de 5 ans", "type": "boolean", "aide": "Une licence IV non exploitee > 5 ans est perimee.", "affiche_si": "licence_boissons = Licence IV" },
+        { "key": "permis_exploitation", "label": "Permis d'exploitation (valide)", "type": "boolean" },
+        { "key": "horaire_fermeture", "label": "Heure de fermeture autorisee", "type": "text" },
+        { "key": "autorisation_nuit", "label": "Autorisation ouverture de nuit", "type": "boolean" },
+        { "key": "bar_de_nuit", "label": "Bar de nuit / musique amplifiee", "type": "boolean" },
+        { "key": "etude_impact_bruit", "label": "Etude d'impact sonore / limiteur acoustique", "type": "boolean", "affiche_si": "bar_de_nuit = true" },
+        { "key": "activite_tabac", "label": "Activite tabac (debit)", "type": "boolean" },
+        { "key": "remise_nette_tabac", "label": "Remise nette tabac annuelle", "type": "number", "unite": "EUR/an", "affiche_si": "activite_tabac = true" },
+        { "key": "contrat_gerance_douanes", "label": "Contrat de gerance douanes (echeance)", "type": "date", "affiche_si": "activite_tabac = true" },
+        { "key": "ca_fdj", "label": "CA jeux FDJ", "type": "number", "unite": "EUR/an" },
+        { "key": "ca_pmu", "label": "CA PMU / paris", "type": "number", "unite": "EUR/an" },
+        { "key": "ca_presse", "label": "CA presse", "type": "number", "unite": "EUR/an" },
+        { "key": "contrat_brasseur", "label": "Contrat brasseur / approvisionnement (duree)", "type": "text" },
+        { "key": "restauration_associee", "label": "Restauration / snacking associe", "type": "boolean" },
+        { "key": "valeur_materiel", "label": "Valeur du materiel de bar inclus", "type": "number", "unite": "EUR" }
+      ],
+      "licences": ["Permis d'exploitation", "Licence IV (non recreee depuis 2016, s'achete, perime si non exploitee > 5 ans)", "Licence III", "Tabac: droit de presentation d'un successeur soumis a agrement des douanes (DGDDI) - non cessible librement", "Agrements FDJ / PMU / diffuseur de presse"],
+      "valorisation": {
+        "pct_ca": "Bar/cafe (liquides): jusqu'a ~200 % du CA HT",
+        "multiple_ebe": "3 a 5 x EBE (2 a 4,5 x EBE pour buralistes)",
+        "notes": "Tabac: 2 a 4 ans de remise nette (repere 2,5x). Tabac-presse-tabletterie: 80 a 160 % du CA TTC. Licence IV = +30 %."
+      }
+    },
+
+    "restauration_rapide": {
+      "label": "Restauration rapide",
+      "nat_variants": ["restauration rapide", "fast food", "kebab", "burger", "sandwicherie", "sandwitcherie", "pizzeria", "pizza a emporter", "food"],
+      "champs": [
+        { "key": "specialite", "label": "Specialite", "type": "select", "options": ["Kebab", "Burger", "Pizza", "Sandwicherie", "Tacos", "Asiatique", "Poulet", "Autre"] },
+        { "key": "salle_sur_place", "label": "Salle de consommation sur place", "type": "boolean" },
+        { "key": "nb_places_assises", "label": "Places assises", "type": "number", "unite": "places", "affiche_si": "salle_sur_place = true" },
+        { "key": "part_emporter", "label": "Part vente a emporter", "type": "number", "unite": "% du CA" },
+        { "key": "part_livraison", "label": "Part livraison", "type": "number", "unite": "% du CA" },
+        { "key": "plateformes_livraison", "label": "Plateformes de livraison", "type": "multiselect", "options": ["Uber Eats", "Deliveroo", "Just Eat", "Aucune"] },
+        { "key": "part_ca_plateformes", "label": "Part du CA via plateformes", "type": "number", "unite": "% du CA", "aide": "Commission ~20-30 % a signaler." },
+        { "key": "extraction_conforme", "label": "Extraction / hotte aux normes", "type": "boolean", "required": true, "aide": "Facteur de valeur majeur (~+50 %)." },
+        { "key": "laboratoire", "label": "Laboratoire / cuisine de production", "type": "boolean" },
+        { "key": "equipements_cuisson", "label": "Equipements de cuisson", "type": "text", "aide": "Broche kebab, friteuses, plancha, four pizza, grill (nb + etat)." },
+        { "key": "chambre_froide", "label": "Chambre froide", "type": "boolean" },
+        { "key": "licence_boissons", "label": "Licence debit de boissons", "type": "select", "options": ["Aucune", "Petite licence restaurant", "Licence restaurant", "Licence III", "Licence IV"] },
+        { "key": "franchise", "label": "Franchise / enseigne", "type": "boolean" },
+        { "key": "franchise_nom", "label": "Nom du reseau", "type": "text", "affiche_si": "franchise = true" },
+        { "key": "formation_haccp", "label": "Formation hygiene HACCP", "type": "boolean" },
+        { "key": "ticket_moyen", "label": "Ticket moyen", "type": "number", "unite": "EUR" }
+      ],
+      "licences": ["Formation hygiene HACCP obligatoire", "Declaration DDPP (denrees animales)", "Extraction conforme + autorisation toiture", "Licence boissons + permis d'exploitation si alcool", "Conformite ERP"],
+      "valorisation": {
+        "pct_ca": "30 a 80 % du CA HT (moyenne ~60-65 %)",
+        "multiple_ebe": "3 a 5 x EBE retraite",
+        "notes": "Extraction = +50 %, licence IV = +30 %. Attention dependance aux plateformes de livraison."
+      }
+    },
+
+    "boulangerie_patisserie": {
+      "label": "Boulangerie / Patisserie",
+      "nat_variants": ["boulangerie", "boulangerie patisserie", "patisserie", "boulangerie, patisserie, traiteur", "patisserie boulangerie salon de the", "terminal de cuisson, patisserie", "chocolaterie", "salon de the"],
+      "champs": [
+        { "key": "volume_farine_an", "label": "Volume de farine panifie par an", "type": "number", "unite": "quintaux/an", "required": true, "aide": "Indicateur cle de volume. Repere: ~340-400 q/an pour une boulangerie moyenne (1 q = 100 kg)." },
+        { "key": "production_maison", "label": "Type de production", "type": "select", "required": true, "options": ["100 % maison (petrissage/faconnage/cuisson sur place)", "Mixte", "Terminal de cuisson (precuit/surgele)"], "aide": "Conditionne le droit a l'appellation legale 'boulangerie' (loi 1998)." },
+        { "key": "fournil_labo", "label": "Presence d'un fournil / laboratoire", "type": "boolean" },
+        { "key": "surface_fournil", "label": "Surface du fournil / labo", "type": "number", "unite": "m2" },
+        { "key": "surface_boutique", "label": "Surface boutique / vente", "type": "number", "unite": "m2" },
+        { "key": "nb_fours", "label": "Nombre de fours", "type": "number" },
+        { "key": "type_four", "label": "Type de four", "type": "select", "options": ["Four a sole", "Four ventile / rotatif", "Four electrique", "Four a gaz", "Four a bois"] },
+        { "key": "age_four", "label": "Annee du four principal", "type": "number", "unite": "annee", "aide": "Decote majeure si > 15 ans." },
+        { "key": "petrin", "label": "Presence d'un petrin", "type": "boolean" },
+        { "key": "type_petrin", "label": "Type de petrin", "type": "select", "options": ["Petrin a spirale", "Petrin a axe oblique", "Batteur-melangeur"] },
+        { "key": "tour_refrigere", "label": "Tour / tour refrigeree (viennoiserie)", "type": "boolean" },
+        { "key": "laminoir", "label": "Laminoir", "type": "boolean" },
+        { "key": "chambre_pousse", "label": "Chambre de pousse / fermentation", "type": "boolean" },
+        { "key": "chambre_froide", "label": "Chambre froide (positive/negative)", "type": "boolean" },
+        { "key": "vitrine_refrigeree", "label": "Vitrine refrigeree (etat/age)", "type": "text" },
+        { "key": "activite_patisserie", "label": "Patisserie maison", "type": "boolean" },
+        { "key": "activite_chocolaterie", "label": "Chocolaterie / confiserie maison", "type": "boolean" },
+        { "key": "activite_snacking", "label": "Traiteur / snacking", "type": "boolean" },
+        { "key": "part_snacking", "label": "Part du snacking dans le CA", "type": "number", "unite": "% du CA", "affiche_si": "activite_snacking = true" },
+        { "key": "salon_de_the", "label": "Salon de the / consommation sur place", "type": "boolean" },
+        { "key": "nb_places_assises", "label": "Places assises (salon de the)", "type": "number", "unite": "places", "affiche_si": "salon_de_the = true" },
+        { "key": "contrats_b2b", "label": "Contrats de livraison B2B recurrents", "type": "boolean", "aide": "Cantines, GMS, restaurants." },
+        { "key": "depot_secondaire", "label": "Depot de pain / point de vente secondaire", "type": "boolean" },
+        { "key": "nb_salaries_qualifies", "label": "Salaries qualifies (boulangers/patissiers)", "type": "number" },
+        { "key": "formation_haccp", "label": "Formation hygiene alimentaire", "type": "boolean" }
+      ],
+      "licences": ["Appellation 'boulangerie' protegee (loi 98-405): petrissage/fermentation/faconnage/cuisson sur place, jamais surgele", "Hygiene alimentaire / HACCP", "Conformite fournil, extraction, electricite, gaz", "Conformite ERP et accessibilite", "Licence + permis d'exploitation si salon de the avec alcool"],
+      "valorisation": {
+        "pct_ca": "60 a 110 % du CA TTC (en pratique 75-90 %)",
+        "multiple_ebe": "3 a 5 x EBE retraite",
+        "notes": "Decote 20-50 k EUR si four a sole > 15 ans / vitrine non conforme. Marge brute reperes 73-78 % du CA HT."
+      }
+    },
+
+    "garage_carrosserie": {
+      "label": "Garage / Carrosserie",
+      "nat_variants": ["garage mecanique", "garage mecanique carrosserie", "garage reparation", "garage vente et toutes activites", "carrosserie", "atelier de carrosserie", "vente et reparation de vehicules"],
+      "champs": [
+        { "key": "activite_dominante", "label": "Activite dominante", "type": "select", "options": ["Mecanique generale (MRA)", "Carrosserie-peinture", "Vente VN-VO", "Centre auto", "Reparation rapide", "Vitrage", "Pneumatique", "Mixte"] },
+        { "key": "surface_atelier", "label": "Surface de l'atelier", "type": "number", "unite": "m2" },
+        { "key": "surface_showroom", "label": "Surface show-room / vente", "type": "number", "unite": "m2" },
+        { "key": "parc_exterieur", "label": "Parc exterieur / parking (capacite)", "type": "number", "unite": "vehicules" },
+        { "key": "nb_ponts", "label": "Nombre de ponts elevateurs", "type": "number", "required": true },
+        { "key": "type_ponts", "label": "Type de ponts", "type": "multiselect", "options": ["2 colonnes", "4 colonnes", "Ciseaux"] },
+        { "key": "nb_baies", "label": "Nombre de baies / postes de travail", "type": "number" },
+        { "key": "fosse_visite", "label": "Fosse de visite", "type": "boolean" },
+        { "key": "cabine_peinture", "label": "Cabine de peinture", "type": "boolean", "aide": "Actif majeur en carrosserie." },
+        { "key": "banc_carrosserie", "label": "Banc de redressage / marbre", "type": "boolean" },
+        { "key": "demonte_pneu", "label": "Demonte-pneu", "type": "boolean" },
+        { "key": "equilibreuse", "label": "Equilibreuse", "type": "boolean" },
+        { "key": "banc_geometrie", "label": "Banc de geometrie / parallelisme", "type": "boolean" },
+        { "key": "valise_diag", "label": "Valise de diagnostic multimarque", "type": "boolean" },
+        { "key": "station_clim", "label": "Station de charge climatisation", "type": "boolean" },
+        { "key": "equipement_ve", "label": "Equipement vehicules electriques (IRVE)", "type": "boolean" },
+        { "key": "cuve_carburant", "label": "Cuve a hydrocarbures / stockage carburant", "type": "boolean" },
+        { "key": "cuve_enterree", "label": "Cuve enterree (passif environnemental)", "type": "boolean", "aide": "Point de due diligence environnementale." },
+        { "key": "separateur_hydrocarbures", "label": "Separateur d'hydrocarbures / debourbeur", "type": "boolean" },
+        { "key": "vehicules_courtoisie", "label": "Vehicules de courtoisie / pret", "type": "number" },
+        { "key": "agrement_assurance", "label": "Agrement compagnie(s) d'assurance", "type": "boolean", "aide": "Actif commercial fort (flux sinistres diriges)." },
+        { "key": "agrement_assurance_liste", "label": "Compagnies conventionnees", "type": "text", "affiche_si": "agrement_assurance = true" },
+        { "key": "agrement_controle_technique", "label": "Agrement centre de controle technique", "type": "boolean" },
+        { "key": "agrement_constructeur", "label": "Agrement / contrat constructeur (marque)", "type": "boolean", "aide": "Intuitu personae - pas toujours transmissible." },
+        { "key": "agrement_vhu", "label": "Agrement VHU (vehicules hors d'usage)", "type": "boolean" },
+        { "key": "icpe", "label": "Soumis a reglementation ICPE", "type": "boolean" },
+        { "key": "repartition_ca", "label": "Repartition du CA par poste", "type": "text", "aide": "Mecanique / carrosserie / pieces / vente vehicules / pneus (%)." },
+        { "key": "contrats_flottes", "label": "Contrats flottes / entreprises", "type": "boolean" },
+        { "key": "nb_salaries_qualifies", "label": "Salaries qualifies (mecaniciens/carrossiers)", "type": "number" }
+      ],
+      "licences": ["Agrement compagnies d'assurance (carrosserie)", "Agrement centre de controle technique (independance exigee)", "Agrement / contrat constructeur (intuitu personae)", "Agrement VHU (prefectoral, 6 ans, controle annuel)", "Reglementation ICPE selon activites", "Attestation capacite fluides frigorigenes (clim)", "Due diligence passif environnemental (cuves)"],
+      "valorisation": {
+        "pct_ca": "35 a 60 % du CA HT (mediane ~36,5 %)",
+        "multiple_ebe": "3 a 5 x EBE (jusqu'a 10x selon agrements/recurrence)",
+        "notes": "Reperes: CA median ~396 k EUR, marge brute ~59 %, EBE ~8 % du CA. Passif environnemental = point cle."
+      }
+    },
+
+    "fleuriste": {
+      "label": "Fleuriste",
+      "nat_variants": ["fleuriste", "primeur (vegetal)"],
+      "champs": [
+        { "key": "type_point_vente", "label": "Type de point de vente", "type": "select", "options": ["Boutique traditionnelle", "Libre-service", "Stand de marche", "Mixte", "Franchise"] },
+        { "key": "surface_vente", "label": "Surface de vente", "type": "number", "unite": "m2" },
+        { "key": "atelier", "label": "Presence d'un atelier (composition/reserve)", "type": "boolean" },
+        { "key": "surface_atelier", "label": "Surface de l'atelier", "type": "number", "unite": "m2", "affiche_si": "atelier = true" },
+        { "key": "etalage_exterieur", "label": "Etalage exterieur / sur trottoir", "type": "boolean", "required": true, "aide": "Souvent essentiel a l'attractivite et au CA." },
+        { "key": "aot_etalage", "label": "Autorisation d'occupation du domaine public (etalage)", "type": "boolean", "affiche_si": "etalage_exterieur = true", "aide": "Personnelle, precaire, NON transmise automatiquement avec le fonds." },
+        { "key": "surface_etalage", "label": "Surface de l'etalage autorise", "type": "number", "unite": "m2", "affiche_si": "etalage_exterieur = true" },
+        { "key": "redevance_domaine_public", "label": "Redevance d'occupation du domaine public", "type": "number", "unite": "EUR/an", "affiche_si": "etalage_exterieur = true" },
+        { "key": "chambre_froide", "label": "Chambre froide / chambre positive", "type": "boolean" },
+        { "key": "vitrine_refrigeree", "label": "Vitrine refrigeree", "type": "boolean" },
+        { "key": "nb_vitrines_refrigerees", "label": "Nombre de vitrines refrigerees", "type": "number", "affiche_si": "vitrine_refrigeree = true" },
+        { "key": "linaire_facade", "label": "Linaire de facade / vitrine", "type": "number", "unite": "m" },
+        { "key": "vehicule_livraison", "label": "Vehicule(s) de livraison", "type": "number" },
+        { "key": "service_livraison", "label": "Service de livraison a domicile", "type": "boolean" },
+        { "key": "reseau_transmission", "label": "Reseau de transmission florale", "type": "select", "options": ["Interflora", "Florajet", "Euroflorist", "Aucun"] },
+        { "key": "contrats_entreprises", "label": "Contrats / abonnements entreprises", "type": "boolean" },
+        { "key": "marche_obseques", "label": "Marche pompes funebres / obseques", "type": "boolean" },
+        { "key": "evenementiel_mariages", "label": "Evenementiel mariages / ceremonies", "type": "boolean" },
+        { "key": "part_evenementiel", "label": "Part evenementiel / deco dans le CA", "type": "number", "unite": "% du CA" },
+        { "key": "site_ecommerce", "label": "Site e-commerce / vente en ligne", "type": "boolean" },
+        { "key": "repartition_ca", "label": "Repartition du CA", "type": "text", "aide": "Fleurs coupees / plantes / deco / obseques / evenementiel (%)." },
+        { "key": "saisonnalite", "label": "Saisonnalite (pics)", "type": "text", "aide": "Toussaint, fete des meres, St-Valentin, fin d'annee." },
+        { "key": "nb_salaries_qualifies", "label": "Salaries fleuristes diplomes (CAP/BP)", "type": "number" }
+      ],
+      "licences": ["Autorisation d'occupation temporaire du domaine public (etalage) - non transmise automatiquement", "CAP/BP Fleuriste (non obligatoire mais critere de savoir-faire)", "Certiphyto si vente de produits phytosanitaires", "Conformite chaine du froid (vitrines, chambre froide)", "Carte de commercant ambulant si stand/marche", "Verifier destination du bail"],
+      "valorisation": {
+        "pct_ca": "20 a 60 % du CA HT (repere prudent ~30 %)",
+        "multiple_ebe": "3 a 11 x EBE retraite",
+        "notes": "Reperes: CA median ~292 k EUR, marge brute ~53 %, EBE ~7,7 %. Stock perissable (rotation ~16 j). Etalage exterieur autorise = point cle."
+      }
+    },
+
+    "coiffure_esthetique": {
+      "label": "Coiffure / Esthetique / Beaute",
+      "nat_variants": ["salon de coiffure", "coiffure", "salon de coiffure - esthetique - onglerie", "salon de coiffure et d'esthetique", "salon d'esthetique", "onglerie, epilation, massage", "esthetique", "barbier", "spa"],
+      "champs": [
+        { "key": "type_etablissement", "label": "Type d'etablissement", "type": "select", "required": true, "options": ["Salon de coiffure", "Institut esthetique", "Onglerie", "Barbier", "Mixte coiffure+esthetique", "SPA", "Centre epilation"] },
+        { "key": "positionnement", "label": "Positionnement / gamme", "type": "select", "options": ["Low cost", "Milieu de gamme", "Premium / luxe"] },
+        { "key": "nb_postes_coiffage", "label": "Nombre de postes de coiffage", "type": "number" },
+        { "key": "nb_bacs_lavage", "label": "Nombre de bacs de lavage", "type": "number" },
+        { "key": "nb_cabines_soins", "label": "Nombre de cabines de soins (esthetique)", "type": "number" },
+        { "key": "nb_postes_manucure", "label": "Nombre de postes manucure / onglerie", "type": "number" },
+        { "key": "nb_postes_barbier", "label": "Nombre de postes barbier", "type": "number" },
+        { "key": "nb_cabines_epilation", "label": "Nombre de cabines / postes d'epilation", "type": "number" },
+        { "key": "espace_spa", "label": "Espace SPA (sauna, hammam, jacuzzi)", "type": "boolean" },
+        { "key": "equipements_spa", "label": "Detail equipements SPA", "type": "multiselect", "options": ["Sauna", "Hammam", "Jacuzzi", "Douche sensorielle", "Table de massage"], "affiche_si": "espace_spa = true" },
+        { "key": "appareils_epilation_definitive", "label": "Appareils epilation definitive (laser / IPL)", "type": "boolean", "aide": "Encadrement reglementaire - verifier habilitation." },
+        { "key": "etat_agencement", "label": "Etat de l'agencement", "type": "select", "options": ["Recent", "Bon", "A rafraichir", "A refaire"] },
+        { "key": "valeur_materiel", "label": "Valeur du materiel et mobilier", "type": "number", "unite": "EUR" },
+        { "key": "nb_salaries", "label": "Nombre de salaries repris", "type": "number" },
+        { "key": "titulaire_qualification_reste", "label": "Devenir du titulaire de la qualification", "type": "select", "options": ["Cedant reste", "Cedant part", "Salarie qualifie reste"], "required": true, "aide": "Cle: au moins une personne doit detenir le BP coiffure / qualification esthetique." },
+        { "key": "salarie_qualifie_present", "label": "Salarie qualifie (BP/CAP) en place", "type": "boolean" },
+        { "key": "part_revente_produits", "label": "Part revente produits dans le CA", "type": "number", "unite": "% du CA" },
+        { "key": "marques_produits", "label": "Marques / gammes utilisees", "type": "text", "aide": "L'Oreal, Schwarzkopf, Wella, Kerastase..." },
+        { "key": "valeur_stock", "label": "Valeur du stock de produits", "type": "number", "unite": "EUR" },
+        { "key": "fichier_clients", "label": "Fichier clients transmis", "type": "boolean" },
+        { "key": "rdv_en_ligne", "label": "Prise de RDV en ligne", "type": "boolean" },
+        { "key": "plateforme_rdv", "label": "Plateforme de reservation", "type": "text", "affiche_si": "rdv_en_ligne = true", "aide": "Planity, Booksy, Kiute, Treatwell..." },
+        { "key": "note_google", "label": "Note Google (/5)", "type": "number" },
+        { "key": "franchise", "label": "Sous enseigne / franchise", "type": "boolean" },
+        { "key": "franchise_nom", "label": "Nom de l'enseigne", "type": "text", "affiche_si": "franchise = true" },
+        { "key": "ratio_masse_salariale", "label": "Ratio masse salariale / CA", "type": "number", "unite": "%" }
+      ],
+      "licences": ["Coiffure: BP/BM coiffure obligatoire (ou 3 ans d'experience) pour exploiter - le CAP seul ne suffit pas", "Esthetique: CAP/BP/Bac pro/BTS esthetique ou 3 ans d'experience", "Epilation laser/IPL: encadree (formation/habilitation)", "Massage thERApeutique reserve aux kines (bien-etre uniquement)", "Conformite ERP, hygiene/desinfection, logiciel de caisse conforme"],
+      "valorisation": {
+        "pct_ca": "Coiffure 40-80 % du CA TTC ; Esthetique 35-95 % du CA TTC",
+        "multiple_ebe": "Coiffure 2 a 3,3 x EBE ; Esthetique 3 a 5 x EBE",
+        "notes": "Risque cle: fidelite clientele au coiffeur plutot qu'au salon (depart du cedant). Masse salariale = poste lourd. Stock valorise separement."
+      }
+    },
+
+    "autre": {
+      "label": "Autre commerce (generique)",
+      "nat_variants": ["boucherie", "charcuterie", "traiteur", "primeur", "caviste", "epicerie", "pharmacie", "bijouterie", "horlogerie", "habillement", "chaussures", "vetements", "jouets", "bazar", "depot-vente", "salle de sport", "hotel", "chocolaterie"],
+      "champs": [
+        { "key": "activite_detail", "label": "Activite detaillee", "type": "text", "required": true },
+        { "key": "surface_vente", "label": "Surface de vente", "type": "number", "unite": "m2" },
+        { "key": "reserve", "label": "Reserve / stockage", "type": "boolean" },
+        { "key": "vitrine_refrigeree", "label": "Vitrine / equipement refrigere", "type": "boolean" },
+        { "key": "laboratoire", "label": "Laboratoire / atelier de production", "type": "boolean" },
+        { "key": "licence_specifique", "label": "Licence / agrement specifique", "type": "text" },
+        { "key": "valeur_materiel", "label": "Valeur du materiel inclus", "type": "number", "unite": "EUR" },
+        { "key": "valeur_stock", "label": "Valeur du stock", "type": "number", "unite": "EUR" },
+        { "key": "nb_salaries", "label": "Nombre de salaries", "type": "number" },
+        { "key": "remarques_metier", "label": "Particularites du metier", "type": "textarea" }
+      ],
+      "licences": ["A preciser selon l'activite (ex: pharmacie = diplome de pharmacien + licence officinale ; boucherie = hygiene/HACCP ; caviste = licence a emporter)."],
+      "valorisation": {
+        "pct_ca": "Variable selon activite",
+        "multiple_ebe": "3 a 5 x EBE retraite (repere general TPE/PME)",
+        "notes": "Famille fourre-tout a affiner ulterieurement (boucherie, pharmacie, bijouterie, habillement, hotellerie, sport)."
+      }
+    }
+  }
+}
