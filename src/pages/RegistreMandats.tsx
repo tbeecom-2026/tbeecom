@@ -1,6 +1,7 @@
 // src/pages/RegistreMandats.tsx
 // Onglet "Mandats" = le REGISTRE des contrats de mandat (table registre_mandats).
 // 1 ligne = 1 mandat (N°, type/objet, mandant, bien concerné, dates début→fin, négociateur).
+// + colonne "État" : badge rouge (dépassé) / orange (fin proche) / vert (en cours).
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
+import { getMandatDateState, retirerMandatsExpires } from "@/lib/mandatStatus";
 import type { RegistreMandat } from "@/types/database";
 
 export default function RegistreMandats() {
@@ -17,14 +19,20 @@ export default function RegistreMandats() {
   const [total, setTotal] = useState(0);
   const PAGE_SIZE = 25;
 
-  useEffect(() => { load(); }, [search, page]);
+  useEffect(() => {
+    load();
+  }, [search, page]);
+  // Retrait auto des biens dont le mandat est dépassé (au montage).
+  useEffect(() => {
+    retirerMandatsExpires();
+  }, []);
 
   async function load() {
     let query = supabase.from("registre_mandats").select("*", { count: "exact" });
     if (search) {
       const t = search.trim();
       query = query.or(
-        `numero.ilike.%${t}%,mandant_nom.ilike.%${t}%,reference_bien.ilike.%${t}%,objet.ilike.%${t}%,negociateur.ilike.%${t}%`
+        `numero.ilike.%${t}%,mandant_nom.ilike.%${t}%,reference_bien.ilike.%${t}%,objet.ilike.%${t}%,negociateur.ilike.%${t}%`,
       );
     }
     const { data, count } = await query
@@ -49,7 +57,10 @@ export default function RegistreMandats() {
           placeholder="N° mandat, mandant, référence du bien, objet, négociateur..."
           className="pl-9"
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(0);
+          }}
         />
       </div>
 
@@ -62,34 +73,49 @@ export default function RegistreMandats() {
               <th className="p-3">Mandant</th>
               <th className="p-3 w-28">Bien</th>
               <th className="p-3">Mandat (début → fin)</th>
+              <th className="p-3">État</th>
               <th className="p-3">Négociateur</th>
             </tr>
           </thead>
           <tbody>
-            {mandats.map((m) => (
-              <tr key={m.id} className="border-t border-border/50 hover:bg-secondary/30">
-                <td className="p-3">
-                  <span className="text-base font-bold text-primary">{m.numero ?? "—"}</span>
-                </td>
-                <td className="p-3">
-                  {m.objet ?? "—"}
-                  {m.type_mandat ? <span className="block text-xs text-muted-foreground">{m.type_mandat}</span> : null}
-                </td>
-                <td className="p-3">{m.mandant_nom ?? "—"}</td>
-                <td className="p-3">
-                  {m.reference_bien ? <Badge variant="outline">{m.reference_bien}</Badge> : "—"}
-                </td>
-                <td className="p-3">
-                  {m.date_debut && m.date_fin
-                    ? `${formatDate(m.date_debut)} → ${formatDate(m.date_fin)}`
-                    : m.dates_mandat ?? (m.date_debut ? formatDate(m.date_debut) : "—")}
-                </td>
-                <td className="p-3">{m.negociateur ?? "—"}</td>
-              </tr>
-            ))}
+            {mandats.map((m) => {
+              const etat = getMandatDateState(m.date_fin);
+              return (
+                <tr key={m.id} className="border-t border-border/50 hover:bg-secondary/30">
+                  <td className="p-3">
+                    <span className="text-base font-bold text-primary">{m.numero ?? "—"}</span>
+                  </td>
+                  <td className="p-3">
+                    {m.objet ?? "—"}
+                    {m.type_mandat ? (
+                      <span className="block text-xs text-muted-foreground">{m.type_mandat}</span>
+                    ) : null}
+                  </td>
+                  <td className="p-3">{m.mandant_nom ?? "—"}</td>
+                  <td className="p-3">
+                    {m.reference_bien ? <Badge variant="outline">{m.reference_bien}</Badge> : "—"}
+                  </td>
+                  <td className="p-3">
+                    {m.date_debut && m.date_fin
+                      ? `${formatDate(m.date_debut)} → ${formatDate(m.date_fin)}`
+                      : (m.dates_mandat ?? (m.date_debut ? formatDate(m.date_debut) : "—"))}
+                  </td>
+                  <td className="p-3">
+                    {etat.level === "none" ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      <Badge className={etat.className}>{etat.label}</Badge>
+                    )}
+                  </td>
+                  <td className="p-3">{m.negociateur ?? "—"}</td>
+                </tr>
+              );
+            })}
             {mandats.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-muted-foreground">Aucun mandat trouvé</td>
+                <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                  Aucun mandat trouvé
+                </td>
               </tr>
             )}
           </tbody>
@@ -100,9 +126,15 @@ export default function RegistreMandats() {
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>{total} résultat(s)</span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>Précédent</Button>
-            <span className="flex items-center px-2">Page {page + 1} / {totalPages}</span>
-            <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Suivant</Button>
+            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
+              Précédent
+            </Button>
+            <span className="flex items-center px-2">
+              Page {page + 1} / {totalPages}
+            </span>
+            <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
+              Suivant
+            </Button>
           </div>
         </div>
       )}
