@@ -241,8 +241,17 @@ function Info({ label, value }: { label: string; value: any }) {
 function DerniersValides({ onPDF }: { onPDF: (r: Row) => void }) {
   const [rows, setRows] = useState<Row[]>([]);
   useEffect(() => {
-    supabase.from("registre_mandats").select("*").eq("statut_validation", "valide").order("valide_le", { ascending: false }).limit(10)
-      .then(({ data }) => setRows((data as Row[]) ?? []));
+    (async () => {
+      const { data } = await supabase.from("registre_mandats").select("*").eq("statut_validation", "valide").order("valide_le", { ascending: false }).limit(10);
+      const rs = (data as Row[]) ?? [];
+      const parentIds = Array.from(new Set(rs.map((r) => r.avenant_de).filter(Boolean) as string[]));
+      const parentMap = new Map<string, string | null>();
+      if (parentIds.length) {
+        const { data: pd } = await supabase.from("registre_mandats").select("id, numero").in("id", parentIds);
+        for (const p of ((pd as any[]) ?? [])) parentMap.set(p.id, p.numero ?? null);
+      }
+      setRows(rs.map((r) => ({ ...r, parent_numero: r.avenant_de ? parentMap.get(r.avenant_de) ?? null : null })));
+    })();
   }, []);
   if (rows.length === 0) return null;
   return (
@@ -252,7 +261,11 @@ function DerniersValides({ onPDF }: { onPDF: (r: Row) => void }) {
         {rows.map((r) => (
           <div key={r.id} className="flex items-center justify-between text-sm border-b border-border/40 last:border-0 py-2">
             <div>
-              <span className="font-bold text-primary mr-2">N° {r.numero ?? "—"}</span>
+              {r.avenant_de ? (
+                <span className="font-bold text-primary mr-2">Avenant n° {r.avenant_numero ?? "—"} au mandat N° {r.parent_numero ?? "—"}</span>
+              ) : (
+                <span className="font-bold text-primary mr-2">N° {r.numero ?? "—"}</span>
+              )}
               <span>{r.nature_mandat} — {r.forme_mandat}</span>
               <span className="text-muted-foreground"> · {r.mandant_nom ?? "—"}</span>
             </div>
