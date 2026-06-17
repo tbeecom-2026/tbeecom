@@ -318,7 +318,22 @@ export default function RegistreMandats() {
                       <span className="text-muted-foreground">—</span>
                     )}
                   </td>
-                  <td className="p-3">{m.negociateur ?? "—"}</td>
+                  <td className="p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>{m.negociateur ?? "—"}</span>
+                      {m.numero && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-xs"
+                          onClick={(e) => { e.stopPropagation(); navigate(`/mandats/${m.id}/avenant`); }}
+                          title="Créer un avenant à ce mandat"
+                        >
+                          <FilePlus2 className="mr-1 h-3.5 w-3.5" /> Avenant
+                        </Button>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               );
             })}
