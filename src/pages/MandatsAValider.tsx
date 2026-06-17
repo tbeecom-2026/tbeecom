@@ -200,7 +200,7 @@ export default function MandatsAValider() {
                     <X className="mr-1 h-4 w-4" /> Refuser
                   </Button>
                   <Button size="sm" onClick={() => valider(r)} disabled={busy}>
-                    <Check className="mr-1 h-4 w-4" /> Valider &amp; numéroter
+                    <Check className="mr-1 h-4 w-4" /> {r.avenant_de ? "Valider l'avenant" : "Valider & numéroter"}
                   </Button>
                 </>
               ) : (
