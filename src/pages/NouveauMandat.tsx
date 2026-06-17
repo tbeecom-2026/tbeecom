@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -54,11 +54,18 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 export default function NouveauMandat() {
   const navigate = useNavigate();
-  const { id: editId } = useParams<{ id: string }>();
+  const location = useLocation();
+  const { id: routeId } = useParams<{ id: string }>();
+  const isAvenant = location.pathname.endsWith("/avenant");
+  const editId = isAvenant ? undefined : routeId;
+  const parentId = isAvenant ? routeId : undefined;
   const isEdit = !!editId;
   const { toast } = useToast();
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin();
+
+  const [avenantDe, setAvenantDe] = useState<string | null>(null);
+  const [parentNumero, setParentNumero] = useState<string | null>(null);
 
   const [nature, setNature] = useState<string>("Fonds de commerce");
   const [forme, setForme] = useState<string>("Simple");
@@ -125,7 +132,7 @@ export default function NouveauMandat() {
 
   const [bareme, setBareme] = useState<BaremeTranche[]>([]);
   const [saving, setSaving] = useState(false);
-  const [loadingEdit, setLoadingEdit] = useState(isEdit);
+  const [loadingEdit, setLoadingEdit] = useState(isEdit || isAvenant);
   const [statut, setStatut] = useState<string>("brouillon");
   const [motifRefus, setMotifRefus] = useState<string | null>(null);
 
@@ -136,12 +143,13 @@ export default function NouveauMandat() {
     });
   }, []);
 
-  // -------- chargement du brouillon en mode édition
+  // -------- chargement brouillon (édition) ou mandat parent (avenant)
   useEffect(() => {
-    if (!isEdit || !editId || !user?.id) return;
+    const sourceId = editId ?? parentId;
+    if (!sourceId || !user?.id) return;
     let cancelled = false;
     (async () => {
-      const { data, error } = await supabase.from("registre_mandats").select("*").eq("id", editId).limit(1);
+      const { data, error } = await supabase.from("registre_mandats").select("*").eq("id", sourceId).limit(1);
       const row = (data as any[])?.[0];
       if (cancelled) return;
       if (error || !row) {
@@ -149,17 +157,29 @@ export default function NouveauMandat() {
         navigate("/mandats");
         return;
       }
-      // autorisation : brouillon/refuse + (créateur ou admin)
-      const editable = (row.statut_validation === "brouillon" || row.statut_validation === "refuse")
-        && (row.cree_par === user.id || isAdmin);
-      if (!editable) {
-        toast({ title: "Édition impossible", description: "Ce mandat n'est plus modifiable.", variant: "destructive" });
-        navigate("/mandats");
-        return;
+      if (isAvenant) {
+        // En mode avenant : on copie les champs du parent dans une nouvelle ligne
+        if (!row.numero || row.statut_validation !== "valide") {
+          toast({ title: "Avenant impossible", description: "Le mandat parent doit être validé.", variant: "destructive" });
+          navigate("/mandats");
+          return;
+        }
+        setAvenantDe(row.id);
+        setParentNumero(row.numero ?? null);
+        setStatut("brouillon");
+        setMotifRefus(null);
+      } else {
+        // autorisation : brouillon/refuse + (créateur ou admin)
+        const editable = (row.statut_validation === "brouillon" || row.statut_validation === "refuse")
+          && (row.cree_par === user.id || isAdmin);
+        if (!editable) {
+          toast({ title: "Édition impossible", description: "Ce mandat n'est plus modifiable.", variant: "destructive" });
+          navigate("/mandats");
+          return;
+        }
+        setStatut(row.statut_validation ?? "brouillon");
+        setMotifRefus(row.motif_refus ?? null);
       }
-      // pré-remplissage
-      setStatut(row.statut_validation ?? "brouillon");
-      setMotifRefus(row.motif_refus ?? null);
       setNature(row.nature_mandat ?? "Fonds de commerce");
       setForme(row.forme_mandat ?? "Simple");
       setDesignation(row.designation_bien ?? "");
@@ -210,7 +230,7 @@ export default function NouveauMandat() {
       setLoadingEdit(false);
     })();
     return () => { cancelled = true; };
-  }, [isEdit, editId, user?.id, isAdmin, navigate, toast]);
+  }, [isEdit, editId, parentId, isAvenant, user?.id, isAdmin, navigate, toast]);
 
   // -------- recherche contacts
   useEffect(() => {
@@ -419,6 +439,7 @@ export default function NouveauMandat() {
     } else {
       payload.numero = null;
       payload.cree_par = user.id;
+      if (avenantDe) payload.avenant_de = avenantDe;
       const res = await supabase.from("registre_mandats").insert(payload);
       error = res.error;
     }
@@ -437,7 +458,7 @@ export default function NouveauMandat() {
   }
 
   async function apercu() {
-    const draft = { ...buildPayload("brouillon"), mandant_id: mandant?.id ?? null } as any;
+    const draft = { ...buildPayload("brouillon"), mandant_id: mandant?.id ?? null, avenant_de: avenantDe ?? null } as any;
     const agence = await getAgence();
     const html = await generateMandatV2(draft, agence);
     openMandat(html);
@@ -453,11 +474,20 @@ export default function NouveauMandat() {
         <Button variant="ghost" size="sm" onClick={() => navigate("/mandats")}>
           <ArrowLeft className="mr-1 h-4 w-4" /> Retour au registre
         </Button>
-        <h1 className="text-2xl font-bold ml-2">{isEdit ? "Modifier le mandat" : "Nouveau mandat"}</h1>
+        <h1 className="text-2xl font-bold ml-2">{isAvenant ? "Nouvel avenant" : isEdit ? "Modifier le mandat" : "Nouveau mandat"}</h1>
         <Badge variant="outline" className="ml-2">
           {statut === "refuse" ? "Refusé — à corriger" : statut === "brouillon" ? "Brouillon" : "À valider"}
         </Badge>
       </div>
+
+      {isAvenant && (
+        <Card className="border-primary/40 bg-primary/5">
+          <CardContent className="py-3 text-sm">
+            <strong className="text-primary">Avenant au mandat N° {parentNumero ?? "—"}</strong>
+            <span className="text-muted-foreground"> · Modifiez ce qui change (prix, honoraires, durée, date) et renseignez l'objet de l'avenant dans « Observations ». Le mandat parent ne sera pas modifié.</span>
+          </CardContent>
+        </Card>
+      )}
 
       {statut === "refuse" && motifRefus && (
         <Card className="border-destructive/40 bg-destructive/5">

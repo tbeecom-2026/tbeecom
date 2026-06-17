@@ -45,6 +45,9 @@ interface Row {
   criteres_recherche: string | null;
   prix_max_recherche: number | null;
   created_at: string | null;
+  avenant_de: string | null;
+  avenant_numero: number | null;
+  parent_numero?: string | null;
 }
 
 export default function MandatsAValider() {
@@ -62,30 +65,57 @@ export default function MandatsAValider() {
     if (!isAdmin && user?.id) q = q.eq("cree_par", user.id);
     const { data, error } = await q;
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    setRows((data as Row[]) ?? []);
+    const rs = ((data as Row[]) ?? []);
+    // récupère le numéro des mandats parents pour les avenants
+    const parentIds = Array.from(new Set(rs.map((r) => r.avenant_de).filter(Boolean) as string[]));
+    let parentMap = new Map<string, string | null>();
+    if (parentIds.length) {
+      const { data: pd } = await supabase.from("registre_mandats").select("id, numero").in("id", parentIds);
+      for (const p of ((pd as any[]) ?? [])) parentMap.set(p.id, p.numero ?? null);
+    }
+    setRows(rs.map((r) => ({ ...r, parent_numero: r.avenant_de ? parentMap.get(r.avenant_de) ?? null : null })));
   }
   useEffect(() => { if (!loadingAdmin) load(); /* eslint-disable-next-line */ }, [loadingAdmin, isAdmin, user?.id]);
 
   async function valider(row: Row) {
     if (!isAdmin || !user?.id) return;
     setBusy(true);
-    // calcul du prochain n°
-    const { data: allNums } = await supabase.from("registre_mandats").select("numero").not("numero", "is", null).limit(5000);
-    const maxN = ((allNums as any[]) ?? []).reduce((m, r) => {
-      const n = parseInt(String(r.numero ?? "").replace(/\D/g, ""), 10);
-      return Number.isFinite(n) && n > m ? n : m;
-    }, DEBUT_REGISTRE - 1);
-    const nextN = String(maxN + 1);
-    const { error } = await supabase.from("registre_mandats").update({
-      numero: nextN,
+    let updatePayload: Record<string, any> = {
       statut_validation: "valide",
       valide_par: user.id,
       valide_le: new Date().toISOString(),
       motif_refus: null,
-    }).eq("id", row.id);
+    };
+    let messageDesc = "";
+    if (row.avenant_de) {
+      // Avenant : pas de n° de registre, mais n° d'avenant séquentiel pour ce parent
+      const { data: existing } = await supabase
+        .from("registre_mandats")
+        .select("avenant_numero")
+        .eq("avenant_de", row.avenant_de)
+        .eq("statut_validation", "valide")
+        .limit(500);
+      const maxA = ((existing as any[]) ?? []).reduce((m, r) => {
+        const n = Number(r.avenant_numero);
+        return Number.isFinite(n) && n > m ? n : m;
+      }, 0);
+      const nextA = maxA + 1;
+      updatePayload.avenant_numero = nextA;
+      messageDesc = `Avenant n° ${nextA} validé.`;
+    } else {
+      const { data: allNums } = await supabase.from("registre_mandats").select("numero").not("numero", "is", null).limit(5000);
+      const maxN = ((allNums as any[]) ?? []).reduce((m, r) => {
+        const n = parseInt(String(r.numero ?? "").replace(/\D/g, ""), 10);
+        return Number.isFinite(n) && n > m ? n : m;
+      }, DEBUT_REGISTRE - 1);
+      const nextN = String(maxN + 1);
+      updatePayload.numero = nextN;
+      messageDesc = `N° ${nextN} attribué.`;
+    }
+    const { error } = await supabase.from("registre_mandats").update(updatePayload).eq("id", row.id);
     setBusy(false);
     if (error) return toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    toast({ title: "Mandat validé", description: `N° ${nextN} attribué.` });
+    toast({ title: "Mandat validé", description: messageDesc });
     load();
   }
 
@@ -132,6 +162,11 @@ export default function MandatsAValider() {
         <Card key={r.id}>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2 flex-wrap">
+              {r.avenant_de && (
+                <Badge className="bg-primary/20 text-primary border-primary/40">
+                  Avenant au mandat N° {r.parent_numero ?? "—"}
+                </Badge>
+              )}
               <Badge variant="outline">{r.nature_mandat ?? "—"}</Badge>
               <Badge variant="outline">{r.forme_mandat ?? r.nature_mandat ?? "—"}</Badge>
               <span>{r.mandant_nom ?? "—"}</span>
@@ -165,7 +200,7 @@ export default function MandatsAValider() {
                     <X className="mr-1 h-4 w-4" /> Refuser
                   </Button>
                   <Button size="sm" onClick={() => valider(r)} disabled={busy}>
-                    <Check className="mr-1 h-4 w-4" /> Valider &amp; numéroter
+                    <Check className="mr-1 h-4 w-4" /> {r.avenant_de ? "Valider l'avenant" : "Valider & numéroter"}
                   </Button>
                 </>
               ) : (
@@ -206,8 +241,17 @@ function Info({ label, value }: { label: string; value: any }) {
 function DerniersValides({ onPDF }: { onPDF: (r: Row) => void }) {
   const [rows, setRows] = useState<Row[]>([]);
   useEffect(() => {
-    supabase.from("registre_mandats").select("*").eq("statut_validation", "valide").order("valide_le", { ascending: false }).limit(10)
-      .then(({ data }) => setRows((data as Row[]) ?? []));
+    (async () => {
+      const { data } = await supabase.from("registre_mandats").select("*").eq("statut_validation", "valide").order("valide_le", { ascending: false }).limit(10);
+      const rs = (data as Row[]) ?? [];
+      const parentIds = Array.from(new Set(rs.map((r) => r.avenant_de).filter(Boolean) as string[]));
+      const parentMap = new Map<string, string | null>();
+      if (parentIds.length) {
+        const { data: pd } = await supabase.from("registre_mandats").select("id, numero").in("id", parentIds);
+        for (const p of ((pd as any[]) ?? [])) parentMap.set(p.id, p.numero ?? null);
+      }
+      setRows(rs.map((r) => ({ ...r, parent_numero: r.avenant_de ? parentMap.get(r.avenant_de) ?? null : null })));
+    })();
   }, []);
   if (rows.length === 0) return null;
   return (
@@ -217,7 +261,11 @@ function DerniersValides({ onPDF }: { onPDF: (r: Row) => void }) {
         {rows.map((r) => (
           <div key={r.id} className="flex items-center justify-between text-sm border-b border-border/40 last:border-0 py-2">
             <div>
-              <span className="font-bold text-primary mr-2">N° {r.numero ?? "—"}</span>
+              {r.avenant_de ? (
+                <span className="font-bold text-primary mr-2">Avenant n° {r.avenant_numero ?? "—"} au mandat N° {r.parent_numero ?? "—"}</span>
+              ) : (
+                <span className="font-bold text-primary mr-2">N° {r.numero ?? "—"}</span>
+              )}
               <span>{r.nature_mandat} — {r.forme_mandat}</span>
               <span className="text-muted-foreground"> · {r.mandant_nom ?? "—"}</span>
             </div>

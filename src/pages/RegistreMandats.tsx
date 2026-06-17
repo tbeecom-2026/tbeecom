@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Plus, FilePen, Send } from "lucide-react";
+import { Search, Plus, FilePen, Send, FilePlus2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/formatters";
 import { retirerMandatsExpires, nettyLabel, getIssueBadgeClass } from "@/lib/mandatStatus";
@@ -318,7 +318,22 @@ export default function RegistreMandats() {
                       <span className="text-muted-foreground">—</span>
                     )}
                   </td>
-                  <td className="p-3">{m.negociateur ?? "—"}</td>
+                  <td className="p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>{m.negociateur ?? "—"}</span>
+                      {m.numero && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-xs"
+                          onClick={(e) => { e.stopPropagation(); navigate(`/mandats/${m.id}/avenant`); }}
+                          title="Créer un avenant à ce mandat"
+                        >
+                          <FilePlus2 className="mr-1 h-3.5 w-3.5" /> Avenant
+                        </Button>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               );
             })}
