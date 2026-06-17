@@ -4,7 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * Renvoie true si l'utilisateur courant a profiles.is_admin = true.
- * Renvoie false par défaut (sécurité : on suppose non-admin tant que non vérifié).
+ * On matche en priorité par EMAIL (c'est ainsi que l'admin est désigné en base),
+ * avec repli sur l'id. false par défaut tant que non vérifié (sécurité).
  */
 export function useIsAdmin() {
   const { user } = useAuth();
@@ -14,16 +15,17 @@ export function useIsAdmin() {
   useEffect(() => {
     let cancelled = false;
     async function run() {
-      if (!user?.id) {
+      if (!user?.id && !user?.email) {
         setIsAdmin(false);
         setLoading(false);
         return;
       }
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", user.id)
-        .limit(1);
+      // Match par email si dispo (fiable), sinon par id.
+      let query = supabase.from("profiles").select("is_admin, email, id");
+      if (user?.email) query = query.eq("email", user.email);
+      else query = query.eq("id", user.id);
+
+      const { data, error } = await query.limit(1);
       if (cancelled) return;
       if (error) {
         console.warn("[useIsAdmin]", error.message);
@@ -35,10 +37,8 @@ export function useIsAdmin() {
       setLoading(false);
     }
     run();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
+    return () => { cancelled = true; };
+  }, [user?.id, user?.email]);
 
   return { isAdmin, loading };
 }
