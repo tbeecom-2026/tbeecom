@@ -324,6 +324,7 @@ export default function NouveauMandat() {
   const isLocation = nature === "Location";
   const isMurs = nature === "Murs commerciaux" || nature === "Local / immobilier d'entreprise";
   const isBail = nature === "Droit au bail" || nature === "Murs commerciaux" || nature === "Local / immobilier d'entreprise";
+  const hasBail = ["Fonds de commerce","Droit au bail","Murs commerciaux","Local / immobilier d'entreprise"].includes(nature);
   const isFonds = nature === "Fonds de commerce";
 
   // Construit le payload commun
