@@ -48,10 +48,12 @@ export default function RegistreMandats() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [saisie, setSaisie] = useState<number | null>(null); // N° en cours de saisie (modal)
+  const [nbAValider, setNbAValider] = useState(0);
   const PAGE_SIZE = 50;
 
   useEffect(() => {
     load();
+    loadCount();
   }, []);
   useEffect(() => {
     retirerMandatsExpires();
@@ -61,8 +63,16 @@ export default function RegistreMandats() {
   }, [search]);
 
   async function load() {
+    // ne lister que les mandats validés ou legacy (sans statut_validation)
     const { data } = await supabase.from("registre_mandats").select("*").limit(5000);
-    setAll((data as RegistreMandat[]) ?? []);
+    const rows = ((data as RegistreMandat[]) ?? []).filter(
+      (r) => !r.statut_validation || r.statut_validation === "valide"
+    );
+    setAll(rows);
+  }
+  async function loadCount() {
+    const { data } = await supabase.from("registre_mandats").select("id").eq("statut_validation", "a_valider").limit(500);
+    setNbAValider(((data as any[]) ?? []).length);
   }
 
   // Ouvre la fiche du bien correspondant à une référence (depuis le registre).
