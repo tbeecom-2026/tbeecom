@@ -199,6 +199,31 @@ export interface RegistreMandat {
   observations: string | null;
   negociateur: string | null;
   created_at: string | null;
+  // Workflow validation (colonnes ajoutées par le SQL fourni)
+  statut_validation?: string | null;
+  cree_par?: string | null;
+  valide_par?: string | null;
+  valide_le?: string | null;
+  motif_refus?: string | null;
+  // Champs métier formulaire
+  nature_mandat?: string | null;
+  forme_mandat?: string | null;
+  bien_id?: string | null;
+  mandant_id?: string | null;
+  prix?: number | null;
+  prix_net_vendeur?: number | null;
+  loyer?: number | null;
+  honoraires_montant?: number | null;
+  honoraires_charge?: string | null;
+  duree_mois?: number | null;
+  date_signature?: string | null;
+  preavis_jours?: number | null;
+  designation_bien?: string | null;
+  adresse_bien?: string | null;
+  activite_bien?: string | null;
+  surfaces_bien?: string | null;
+  criteres_recherche?: string | null;
+  prix_max_recherche?: number | null;
   mandat?: Mandat;
 }
 
@@ -207,6 +232,7 @@ export interface Profile {
   email: string | null;
   full_name: string | null;
   created_at: string;
+  is_admin?: boolean | null;
 }
 export interface MandatVendeur {
   id: string;
