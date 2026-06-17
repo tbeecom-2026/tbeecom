@@ -700,6 +700,7 @@ export interface MandatDraft {
   numero?: string | null;
   nature_mandat?: string | null;
   forme_mandat?: string | null;
+  mandant_id?: string | null;
   mandant_nom?: string | null;
   reference_bien?: string | null;
   designation_bien?: string | null;
