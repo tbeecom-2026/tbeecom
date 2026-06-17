@@ -793,6 +793,126 @@ function objetLibelle(nature: string): { titre: string; partieAdverse: string; o
   }
 }
 
+function renderAvenant(
+  draft: MandatDraft,
+  parent: any | null,
+  agence: AgenceParametres | null,
+  c: any | null,
+): string {
+  const numAvenant = draft.avenant_numero != null ? String(draft.avenant_numero) : "—";
+  const numParent = parent?.numero ?? "[ ___ ]";
+  const titre = `AVENANT N° ${numAvenant} AU MANDAT N° ${numParent}`;
+
+  // Identité mandant (réutilise les mêmes règles que le mandat)
+  const mandantNomComplet = [c?.civilite, c?.prenom, c?.nom].filter(Boolean).join(" ").trim();
+  const mandantNom = (c?.societe && c.societe.trim())
+    ? c.societe.trim()
+    : (mandantNomComplet || draft.mandant_nom || parent?.mandant_nom || null);
+  const mandantAdresse = c
+    ? [c.adresse, c.code_postal, c.commune].filter(Boolean).join(" ").trim()
+    : null;
+  const mandantRows: string[] = [];
+  mandantRows.push(`<tr><td>Nom / Raison sociale</td><td><b>${val(mandantNom)}</b></td></tr>`);
+  if (c?.societe) {
+    const formeCapital = [c.forme_juridique, c.capital ? `Capital : ${euros(c.capital)}` : null].filter(Boolean).join(" — ");
+    if (formeCapital) mandantRows.push(`<tr><td>Forme / Capital</td><td>${val(formeCapital)}</td></tr>`);
+    const rcsSiret = c.rcs ?? c.siret;
+    if (rcsSiret) mandantRows.push(`<tr><td>RCS / SIRET</td><td>${val(rcsSiret)}</td></tr>`);
+    const representant = [mandantNomComplet, c.fonction].filter(Boolean).join(" — ");
+    if (representant) mandantRows.push(`<tr><td>Représentée par</td><td>${val(representant)}</td></tr>`);
+  }
+  mandantRows.push(`<tr><td>Adresse</td><td>${val(mandantAdresse, "[ adresse du mandant ]")}</td></tr>`);
+  if (c?.telephone) mandantRows.push(`<tr><td>Téléphone</td><td>${val(c.telephone)}</td></tr>`);
+  if (c?.email) mandantRows.push(`<tr><td>Email</td><td>${val(c.email)}</td></tr>`);
+
+  // Rappel du mandat initial
+  const rappel: string[] = [];
+  rappel.push(`<tr><td>Mandat initial n°</td><td><b>${numParent}</b></td></tr>`);
+  if (parent?.date_signature) rappel.push(`<tr><td>Date de signature</td><td>${fdate(parent.date_signature)}</td></tr>`);
+  if (parent?.nature_mandat || parent?.forme_mandat) rappel.push(`<tr><td>Nature / Forme</td><td>${parent?.nature_mandat ?? "—"} — ${parent?.forme_mandat ?? "—"}</td></tr>`);
+  if (parent?.designation_bien) rappel.push(`<tr><td>Désignation du bien</td><td>${val(parent.designation_bien)}</td></tr>`);
+  if (parent?.adresse_bien) rappel.push(`<tr><td>Adresse du bien</td><td>${val(parent.adresse_bien)}</td></tr>`);
+  if (parent?.prix != null) rappel.push(`<tr><td>Prix initial</td><td>${euros(parent.prix)}</td></tr>`);
+  if (parent?.prix_net_vendeur != null) rappel.push(`<tr><td>Prix net initial</td><td>${euros(parent.prix_net_vendeur)}</td></tr>`);
+  if (parent?.loyer != null) rappel.push(`<tr><td>Loyer initial</td><td>${euros(parent.loyer)}</td></tr>`);
+  if (parent?.honoraires_montant != null) {
+    const ttcP = Math.round(parent.honoraires_montant * 1.2);
+    rappel.push(`<tr><td>Honoraires initiaux</td><td>${euros(parent.honoraires_montant)} HT — ${euros(ttcP)} TTC${parent.honoraires_charge ? ` (à la charge de ${parent.honoraires_charge})` : ""}</td></tr>`);
+  }
+  if (parent?.duree_mois != null) rappel.push(`<tr><td>Durée initiale</td><td>${parent.duree_mois} mois</td></tr>`);
+
+  // Modifications convenues (uniquement ce qui change)
+  const mods: string[] = [];
+  const changed = (a: any, b: any) => (a ?? null) !== (b ?? null) && (a !== "" && a != null);
+  if (changed(draft.prix, parent?.prix)) mods.push(`<tr><td>Nouveau prix de présentation</td><td><b>${euros(draft.prix)}</b></td></tr>`);
+  if (changed(draft.prix_net_vendeur, parent?.prix_net_vendeur)) mods.push(`<tr><td>Nouveau prix net</td><td><b>${euros(draft.prix_net_vendeur)}</b> — ${eurosLettres(draft.prix_net_vendeur)}</td></tr>`);
+  if (changed(draft.loyer, parent?.loyer)) mods.push(`<tr><td>Nouveau loyer</td><td><b>${euros(draft.loyer)}</b></td></tr>`);
+  if (changed(draft.honoraires_montant, parent?.honoraires_montant) || changed(draft.honoraires_charge, parent?.honoraires_charge)) {
+    const ht = draft.honoraires_montant ?? null;
+    const ttc = ht ? Math.round(ht * 1.2) : null;
+    mods.push(`<tr><td>Nouveaux honoraires</td><td><b>${euros(ht)} HT — ${euros(ttc)} TTC</b>${draft.honoraires_charge ? ` (à la charge de ${draft.honoraires_charge})` : ""}</td></tr>`);
+  }
+  if (changed(draft.duree_mois, parent?.duree_mois)) mods.push(`<tr><td>Nouvelle durée</td><td><b>${draft.duree_mois ?? "—"} mois</b></td></tr>`);
+  if (changed(draft.date_signature, parent?.date_signature)) mods.push(`<tr><td>Nouvelle date de signature</td><td>${fdate(draft.date_signature)}</td></tr>`);
+
+  const objet = draft.observations && draft.observations.trim() ? draft.observations.trim() : "";
+
+  return `<!DOCTYPE html><html lang="fr"><head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>${titre} — ${agence?.nom_commercial ?? "Agence"}</title>
+    <style>${CSS}</style>
+  </head><body>
+  <div class="page">
+    <div class="header">
+      <div>${agenceHeader(agence)}</div>
+      <div class="header-info">${agenceMentions(agence)}</div>
+    </div>
+    <hr class="gold-line"/>
+    <div class="doc-title">
+      <h1>${titre}</h1>
+      <p>AVENANT</p>
+    </div>
+
+    <div class="convention">ENTRE LES SOUSSIGNÉS</div>
+
+    <div class="partie-title">LE MANDANT</div>
+    <table class="partie-table">${mandantRows.join("")}</table>
+    <p>Ci-après désigné(e) <b>« le MANDANT »</b>, d'une part,</p>
+    <hr class="thin-line"/>
+    ${mandataireV2(agence, draft.negociateur)}
+
+    <div class="convention">IL A ÉTÉ CONVENU CE QUI SUIT</div>
+
+    <div class="article">
+      <div class="article-title">ARTICLE 1 — RAPPEL DU MANDAT INITIAL</div>
+      <table class="summary-table">${rappel.join("")}</table>
+    </div>
+
+    ${objet ? `
+    <div class="article">
+      <div class="article-title">ARTICLE 2 — OBJET DE L'AVENANT</div>
+      <p>${val(objet)}</p>
+    </div>` : ""}
+
+    <div class="article">
+      <div class="article-title">ARTICLE ${objet ? "3" : "2"} — MODIFICATIONS CONVENUES</div>
+      ${mods.length
+        ? `<table class="summary-table">${mods.join("")}</table>`
+        : `<p><em>Aucune modification chiffrée renseignée — préciser ci-dessus l'objet de l'avenant.</em></p>`}
+    </div>
+
+    <div class="article">
+      <p><b>Toutes les autres clauses et conditions du mandat initial demeurent inchangées et conservent leur plein effet.</b></p>
+    </div>
+
+    ${signaturesHtml()}
+
+    <p class="footer-note">${agence?.nom_commercial ?? "Agence"} — Avenant n°&nbsp;${numAvenant} au mandat N°&nbsp;${numParent} — Document confidentiel</p>
+  </div>
+  </body></html>`;
+}
+
 export async function generateMandatV2(draft: MandatDraft, agence: AgenceParametres | null): Promise<string> {
   // Récupération du contact mandant pour son identité complète
   let c: any = null;
