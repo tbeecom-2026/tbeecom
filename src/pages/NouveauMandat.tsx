@@ -73,6 +73,19 @@ export default function NouveauMandat() {
   const [activiteBien, setActiviteBien] = useState("");
   const [surfacesBien, setSurfacesBien] = useState("");
 
+  // biens liés au mandant sélectionné
+  const [biensDuMandant, setBiensDuMandant] = useState<BienLite[]>([]);
+  const [loadingBiensMandant, setLoadingBiensMandant] = useState(false);
+
+  // applique un bien au formulaire (pré-remplit les champs libres)
+  function applyBien(b: BienLite) {
+    setBien(b);
+    setDesignation((d) => d || b.titre || "");
+    setAdresseBien((a) => a || [b.adresse, b.code_postal, b.commune].filter(Boolean).join(", "));
+    setActiviteBien((a) => a || b.nature_activite || "");
+    setSurfacesBien((s) => s || buildSurfaces(b));
+  }
+
   // recherche
   const [criteres, setCriteres] = useState("");
   const [prixMaxRecherche, setPrixMaxRecherche] = useState<string>("");
