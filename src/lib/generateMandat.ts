@@ -719,6 +719,14 @@ export interface MandatDraft {
   negociateur?: string | null;
   criteres_recherche?: string | null;
   prix_max_recherche?: number | null;
+  bail_duree_restante?: string | null;
+  bail_garanties?: string | null;
+  bail_charges?: number | null;
+  bail_taxe_fonciere?: number | null;
+  bail_indexation?: string | null;
+  bail_fiscalite?: string | null;
+  effectif?: number | null;
+  composition?: string | null;
 }
 
 function agenceHeader(a: AgenceParametres | null): string {
