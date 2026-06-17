@@ -71,17 +71,31 @@ export default function Parametres() {
     return "—";
   }
 
+  const { isAdmin } = useIsAdmin();
+
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Paramètres</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Barème des honoraires — Cession de fonds de commerce
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">Mon agence &amp; barème des honoraires</p>
         </div>
+      </div>
+
+      <Tabs defaultValue="bareme">
+        <TabsList>
+          <TabsTrigger value="bareme"><Euro className="mr-1 h-4 w-4" /> Barème honoraires</TabsTrigger>
+          <TabsTrigger value="agence"><Building2 className="mr-1 h-4 w-4" /> Mon agence</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="agence" className="mt-4">
+          <AgenceForm canEdit={isAdmin} />
+        </TabsContent>
+
+        <TabsContent value="bareme" className="mt-4 space-y-6">
+      <div className="flex items-center justify-end">
         <Button onClick={handleSave} disabled={saving}>
-          <Save className="mr-2 h-4 w-4" />{saving ? "Enregistrement..." : "Enregistrer"}
+          <Save className="mr-2 h-4 w-4" />{saving ? "Enregistrement..." : "Enregistrer le barème"}
         </Button>
       </div>
 
