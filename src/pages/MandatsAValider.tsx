@@ -107,7 +107,7 @@ export default function MandatsAValider() {
 
   async function genererPDF(row: Row) {
     const agence = await getAgence();
-    const html = generateMandatV2(row as any, agence);
+    const html = await generateMandatV2(row as any, agence);
     openMandat(html);
   }
 

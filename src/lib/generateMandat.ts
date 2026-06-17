@@ -6,6 +6,7 @@
 
 import type { Mandat, Contact, MandatVendeur } from "@/types/database";
 import type { AgenceParametres } from "@/lib/agence";
+import { supabase } from "@/lib/supabaseClient";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function euros(n: number | null | undefined): string {
@@ -699,6 +700,7 @@ export interface MandatDraft {
   numero?: string | null;
   nature_mandat?: string | null;
   forme_mandat?: string | null;
+  mandant_id?: string | null;
   mandant_nom?: string | null;
   reference_bien?: string | null;
   designation_bien?: string | null;
@@ -774,7 +776,18 @@ function objetLibelle(nature: string): { titre: string; partieAdverse: string; o
   }
 }
 
-export function generateMandatV2(draft: MandatDraft, agence: AgenceParametres | null): string {
+export async function generateMandatV2(draft: MandatDraft, agence: AgenceParametres | null): Promise<string> {
+  // Récupération du contact mandant pour son identité complète
+  let c: any = null;
+  if (draft.mandant_id) {
+    const { data } = await supabase
+      .from("contacts")
+      .select("*")
+      .eq("id", draft.mandant_id)
+      .limit(1);
+    c = (data as any[])?.[0] ?? null;
+  }
+
   const nature = draft.nature_mandat ?? "Fonds de commerce";
   const forme = draft.forme_mandat ?? "Simple";
   const isExcl = forme === "Exclusif";
@@ -788,6 +801,30 @@ export function generateMandatV2(draft: MandatDraft, agence: AgenceParametres | 
   const ttc = ht ? Math.round(ht * 1.2) : null;
   const dureeMois = draft.duree_mois ?? 3;
   const preavis = draft.preavis_jours ?? 15;
+
+  // ── Bloc identité MANDANT (contact lié) ────────────────────────────
+  const mandantNomComplet = [c?.civilite, c?.prenom, c?.nom].filter(Boolean).join(" ").trim();
+  const mandantNom = (c?.societe && c.societe.trim())
+    ? c.societe.trim()
+    : (mandantNomComplet || draft.mandant_nom || null);
+  const mandantAdresse = c
+    ? [c.adresse, c.code_postal, c.commune].filter(Boolean).join(" ").trim()
+    : null;
+  const mandantRows: string[] = [];
+  mandantRows.push(`<tr><td>Nom / Raison sociale</td><td><b>${val(mandantNom)}</b></td></tr>`);
+  if (c?.societe) {
+    const formeCapital = [c.forme_juridique, c.capital ? `Capital : ${euros(c.capital)}` : null]
+      .filter(Boolean).join(" — ");
+    if (formeCapital) mandantRows.push(`<tr><td>Forme / Capital</td><td>${val(formeCapital)}</td></tr>`);
+    const rcsSiret = c.rcs ?? c.siret;
+    if (rcsSiret) mandantRows.push(`<tr><td>RCS / SIRET</td><td>${val(rcsSiret)}</td></tr>`);
+    const representant = [mandantNomComplet, c.fonction].filter(Boolean).join(" — ");
+    if (representant) mandantRows.push(`<tr><td>Représentée par</td><td>${val(representant)}</td></tr>`);
+  }
+  mandantRows.push(`<tr><td>Adresse</td><td>${val(mandantAdresse, "[ adresse du mandant ]")}</td></tr>`);
+  if (c?.telephone) mandantRows.push(`<tr><td>Téléphone</td><td>${val(c.telephone)}</td></tr>`);
+  if (c?.email) mandantRows.push(`<tr><td>Email</td><td>${val(c.email)}</td></tr>`);
+
 
   // synthèse spécifique
   const synthese: string[] = [];
@@ -857,8 +894,7 @@ export function generateMandatV2(draft: MandatDraft, agence: AgenceParametres | 
 
     <div class="partie-title">${partieAdverse}</div>
     <table class="partie-table">
-      <tr><td>Nom / Raison sociale</td><td><b>${val(draft.mandant_nom)}</b></td></tr>
-      <tr><td>Adresse</td><td>${val(draft.adresse_bien, "[ adresse du mandant ]")}</td></tr>
+      ${mandantRows.join("")}
     </table>
     <p>Ci-après désigné(e) <b>« le MANDANT »</b>, d'une part,</p>
     <hr class="thin-line"/>
