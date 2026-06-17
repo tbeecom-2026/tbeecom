@@ -26,7 +26,18 @@ const FORMES = ["Simple", "Exclusif", "Semi-exclusif"];
 const CHARGE = ["Acquéreur", "Vendeur"];
 
 type ContactLite = { id: string; nom: string | null; prenom: string | null; societe: string | null; email: string | null; telephone: string | null; adresse: string | null; code_postal: string | null; commune: string | null };
-type BienLite = { id: string; reference: string | null; titre: string | null; adresse: string | null; code_postal: string | null; commune: string | null; nature_activite: string | null; surface_commerciale: number | null; surface_totale: number | null };
+type BienLite = { id: string; reference: string | null; titre: string | null; adresse: string | null; code_postal: string | null; commune: string | null; nature_activite: string | null; surface_commerciale: number | null; surface_totale: number | null; proprietaire_email?: string | null; proprietaire_nom?: string | null };
+
+function escapeOr(s: string) {
+  // PostgREST .or() : éviter virgules/parenthèses/guillemets qui cassent la syntaxe
+  return s.replace(/[,()"']/g, " ").trim();
+}
+function buildSurfaces(b: BienLite) {
+  const parts: string[] = [];
+  if (b.surface_commerciale) parts.push(`${b.surface_commerciale} m² commerciale`);
+  if (b.surface_totale) parts.push(`${b.surface_totale} m² totale`);
+  return parts.join(" / ");
+}
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
