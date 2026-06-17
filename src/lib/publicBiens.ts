@@ -7,12 +7,33 @@ import { supabase } from "./supabaseClient";
 
 // Colonnes exposées par la vue biens_publics (PAS d'adresse, PAS d'attributs).
 export const PUBLIC_FIELDS = [
-  "id","reference","categorie","type_commerce","sous_type","nature_activite",
-  "titre","description","commune","code_postal","secteur",
-  "surface_commerciale","surface_totale","surface_reserves","surface_cuisine",
-  "nb_couverts_salle","nb_couverts_terrasse","lineaire_vitrine",
-  "conforme_erp","conforme_pmr","extraction","murs_a_vendre",
-  "prix_demande","photo_principale","photos","enseigne","confidentiel",
+  "id",
+  "reference",
+  "categorie",
+  "type_commerce",
+  "sous_type",
+  "nature_activite",
+  "titre",
+  "description",
+  "commune",
+  "code_postal",
+  "secteur",
+  "surface_commerciale",
+  "surface_totale",
+  "surface_reserves",
+  "surface_cuisine",
+  "nb_couverts_salle",
+  "nb_couverts_terrasse",
+  "lineaire_vitrine",
+  "conforme_erp",
+  "conforme_pmr",
+  "extraction",
+  "murs_a_vendre",
+  "prix_demande",
+  "photo_principale",
+  "photos",
+  "enseigne",
+  "confidentiel",
   "created_at",
 ].join(",");
 
@@ -54,8 +75,14 @@ export function sanitize(b: PublicBien): PublicBien {
 }
 
 export async function listPublicBiens(opts: {
-  search?: string; categorie?: string; type?: string; commune?: string;
-  prixMax?: number; surfaceMin?: number; page?: number; pageSize?: number;
+  search?: string;
+  categorie?: string;
+  type?: string;
+  commune?: string;
+  prixMax?: number;
+  surfaceMin?: number;
+  page?: number;
+  pageSize?: number;
 }) {
   const { search, categorie, type, commune, prixMax, surfaceMin, page = 0, pageSize = 12 } = opts;
   let q = supabase.from("biens_publics").select(PUBLIC_FIELDS, { count: "exact" });
@@ -65,8 +92,11 @@ export async function listPublicBiens(opts: {
   if (prixMax) q = q.lte("prix_demande", prixMax);
   if (surfaceMin) q = q.gte("surface_commerciale", surfaceMin);
   if (search) {
-    const t = search.trim().replace(/[,()]/g, " ");
-    q = q.or(`titre.ilike.%${t}%,commune.ilike.%${t}%,type_commerce.ilike.%${t}%,nature_activite.ilike.%${t}%,description.ilike.%${t}%`);
+    const t = search.trim().replace(/[,()*]/g, " ");
+    // NB : dans .or(), le joker PostgREST/Neon est '*' (pas '%').
+    q = q.or(
+      `titre.ilike.*${t}*,commune.ilike.*${t}*,type_commerce.ilike.*${t}*,nature_activite.ilike.*${t}*,description.ilike.*${t}*`,
+    );
   }
   const { data, count, error } = await q
     .order("created_at", { ascending: false })
@@ -86,8 +116,7 @@ export async function getPublicBien(reference: string) {
 }
 
 export async function distinctValues(field: "categorie" | "commune" | "type_commerce") {
-  const { data } = await supabase
-    .from("biens_publics").select(field).not(field, "is", null).limit(2000);
+  const { data } = await supabase.from("biens_publics").select(field).not(field, "is", null).limit(2000);
   const set = new Set<string>();
   (data ?? []).forEach((r: any) => r[field] && set.add(r[field]));
   return Array.from(set).sort();
