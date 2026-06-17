@@ -142,13 +142,81 @@ export default function NouveauMandat() {
     const t = setTimeout(async () => {
       const { data } = await supabase
         .from("mandats")
-        .select("id, reference, titre, adresse, code_postal, commune, nature_activite, surface_commerciale, surface_totale")
+        .select("id, reference, titre, adresse, code_postal, commune, nature_activite, surface_commerciale, surface_totale, proprietaire_email, proprietaire_nom")
         .or(`reference.ilike.%${q}%,titre.ilike.%${q}%`)
         .limit(8);
       setBienList((data as BienLite[]) ?? []);
     }, 250);
     return () => clearTimeout(t);
   }, [bienQ, bien]);
+
+  // -------- mandant -> biens du mandant (auto)
+  useEffect(() => {
+    if (!mandant) { setBiensDuMandant([]); return; }
+    let cancelled = false;
+    (async () => {
+      setLoadingBiensMandant(true);
+      const cols = "id, reference, titre, adresse, code_postal, commune, nature_activite, surface_commerciale, surface_totale, proprietaire_email, proprietaire_nom";
+      const email = mandant.email?.trim();
+      let rows: BienLite[] = [];
+      if (email) {
+        const { data } = await supabase.from("mandats").select(cols).ilike("proprietaire_email", email).limit(20);
+        rows = (data as BienLite[]) ?? [];
+      }
+      if (rows.length === 0) {
+        const fullName = [mandant.prenom, mandant.nom].filter(Boolean).join(" ").trim();
+        const candidates = [fullName, mandant.nom, mandant.societe].filter((s): s is string => !!s && s.length >= 2);
+        const seen = new Set<string>();
+        for (const c of candidates) {
+          const { data } = await supabase.from("mandats").select(cols).ilike("proprietaire_nom", `%${escapeOr(c)}%`).limit(20);
+          for (const r of ((data as BienLite[]) ?? [])) {
+            if (!seen.has(r.id)) { seen.add(r.id); rows.push(r); }
+          }
+          if (rows.length >= 20) break;
+        }
+      }
+      if (cancelled) return;
+      setBiensDuMandant(rows);
+      // auto pré-sélection si un seul bien et aucun bien encore choisi
+      if (!bien && rows.length === 1) applyBien(rows[0]);
+      setLoadingBiensMandant(false);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mandant?.id]);
+
+  // -------- bien -> mandant (auto, sens inverse)
+  useEffect(() => {
+    if (!bien || mandant) return;
+    let cancelled = false;
+    (async () => {
+      const email = bien.proprietaire_email?.trim();
+      let rows: ContactLite[] = [];
+      if (email) {
+        const { data } = await supabase
+          .from("contacts")
+          .select("id, nom, prenom, societe, email, telephone, adresse, code_postal, commune")
+          .ilike("email", email)
+          .limit(5);
+        rows = (data as ContactLite[]) ?? [];
+      }
+      if (rows.length === 0 && bien.proprietaire_nom) {
+        const q = escapeOr(bien.proprietaire_nom);
+        if (q.length >= 2) {
+          const { data } = await supabase
+            .from("contacts")
+            .select("id, nom, prenom, societe, email, telephone, adresse, code_postal, commune")
+            .or(`nom.ilike.%${q}%,societe.ilike.%${q}%`)
+            .limit(5);
+          rows = (data as ContactLite[]) ?? [];
+        }
+      }
+      if (cancelled) return;
+      if (rows.length === 1) setMandant(rows[0]);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bien?.id]);
 
   // -------- honoraires auto
   const prixCalc = useMemo(() => {
