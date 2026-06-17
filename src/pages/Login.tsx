@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +16,18 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  // Si déjà connecté, on dégage vers le CRM (ou la route demandée initialement).
+  useEffect(() => {
+    if (!authLoading && user) {
+      const from = (location.state as any)?.from as string | undefined;
+      navigate(from && from.startsWith("/") && !from.startsWith("/login") ? from : "/dashboard", { replace: true });
+    }
+  }, [authLoading, user, location.state, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
