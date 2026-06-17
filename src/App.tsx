@@ -58,6 +58,7 @@ const App = () => (
               <Route path="biens/:id" element={<MandatDetail />} />
               <Route path="mandats" element={<RegistreMandats />} />
               <Route path="mandats/nouveau" element={<NouveauMandat />} />
+              <Route path="mandats/:id/edit" element={<NouveauMandat />} />
               <Route path="mandats/a-valider" element={<MandatsAValider />} />
               <Route path="mandats/:id" element={<MandatDetail />} />
               <Route path="contacts" element={<Contacts />} />
