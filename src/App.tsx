@@ -11,6 +11,8 @@ import Biens from "@/pages/Biens";
 import NouveauBien from "@/pages/NouveauBien";
 import MandatDetail from "@/pages/MandatDetail";
 import RegistreMandats from "@/pages/RegistreMandats";
+import NouveauMandat from "@/pages/NouveauMandat";
+import MandatsAValider from "@/pages/MandatsAValider";
 import Contacts from "@/pages/Contacts";
 import ContactDetail from "@/pages/ContactDetail";
 import Activites from "@/pages/Activites";
@@ -55,6 +57,8 @@ const App = () => (
               <Route path="biens/nouveau" element={<NouveauBien />} />
               <Route path="biens/:id" element={<MandatDetail />} />
               <Route path="mandats" element={<RegistreMandats />} />
+              <Route path="mandats/nouveau" element={<NouveauMandat />} />
+              <Route path="mandats/a-valider" element={<MandatsAValider />} />
               <Route path="mandats/:id" element={<MandatDetail />} />
               <Route path="contacts" element={<Contacts />} />
               <Route path="contacts/:id" element={<ContactDetail />} />

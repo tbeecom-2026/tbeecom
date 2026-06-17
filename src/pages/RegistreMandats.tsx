@@ -48,10 +48,12 @@ export default function RegistreMandats() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [saisie, setSaisie] = useState<number | null>(null); // N° en cours de saisie (modal)
+  const [nbAValider, setNbAValider] = useState(0);
   const PAGE_SIZE = 50;
 
   useEffect(() => {
     load();
+    loadCount();
   }, []);
   useEffect(() => {
     retirerMandatsExpires();
@@ -61,8 +63,16 @@ export default function RegistreMandats() {
   }, [search]);
 
   async function load() {
+    // ne lister que les mandats validés ou legacy (sans statut_validation)
     const { data } = await supabase.from("registre_mandats").select("*").limit(5000);
-    setAll((data as RegistreMandat[]) ?? []);
+    const rows = ((data as RegistreMandat[]) ?? []).filter(
+      (r) => !r.statut_validation || r.statut_validation === "valide"
+    );
+    setAll(rows);
+  }
+  async function loadCount() {
+    const { data } = await supabase.from("registre_mandats").select("id").eq("statut_validation", "a_valider").limit(500);
+    setNbAValider(((data as any[]) ?? []).length);
   }
 
   // Ouvre la fiche du bien correspondant à une référence (depuis le registre).
@@ -129,11 +139,22 @@ export default function RegistreMandats() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-2xl font-bold">Registre des mandats</h1>
-        <span className="text-sm text-muted-foreground">
-          {nbReels} mandat(s) · {nbManquants} N° manquant(s) — ordre décroissant
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground mr-2">
+            {nbReels} mandat(s) · {nbManquants} N° manquant(s)
+          </span>
+          <Button variant="outline" size="sm" onClick={() => navigate("/mandats/a-valider")}>
+            À valider
+            {nbAValider > 0 && (
+              <Badge className="ml-2 bg-amber-500/20 text-amber-300 border-amber-500/40">{nbAValider}</Badge>
+            )}
+          </Button>
+          <Button size="sm" onClick={() => navigate("/mandats/nouveau")}>
+            <Plus className="mr-1 h-4 w-4" /> Nouveau mandat
+          </Button>
+        </div>
       </div>
 
       <div className="relative">
