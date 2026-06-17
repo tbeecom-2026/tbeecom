@@ -458,7 +458,7 @@ export default function NouveauMandat() {
   }
 
   async function apercu() {
-    const draft = { ...buildPayload("brouillon"), mandant_id: mandant?.id ?? null } as any;
+    const draft = { ...buildPayload("brouillon"), mandant_id: mandant?.id ?? null, avenant_de: avenantDe ?? null } as any;
     const agence = await getAgence();
     const html = await generateMandatV2(draft, agence);
     openMandat(html);
