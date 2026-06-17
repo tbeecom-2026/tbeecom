@@ -193,6 +193,47 @@ export default function RegistreMandats() {
         />
       </div>
 
+      {drafts.length > 0 && (
+        <Card className="border-amber-500/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <FilePen className="h-4 w-4 text-amber-400" />
+              {isAdmin ? "Brouillons & mandats refusés" : "Mes brouillons & refus"}
+              <Badge variant="outline" className="ml-1">{drafts.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {drafts.map((d) => (
+              <div key={d.id} className="flex flex-wrap items-center justify-between gap-2 text-sm border-b border-border/40 last:border-0 py-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant={d.statut_validation === "refuse" ? "destructive" : "outline"}>
+                      {d.statut_validation === "refuse" ? "Refusé" : "Brouillon"}
+                    </Badge>
+                    <span className="font-medium">{d.nature_mandat ?? "—"} · {d.forme_mandat ?? "—"}</span>
+                    <span className="text-muted-foreground">{d.mandant_nom ?? "Mandant —"}</span>
+                    {d.reference_bien && <span className="text-xs text-muted-foreground">· Réf. {d.reference_bien}</span>}
+                  </div>
+                  {d.statut_validation === "refuse" && d.motif_refus && (
+                    <p className="text-xs text-destructive mt-1">Motif : {d.motif_refus}</p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => navigate(`/mandats/${d.id}/edit`)}>
+                    <FilePen className="mr-1 h-3.5 w-3.5" /> Continuer
+                  </Button>
+                  <Button size="sm" onClick={() => soumettre(d.id)}>
+                    <Send className="mr-1 h-3.5 w-3.5" /> Soumettre
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+
+
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead className="bg-secondary/50">
