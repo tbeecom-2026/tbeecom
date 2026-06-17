@@ -222,6 +222,8 @@ export default function Parametres() {
           </p>
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
