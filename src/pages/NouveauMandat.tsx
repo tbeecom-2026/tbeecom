@@ -474,11 +474,20 @@ export default function NouveauMandat() {
         <Button variant="ghost" size="sm" onClick={() => navigate("/mandats")}>
           <ArrowLeft className="mr-1 h-4 w-4" /> Retour au registre
         </Button>
-        <h1 className="text-2xl font-bold ml-2">{isEdit ? "Modifier le mandat" : "Nouveau mandat"}</h1>
+        <h1 className="text-2xl font-bold ml-2">{isAvenant ? "Nouvel avenant" : isEdit ? "Modifier le mandat" : "Nouveau mandat"}</h1>
         <Badge variant="outline" className="ml-2">
           {statut === "refuse" ? "Refusé — à corriger" : statut === "brouillon" ? "Brouillon" : "À valider"}
         </Badge>
       </div>
+
+      {isAvenant && (
+        <Card className="border-primary/40 bg-primary/5">
+          <CardContent className="py-3 text-sm">
+            <strong className="text-primary">Avenant au mandat N° {parentNumero ?? "—"}</strong>
+            <span className="text-muted-foreground"> · Modifiez ce qui change (prix, honoraires, durée, date) et renseignez l'objet de l'avenant dans « Observations ». Le mandat parent ne sera pas modifié.</span>
+          </CardContent>
+        </Card>
+      )}
 
       {statut === "refuse" && motifRefus && (
         <Card className="border-destructive/40 bg-destructive/5">
