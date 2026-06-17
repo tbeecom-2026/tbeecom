@@ -693,7 +693,6 @@ export function openMandat(html: string): void {
 // Couvre 7 natures × 3 formes (Fonds de commerce, Droit au bail, Murs commerciaux,
 // Local pro, Cession de titres, Recherche, Location).
 // ══════════════════════════════════════════════════════════════════════════
-import type { AgenceParametres } from "@/lib/agence";
 
 export interface MandatDraft {
   id?: string;
