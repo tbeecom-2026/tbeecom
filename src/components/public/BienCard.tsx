@@ -4,15 +4,17 @@ import { formatEuros } from "@/lib/formatters";
 import { localisationLabel, titreLabel, type PublicBien } from "@/lib/publicBiens";
 
 export default function BienCard({ b }: { b: PublicBien }) {
+  // Image de couverture : photo_principale, sinon la 1re des photos (comme la fiche).
+  const cover = b.photo_principale || (b.photos && b.photos[0]) || null;
   return (
     <Link
       to={`/landingpage/biens/${encodeURIComponent(b.reference)}`}
       className="group block rounded-xl overflow-hidden bg-card border border-border hover:shadow-lg hover:-translate-y-0.5 transition-all"
     >
       <div className="aspect-[4/3] bg-muted relative overflow-hidden">
-        {b.photo_principale ? (
+        {cover ? (
           <img
-            src={b.photo_principale}
+            src={cover}
             alt={titreLabel(b)}
             loading="lazy"
             className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -41,10 +43,16 @@ export default function BienCard({ b }: { b: PublicBien }) {
         </p>
         <div className="mt-3 flex flex-wrap gap-3 text-xs text-foreground/70">
           {b.type_commerce && (
-            <span className="inline-flex items-center gap-1"><Tag className="h-3 w-3" />{b.type_commerce}</span>
+            <span className="inline-flex items-center gap-1">
+              <Tag className="h-3 w-3" />
+              {b.type_commerce}
+            </span>
           )}
           {b.surface_commerciale != null && (
-            <span className="inline-flex items-center gap-1"><Ruler className="h-3 w-3" />{b.surface_commerciale} m²</span>
+            <span className="inline-flex items-center gap-1">
+              <Ruler className="h-3 w-3" />
+              {b.surface_commerciale} m²
+            </span>
           )}
         </div>
         <div className="mt-4 flex items-baseline justify-between">
