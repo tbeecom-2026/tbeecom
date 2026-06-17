@@ -65,7 +65,15 @@ export default function MandatsAValider() {
     if (!isAdmin && user?.id) q = q.eq("cree_par", user.id);
     const { data, error } = await q;
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    setRows((data as Row[]) ?? []);
+    const rs = ((data as Row[]) ?? []);
+    // récupère le numéro des mandats parents pour les avenants
+    const parentIds = Array.from(new Set(rs.map((r) => r.avenant_de).filter(Boolean) as string[]));
+    let parentMap = new Map<string, string | null>();
+    if (parentIds.length) {
+      const { data: pd } = await supabase.from("registre_mandats").select("id, numero").in("id", parentIds);
+      for (const p of ((pd as any[]) ?? [])) parentMap.set(p.id, p.numero ?? null);
+    }
+    setRows(rs.map((r) => ({ ...r, parent_numero: r.avenant_de ? parentMap.get(r.avenant_de) ?? null : null })));
   }
   useEffect(() => { if (!loadingAdmin) load(); /* eslint-disable-next-line */ }, [loadingAdmin, isAdmin, user?.id]);
 
