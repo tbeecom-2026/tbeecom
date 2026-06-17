@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Search, Eye, Send } from "lucide-react";
 import { calcHonoraires, type BaremeTranche } from "@/lib/honoraires";
@@ -101,7 +102,8 @@ export default function NouveauMandat() {
   const [preavis, setPreavis] = useState<string>("15");
   const [observations, setObservations] = useState("");
 
-  // Champs bail (Droit au bail / Murs / Local pro)
+  // Champs bail (Fonds / Droit au bail / Murs / Local pro)
+  const [bailActivites, setBailActivites] = useState("");
   const [bailDureeRestante, setBailDureeRestante] = useState("");
   const [bailGaranties, setBailGaranties] = useState("");
   const [bailCharges, setBailCharges] = useState<string>("");
@@ -109,9 +111,17 @@ export default function NouveauMandat() {
   const [bailIndexation, setBailIndexation] = useState("");
   const [bailFiscalite, setBailFiscalite] = useState("");
 
+  // Description détaillée des locaux
+  const [descriptionLocaux, setDescriptionLocaux] = useState("");
+
   // Champs fonds de commerce
   const [effectif, setEffectif] = useState<string>("");
   const [composition, setComposition] = useState("");
+  const [compClientele, setCompClientele] = useState(true);
+  const [compEnseigne, setCompEnseigne] = useState(true);
+  const [compNomCommercial, setCompNomCommercial] = useState(true);
+  const [compStocks, setCompStocks] = useState(true);
+  const [compMateriel, setCompMateriel] = useState(true);
 
   const [bareme, setBareme] = useState<BaremeTranche[]>([]);
   const [saving, setSaving] = useState(false);
@@ -168,14 +178,21 @@ export default function NouveauMandat() {
       setDateSignature(row.date_signature ?? new Date().toISOString().slice(0, 10));
       setPreavis(row.preavis_jours != null ? String(row.preavis_jours) : "15");
       setObservations(row.observations ?? "");
+      setBailActivites(row.bail_activites ?? "");
       setBailDureeRestante(row.bail_duree_restante ?? "");
       setBailGaranties(row.bail_garanties ?? "");
       setBailCharges(row.bail_charges != null ? String(row.bail_charges) : "");
       setBailTaxeFonciere(row.bail_taxe_fonciere != null ? String(row.bail_taxe_fonciere) : "");
       setBailIndexation(row.bail_indexation ?? "");
       setBailFiscalite(row.bail_fiscalite ?? "");
+      setDescriptionLocaux(row.description_locaux ?? "");
       setEffectif(row.effectif != null ? String(row.effectif) : "");
       setComposition(row.composition ?? "");
+      setCompClientele(row.comp_clientele !== false);
+      setCompEnseigne(row.comp_enseigne !== false);
+      setCompNomCommercial(row.comp_nom_commercial !== false);
+      setCompStocks(row.comp_stocks !== false);
+      setCompMateriel(row.comp_materiel !== false);
       if (row.mandant_id) {
         const { data: cd } = await supabase.from("contacts")
           .select("id, nom, prenom, societe, email, telephone, adresse, code_postal, commune")
@@ -307,6 +324,7 @@ export default function NouveauMandat() {
   const isLocation = nature === "Location";
   const isMurs = nature === "Murs commerciaux" || nature === "Local / immobilier d'entreprise";
   const isBail = nature === "Droit au bail" || nature === "Murs commerciaux" || nature === "Local / immobilier d'entreprise";
+  const hasBail = ["Fonds de commerce","Droit au bail","Murs commerciaux","Local / immobilier d'entreprise"].includes(nature);
   const isFonds = nature === "Fonds de commerce";
 
   // Construit le payload commun
@@ -340,14 +358,21 @@ export default function NouveauMandat() {
       date_debut: dateSignature || null,
       preavis_jours: isExclusif && preavis ? Number(preavis) : null,
       observations: observations || null,
-      bail_duree_restante: isBail ? (bailDureeRestante || null) : null,
-      bail_garanties: isBail ? (bailGaranties || null) : null,
-      bail_charges: isBail && bailCharges ? Number(bailCharges) : null,
-      bail_taxe_fonciere: isBail && bailTaxeFonciere ? Number(bailTaxeFonciere) : null,
-      bail_indexation: isBail ? (bailIndexation || null) : null,
-      bail_fiscalite: isBail ? (bailFiscalite || null) : null,
+      description_locaux: !isRecherche ? (descriptionLocaux || null) : null,
+      bail_activites: hasBail ? (bailActivites || null) : null,
+      bail_duree_restante: hasBail ? (bailDureeRestante || null) : null,
+      bail_garanties: hasBail ? (bailGaranties || null) : null,
+      bail_charges: hasBail && bailCharges ? Number(bailCharges) : null,
+      bail_taxe_fonciere: hasBail ? (bailTaxeFonciere || null) : null,
+      bail_indexation: hasBail ? (bailIndexation || null) : null,
+      bail_fiscalite: hasBail ? (bailFiscalite || null) : null,
       effectif: isFonds && effectif ? Number(effectif) : null,
       composition: isFonds ? (composition || null) : null,
+      comp_clientele: isFonds ? compClientele : null,
+      comp_enseigne: isFonds ? compEnseigne : null,
+      comp_nom_commercial: isFonds ? compNomCommercial : null,
+      comp_stocks: isFonds ? compStocks : null,
+      comp_materiel: isFonds ? compMateriel : null,
     };
     return payload;
   }
@@ -564,7 +589,12 @@ export default function NouveauMandat() {
               <Field label="Désignation"><Input value={designation} onChange={(e) => setDesignation(e.target.value)} placeholder="ex. Restaurant 60 couverts" /></Field>
               <Field label="Adresse du bien"><Input value={adresseBien} onChange={(e) => setAdresseBien(e.target.value)} /></Field>
               <Field label="Activité"><Input value={activiteBien} onChange={(e) => setActiviteBien(e.target.value)} /></Field>
-              <Field label="Surfaces" hint="ex. 80 m² salle / 25 m² réserve"><Input value={surfacesBien} onChange={(e) => setSurfacesBien(e.target.value)} /></Field>
+              <Field label="Surface totale" hint="ex. 80 m² salle / 25 m² réserve"><Input value={surfacesBien} onChange={(e) => setSurfacesBien(e.target.value)} /></Field>
+              <div className="md:col-span-2">
+                <Field label="Description des locaux" hint="RDC, sous-sol, terrasse, état, équipements…">
+                  <Textarea rows={4} value={descriptionLocaux} onChange={(e) => setDescriptionLocaux(e.target.value)} />
+                </Field>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -595,7 +625,7 @@ export default function NouveauMandat() {
               </Field>
             </>
           )}
-          {(isLocation || isBail) && (
+          {isLocation && (
             <Field label="Loyer mensuel HC (€)"><Input type="number" value={loyer} onChange={(e) => setLoyer(e.target.value)} /></Field>
           )}
           <Field label="Honoraires HT (€)" hint={honorairesAuto ? `Pré-calculé via le barème (${formatEuros(Number(honoraires) || 0)})` : "Saisie manuelle"}>
@@ -613,42 +643,68 @@ export default function NouveauMandat() {
         </CardContent>
       </Card>
 
-      {isBail && (
+      {isFonds && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Caractéristiques du bail</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Field label="Durée restante du bail" hint="ex. 4 ans 6 mois">
-              <Input value={bailDureeRestante} onChange={(e) => setBailDureeRestante(e.target.value)} />
-            </Field>
-            <Field label="Garanties" hint="dépôt de garantie, caution…">
-              <Input value={bailGaranties} onChange={(e) => setBailGaranties(e.target.value)} />
-            </Field>
-            <Field label="Charges annuelles (€)">
-              <Input type="number" value={bailCharges} onChange={(e) => setBailCharges(e.target.value)} />
-            </Field>
-            <Field label="Taxe foncière (€)">
-              <Input type="number" value={bailTaxeFonciere} onChange={(e) => setBailTaxeFonciere(e.target.value)} />
-            </Field>
-            <Field label="Indexation" hint="ex. ILC base 4T 2021">
-              <Input value={bailIndexation} onChange={(e) => setBailIndexation(e.target.value)} />
-            </Field>
-            <Field label="Fiscalité" hint="TVA, refacturation…">
-              <Input value={bailFiscalite} onChange={(e) => setBailFiscalite(e.target.value)} />
-            </Field>
+          <CardHeader><CardTitle className="text-base">Composition du fonds</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {[
+                { id: "comp_clientele", label: "Clientèle et achalandage", checked: compClientele, set: setCompClientele },
+                { id: "comp_enseigne", label: "Enseigne", checked: compEnseigne, set: setCompEnseigne },
+                { id: "comp_nom_commercial", label: "Nom commercial", checked: compNomCommercial, set: setCompNomCommercial },
+                { id: "comp_stocks", label: "Stocks, évalués au jour de la cession", checked: compStocks, set: setCompStocks },
+                { id: "comp_materiel", label: "Agencements, matériel et mobilier", checked: compMateriel, set: setCompMateriel },
+              ].map((o) => (
+                <label key={o.id} htmlFor={o.id} className="flex items-center gap-2 rounded-md border border-border/60 bg-secondary/20 px-3 py-2 text-sm cursor-pointer hover:bg-secondary/40">
+                  <Checkbox id={o.id} checked={o.checked} onCheckedChange={(v) => o.set(v === true)} />
+                  <span>{o.label}</span>
+                </label>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Field label="Effectif salarié">
+                <Input type="number" value={effectif} onChange={(e) => setEffectif(e.target.value)} />
+              </Field>
+              <Field label="Notes / composition (texte libre)" hint="précisions éventuelles">
+                <Textarea rows={3} value={composition} onChange={(e) => setComposition(e.target.value)} />
+              </Field>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {isFonds && (
+      {hasBail && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Exploitation du fonds</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Caractéristiques du bail</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Field label="Effectif salarié">
-              <Input type="number" value={effectif} onChange={(e) => setEffectif(e.target.value)} />
+            <div className="md:col-span-2">
+              <Field label="Activités autorisées au bail" hint="destination contractuelle">
+                <Textarea rows={2} value={bailActivites} onChange={(e) => setBailActivites(e.target.value)} />
+              </Field>
+            </div>
+            <Field label="Durée restante du bail" hint="ex. 4 ans 6 mois">
+              <Input value={bailDureeRestante} onChange={(e) => setBailDureeRestante(e.target.value)} />
             </Field>
-            <Field label="Composition du fonds" hint="éléments inclus dans la cession">
-              <Textarea rows={3} value={composition} onChange={(e) => setComposition(e.target.value)} />
+            <Field label="Loyer annuel brut (€)">
+              <Input type="number" value={loyer} onChange={(e) => setLoyer(e.target.value)} />
             </Field>
+            <Field label="Garanties" hint="dépôt de garantie, caution…">
+              <Input value={bailGaranties} onChange={(e) => setBailGaranties(e.target.value)} />
+            </Field>
+            <Field label="Provision annuelle de charges (€)">
+              <Input type="number" value={bailCharges} onChange={(e) => setBailCharges(e.target.value)} />
+            </Field>
+            <Field label="Taxe foncière" hint="oui / non / refacturée…">
+              <Input value={bailTaxeFonciere} onChange={(e) => setBailTaxeFonciere(e.target.value)} />
+            </Field>
+            <Field label="Indexation" hint="ex. ILC base 4T 2021">
+              <Input value={bailIndexation} onChange={(e) => setBailIndexation(e.target.value)} />
+            </Field>
+            <div className="md:col-span-2">
+              <Field label="Fiscalité" hint="TVA, refacturation…">
+                <Input value={bailFiscalite} onChange={(e) => setBailFiscalite(e.target.value)} />
+              </Field>
+            </div>
           </CardContent>
         </Card>
       )}

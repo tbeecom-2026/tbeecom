@@ -719,14 +719,21 @@ export interface MandatDraft {
   negociateur?: string | null;
   criteres_recherche?: string | null;
   prix_max_recherche?: number | null;
+  bail_activites?: string | null;
   bail_duree_restante?: string | null;
   bail_garanties?: string | null;
   bail_charges?: number | null;
-  bail_taxe_fonciere?: number | null;
+  bail_taxe_fonciere?: string | number | null;
   bail_indexation?: string | null;
   bail_fiscalite?: string | null;
   effectif?: number | null;
   composition?: string | null;
+  description_locaux?: string | null;
+  comp_clientele?: boolean | null;
+  comp_enseigne?: boolean | null;
+  comp_nom_commercial?: boolean | null;
+  comp_stocks?: boolean | null;
+  comp_materiel?: boolean | null;
 }
 
 function agenceHeader(a: AgenceParametres | null): string {
@@ -925,7 +932,8 @@ export async function generateMandatV2(draft: MandatDraft, agence: AgenceParamet
         : `<p><b>Désignation :</b> ${val(draft.designation_bien)}<br/>
            <b>Adresse :</b> ${val(draft.adresse_bien)}<br/>
            ${draft.activite_bien ? `<b>Activité :</b> ${val(draft.activite_bien)}<br/>` : ""}
-           ${draft.surfaces_bien ? `<b>Surfaces :</b> ${val(draft.surfaces_bien)}` : ""}</p>`}
+           ${draft.surfaces_bien ? `<b>Surfaces :</b> ${val(draft.surfaces_bien)}` : ""}</p>
+           ${draft.description_locaux ? `<p><b>Description des locaux :</b><br/>${val(draft.description_locaux)}</p>` : ""}`}
     </div>
 
     <div class="article">
@@ -934,28 +942,43 @@ export async function generateMandatV2(draft: MandatDraft, agence: AgenceParamet
       <p>Les honoraires sont exigibles à la conclusion effective de l'opération constatée par acte écrit.</p>
     </div>
 
-    ${(nature === "Droit au bail" || nature === "Murs commerciaux" || nature === "Local / immobilier d'entreprise") ? `
+    ${nature === "Fonds de commerce" ? (() => {
+      const elements: string[] = [];
+      if (draft.comp_clientele !== false) elements.push("Clientèle et achalandage");
+      if (draft.comp_enseigne !== false) elements.push("Enseigne");
+      if (draft.comp_nom_commercial !== false) elements.push("Nom commercial");
+      if (draft.comp_stocks !== false) elements.push("Stocks, évalués au jour de la cession");
+      if (draft.comp_materiel !== false) elements.push("Agencements, matériel et mobilier");
+      const liElems = elements.length ? `<ul>${elements.map(e => `<li>${e}</li>`).join("")}</ul>` : "";
+      const effLine = draft.effectif != null ? `<p><b>Effectif salarié :</b> ${draft.effectif} salarié(s)</p>` : "";
+      const notes = draft.composition && draft.composition.trim() ? `<p><b>Notes :</b> ${val(draft.composition)}</p>` : "";
+      if (!liElems && !effLine && !notes) return "";
+      return `
+    <div class="article">
+      <div class="article-title">COMPOSITION DU FONDS</div>
+      ${liElems}
+      ${effLine}
+      ${notes}
+    </div>`;
+    })() : ""}
+
+    ${(nature === "Fonds de commerce" || nature === "Droit au bail" || nature === "Murs commerciaux" || nature === "Local / immobilier d'entreprise") ? (() => {
+      const rows: string[] = [];
+      if (draft.bail_activites) rows.push(`<tr><td>Activités autorisées</td><td>${val(draft.bail_activites)}</td></tr>`);
+      if (draft.bail_duree_restante) rows.push(`<tr><td>Durée restante du bail</td><td>${val(draft.bail_duree_restante)}</td></tr>`);
+      if (draft.loyer != null) rows.push(`<tr><td>Loyer</td><td>${euros(draft.loyer)}</td></tr>`);
+      if (draft.bail_garanties) rows.push(`<tr><td>Garanties (dépôt, caution…)</td><td>${val(draft.bail_garanties)}</td></tr>`);
+      if (draft.bail_charges != null) rows.push(`<tr><td>Charges annuelles</td><td>${euros(draft.bail_charges)}</td></tr>`);
+      if (draft.bail_taxe_fonciere) rows.push(`<tr><td>Taxe foncière</td><td>${val(String(draft.bail_taxe_fonciere))}</td></tr>`);
+      if (draft.bail_indexation) rows.push(`<tr><td>Indexation</td><td>${val(draft.bail_indexation)}</td></tr>`);
+      if (draft.bail_fiscalite) rows.push(`<tr><td>Fiscalité</td><td>${val(draft.bail_fiscalite)}</td></tr>`);
+      if (rows.length === 0) return "";
+      return `
     <div class="article">
       <div class="article-title">CARACTÉRISTIQUES DU BAIL</div>
-      <table class="summary-table">
-        <tr><td>Loyer mensuel HC</td><td>${euros(draft.loyer)}</td></tr>
-        <tr><td>Durée restante du bail</td><td>${val(draft.bail_duree_restante)}</td></tr>
-        <tr><td>Garanties (dépôt, caution…)</td><td>${val(draft.bail_garanties)}</td></tr>
-        <tr><td>Charges annuelles</td><td>${euros(draft.bail_charges)}</td></tr>
-        <tr><td>Taxe foncière</td><td>${euros(draft.bail_taxe_fonciere)}</td></tr>
-        <tr><td>Indexation</td><td>${val(draft.bail_indexation)}</td></tr>
-        <tr><td>Fiscalité</td><td>${val(draft.bail_fiscalite)}</td></tr>
-      </table>
-    </div>` : ""}
-
-    ${nature === "Fonds de commerce" ? `
-    <div class="article">
-      <div class="article-title">EXPLOITATION DU FONDS</div>
-      <table class="summary-table">
-        <tr><td>Effectif salarié</td><td>${draft.effectif != null ? `${draft.effectif} salarié(s)` : val(null, "[ ___ ]")}</td></tr>
-        <tr><td>Composition du fonds</td><td>${val(draft.composition)}</td></tr>
-      </table>
-    </div>` : ""}
+      <table class="summary-table">${rows.join("")}</table>
+    </div>`;
+    })() : ""}
 
     <div class="article">
       <div class="article-title">ARTICLE 4 — DURÉE ET RÉSILIATION</div>
