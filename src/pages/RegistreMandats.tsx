@@ -45,12 +45,15 @@ type DisplayRow = { numero: number; row: RegistreMandat | null };
 
 export default function RegistreMandats() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [params] = useSearchParams();
   const focusN = params.get("focus") ? parseInt(params.get("focus")!, 10) : null;
   const [all, setAll] = useState<RegistreMandat[]>([]);
+  const [drafts, setDrafts] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
-  const [saisie, setSaisie] = useState<number | null>(null); // N° en cours de saisie (modal)
+  const [saisie, setSaisie] = useState<number | null>(null);
   const [nbAValider, setNbAValider] = useState(0);
   const PAGE_SIZE = 50;
 
@@ -59,6 +62,10 @@ export default function RegistreMandats() {
     loadCount();
   }, []);
   useEffect(() => {
+    if (user?.id) loadDrafts();
+    // eslint-disable-next-line
+  }, [user?.id, isAdmin]);
+  useEffect(() => {
     retirerMandatsExpires();
   }, []);
   useEffect(() => {
@@ -66,7 +73,6 @@ export default function RegistreMandats() {
   }, [search]);
 
   async function load() {
-    // ne lister que les mandats validés ou legacy (sans statut_validation)
     const { data } = await supabase.from("registre_mandats").select("*").limit(5000);
     const rows = ((data as RegistreMandat[]) ?? []).filter(
       (r) => !r.statut_validation || r.statut_validation === "valide"
@@ -76,6 +82,23 @@ export default function RegistreMandats() {
   async function loadCount() {
     const { data } = await supabase.from("registre_mandats").select("id").eq("statut_validation", "a_valider").limit(500);
     setNbAValider(((data as any[]) ?? []).length);
+  }
+  async function loadDrafts() {
+    let q = supabase.from("registre_mandats").select("*").in("statut_validation", ["brouillon", "refuse"]).order("created_at", { ascending: false });
+    if (!isAdmin && user?.id) q = q.eq("cree_par", user.id);
+    const { data } = await q.limit(200);
+    setDrafts(((data as any[]) ?? []));
+  }
+
+  async function soumettre(id: string) {
+    const { error } = await supabase.from("registre_mandats").update({
+      statut_validation: "a_valider",
+      motif_refus: null,
+    }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Mandat soumis pour validation.");
+    loadDrafts();
+    loadCount();
   }
 
   // Ouvre la fiche du bien correspondant à une référence (depuis le registre).
