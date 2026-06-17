@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,9 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Search } from "lucide-react";
+import { ArrowLeft, Save, Search, Eye, Send } from "lucide-react";
 import { calcHonoraires, type BaremeTranche } from "@/lib/honoraires";
 import { formatEuros } from "@/lib/formatters";
+import { getAgence } from "@/lib/agence";
+import { generateMandatV2, openMandat } from "@/lib/generateMandat";
 
 const NATURES = [
   "Fonds de commerce",
@@ -29,7 +32,6 @@ type ContactLite = { id: string; nom: string | null; prenom: string | null; soci
 type BienLite = { id: string; reference: string | null; titre: string | null; adresse: string | null; code_postal: string | null; commune: string | null; nature_activite: string | null; surface_commerciale: number | null; surface_totale: number | null; proprietaire_email?: string | null; proprietaire_nom?: string | null };
 
 function escapeOr(s: string) {
-  // PostgREST .or() : éviter virgules/parenthèses/guillemets qui cassent la syntaxe
   return s.replace(/[,()"']/g, " ").trim();
 }
 function buildSurfaces(b: BienLite) {
@@ -51,20 +53,20 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 export default function NouveauMandat() {
   const navigate = useNavigate();
+  const { id: editId } = useParams<{ id: string }>();
+  const isEdit = !!editId;
   const { toast } = useToast();
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
 
-  // -------- état formulaire
   const [nature, setNature] = useState<string>("Fonds de commerce");
   const [forme, setForme] = useState<string>("Simple");
 
-  // mandant
   const [mandantQ, setMandantQ] = useState("");
   const [mandantList, setMandantList] = useState<ContactLite[]>([]);
   const [mandant, setMandant] = useState<ContactLite | null>(null);
   const [newContactMode, setNewContactMode] = useState(false);
 
-  // bien
   const [bienQ, setBienQ] = useState("");
   const [bienList, setBienList] = useState<BienLite[]>([]);
   const [bien, setBien] = useState<BienLite | null>(null);
@@ -73,11 +75,9 @@ export default function NouveauMandat() {
   const [activiteBien, setActiviteBien] = useState("");
   const [surfacesBien, setSurfacesBien] = useState("");
 
-  // biens liés au mandant sélectionné
   const [biensDuMandant, setBiensDuMandant] = useState<BienLite[]>([]);
   const [loadingBiensMandant, setLoadingBiensMandant] = useState(false);
 
-  // applique un bien au formulaire (pré-remplit les champs libres)
   function applyBien(b: BienLite) {
     setBien(b);
     setDesignation((d) => d || b.titre || "");
@@ -86,11 +86,9 @@ export default function NouveauMandat() {
     setSurfacesBien((s) => s || buildSurfaces(b));
   }
 
-  // recherche
   const [criteres, setCriteres] = useState("");
   const [prixMaxRecherche, setPrixMaxRecherche] = useState<string>("");
 
-  // financier
   const [prix, setPrix] = useState<string>("");
   const [prixNet, setPrixNet] = useState<string>("");
   const [loyer, setLoyer] = useState<string>("");
@@ -98,14 +96,28 @@ export default function NouveauMandat() {
   const [honorairesAuto, setHonorairesAuto] = useState(true);
   const [honorairesCharge, setHonorairesCharge] = useState("Acquéreur");
 
-  // durée/dates
   const [dureeMois, setDureeMois] = useState<string>("3");
   const [dateSignature, setDateSignature] = useState<string>(new Date().toISOString().slice(0, 10));
   const [preavis, setPreavis] = useState<string>("15");
   const [observations, setObservations] = useState("");
 
+  // Champs bail (Droit au bail / Murs / Local pro)
+  const [bailDureeRestante, setBailDureeRestante] = useState("");
+  const [bailGaranties, setBailGaranties] = useState("");
+  const [bailCharges, setBailCharges] = useState<string>("");
+  const [bailTaxeFonciere, setBailTaxeFonciere] = useState<string>("");
+  const [bailIndexation, setBailIndexation] = useState("");
+  const [bailFiscalite, setBailFiscalite] = useState("");
+
+  // Champs fonds de commerce
+  const [effectif, setEffectif] = useState<string>("");
+  const [composition, setComposition] = useState("");
+
   const [bareme, setBareme] = useState<BaremeTranche[]>([]);
   const [saving, setSaving] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(isEdit);
+  const [statut, setStatut] = useState<string>("brouillon");
+  const [motifRefus, setMotifRefus] = useState<string | null>(null);
 
   // -------- chargement barème
   useEffect(() => {
@@ -114,13 +126,79 @@ export default function NouveauMandat() {
     });
   }, []);
 
+  // -------- chargement du brouillon en mode édition
+  useEffect(() => {
+    if (!isEdit || !editId || !user?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.from("registre_mandats").select("*").eq("id", editId).limit(1);
+      const row = (data as any[])?.[0];
+      if (cancelled) return;
+      if (error || !row) {
+        toast({ title: "Mandat introuvable", variant: "destructive" });
+        navigate("/mandats");
+        return;
+      }
+      // autorisation : brouillon/refuse + (créateur ou admin)
+      const editable = (row.statut_validation === "brouillon" || row.statut_validation === "refuse")
+        && (row.cree_par === user.id || isAdmin);
+      if (!editable) {
+        toast({ title: "Édition impossible", description: "Ce mandat n'est plus modifiable.", variant: "destructive" });
+        navigate("/mandats");
+        return;
+      }
+      // pré-remplissage
+      setStatut(row.statut_validation ?? "brouillon");
+      setMotifRefus(row.motif_refus ?? null);
+      setNature(row.nature_mandat ?? "Fonds de commerce");
+      setForme(row.forme_mandat ?? "Simple");
+      setDesignation(row.designation_bien ?? "");
+      setAdresseBien(row.adresse_bien ?? "");
+      setActiviteBien(row.activite_bien ?? "");
+      setSurfacesBien(row.surfaces_bien ?? "");
+      setCriteres(row.criteres_recherche ?? "");
+      setPrixMaxRecherche(row.prix_max_recherche != null ? String(row.prix_max_recherche) : "");
+      setPrix(row.prix != null ? String(row.prix) : "");
+      setPrixNet(row.prix_net_vendeur != null ? String(row.prix_net_vendeur) : "");
+      setLoyer(row.loyer != null ? String(row.loyer) : "");
+      setHonoraires(row.honoraires_montant != null ? String(row.honoraires_montant) : "");
+      setHonorairesAuto(false);
+      setHonorairesCharge(row.honoraires_charge ?? "Acquéreur");
+      setDureeMois(row.duree_mois != null ? String(row.duree_mois) : "3");
+      setDateSignature(row.date_signature ?? new Date().toISOString().slice(0, 10));
+      setPreavis(row.preavis_jours != null ? String(row.preavis_jours) : "15");
+      setObservations(row.observations ?? "");
+      setBailDureeRestante(row.bail_duree_restante ?? "");
+      setBailGaranties(row.bail_garanties ?? "");
+      setBailCharges(row.bail_charges != null ? String(row.bail_charges) : "");
+      setBailTaxeFonciere(row.bail_taxe_fonciere != null ? String(row.bail_taxe_fonciere) : "");
+      setBailIndexation(row.bail_indexation ?? "");
+      setBailFiscalite(row.bail_fiscalite ?? "");
+      setEffectif(row.effectif != null ? String(row.effectif) : "");
+      setComposition(row.composition ?? "");
+      if (row.mandant_id) {
+        const { data: cd } = await supabase.from("contacts")
+          .select("id, nom, prenom, societe, email, telephone, adresse, code_postal, commune")
+          .eq("id", row.mandant_id).limit(1);
+        const c = (cd as any[])?.[0];
+        if (c) setMandant(c as ContactLite);
+      }
+      if (row.reference_bien) {
+        const { data: bd } = await supabase.from("mandats")
+          .select("id, reference, titre, adresse, code_postal, commune, nature_activite, surface_commerciale, surface_totale, proprietaire_email, proprietaire_nom")
+          .eq("reference", row.reference_bien).limit(1);
+        const b = (bd as any[])?.[0];
+        if (b) setBien(b as BienLite);
+      }
+      setLoadingEdit(false);
+    })();
+    return () => { cancelled = true; };
+  }, [isEdit, editId, user?.id, isAdmin, navigate, toast]);
+
   // -------- recherche contacts
   useEffect(() => {
     const q = mandantQ.trim();
-    if (q.length < 2 || mandant) {
-      setMandantList([]);
-      return;
-    }
+    if (q.length < 2 || mandant) { setMandantList([]); return; }
     const t = setTimeout(async () => {
       const { data } = await supabase
         .from("contacts")
@@ -135,10 +213,7 @@ export default function NouveauMandat() {
   // -------- recherche biens
   useEffect(() => {
     const q = bienQ.trim();
-    if (q.length < 2 || bien) {
-      setBienList([]);
-      return;
-    }
+    if (q.length < 2 || bien) { setBienList([]); return; }
     const t = setTimeout(async () => {
       const { data } = await supabase
         .from("mandats")
@@ -150,7 +225,7 @@ export default function NouveauMandat() {
     return () => clearTimeout(t);
   }, [bienQ, bien]);
 
-  // -------- mandant -> biens du mandant (auto)
+  // -------- mandant -> biens du mandant
   useEffect(() => {
     if (!mandant) { setBiensDuMandant([]); return; }
     let cancelled = false;
@@ -177,7 +252,6 @@ export default function NouveauMandat() {
       }
       if (cancelled) return;
       setBiensDuMandant(rows);
-      // auto pré-sélection si un seul bien et aucun bien encore choisi
       if (!bien && rows.length === 1) applyBien(rows[0]);
       setLoadingBiensMandant(false);
     })();
@@ -185,7 +259,7 @@ export default function NouveauMandat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mandant?.id]);
 
-  // -------- bien -> mandant (auto, sens inverse)
+  // -------- bien -> mandant (sens inverse)
   useEffect(() => {
     if (!bien || mandant) return;
     let cancelled = false;
@@ -196,8 +270,7 @@ export default function NouveauMandat() {
         const { data } = await supabase
           .from("contacts")
           .select("id, nom, prenom, societe, email, telephone, adresse, code_postal, commune")
-          .ilike("email", email)
-          .limit(5);
+          .ilike("email", email).limit(5);
         rows = (data as ContactLite[]) ?? [];
       }
       if (rows.length === 0 && bien.proprietaire_nom) {
@@ -206,8 +279,7 @@ export default function NouveauMandat() {
           const { data } = await supabase
             .from("contacts")
             .select("id, nom, prenom, societe, email, telephone, adresse, code_postal, commune")
-            .or(`nom.ilike.%${q}%,societe.ilike.%${q}%`)
-            .limit(5);
+            .or(`nom.ilike.%${q}%,societe.ilike.%${q}%`).limit(5);
           rows = (data as ContactLite[]) ?? [];
         }
       }
@@ -234,50 +306,21 @@ export default function NouveauMandat() {
   const isRecherche = nature === "Recherche";
   const isLocation = nature === "Location";
   const isMurs = nature === "Murs commerciaux" || nature === "Local / immobilier d'entreprise";
+  const isBail = nature === "Droit au bail" || nature === "Murs commerciaux" || nature === "Local / immobilier d'entreprise";
+  const isFonds = nature === "Fonds de commerce";
 
-  async function save() {
-    if (!user?.id) {
-      toast({ title: "Erreur", description: "Vous devez être connecté.", variant: "destructive" });
-      return;
-    }
-    if (!mandant && !newContactMode) {
-      toast({ title: "Mandant requis", description: "Sélectionnez un contact ou créez-en un.", variant: "destructive" });
-      return;
-    }
-    setSaving(true);
-
-    let mandantId = mandant?.id ?? null;
-    let mandantNom = mandant ? [mandant.prenom, mandant.nom].filter(Boolean).join(" ").trim() || mandant.societe : null;
-
-    if (newContactMode && !mandantId) {
-      // créer un contact rapide
-      const newC: any = {
-        nom: mandantQ.trim() || null,
-        user_id: user.id,
-      };
-      const { data, error } = await supabase.from("contacts").insert(newC).select("id, nom").limit(1);
-      if (error) {
-        setSaving(false);
-        toast({ title: "Erreur création contact", description: error.message, variant: "destructive" });
-        return;
-      }
-      const created = (data as any[])?.[0];
-      mandantId = created?.id ?? null;
-      mandantNom = created?.nom ?? mandantQ.trim();
-    }
-
-    const negociateur = (user as any).name || user.email || "—";
-
+  // Construit le payload commun
+  function buildPayload(targetStatut: "brouillon" | "a_valider") {
+    const negociateur = (user as any)?.name || user?.email || "—";
+    const mandantNom = mandant ? ([mandant.prenom, mandant.nom].filter(Boolean).join(" ").trim() || mandant.societe) : null;
     const payload: Record<string, any> = {
-      numero: null,
-      statut_validation: "a_valider",
-      cree_par: user.id,
+      statut_validation: targetStatut,
       negociateur,
       nature_mandat: nature,
       forme_mandat: forme,
       type_mandat: forme,
       objet: `${nature} — ${forme}`,
-      mandant_id: mandantId,
+      mandant_id: mandant?.id ?? null,
       mandant_nom: mandantNom,
       bien_id: bien?.id ?? null,
       reference_bien: bien?.reference ?? null,
@@ -297,27 +340,107 @@ export default function NouveauMandat() {
       date_debut: dateSignature || null,
       preavis_jours: isExclusif && preavis ? Number(preavis) : null,
       observations: observations || null,
+      bail_duree_restante: isBail ? (bailDureeRestante || null) : null,
+      bail_garanties: isBail ? (bailGaranties || null) : null,
+      bail_charges: isBail && bailCharges ? Number(bailCharges) : null,
+      bail_taxe_fonciere: isBail && bailTaxeFonciere ? Number(bailTaxeFonciere) : null,
+      bail_indexation: isBail ? (bailIndexation || null) : null,
+      bail_fiscalite: isBail ? (bailFiscalite || null) : null,
+      effectif: isFonds && effectif ? Number(effectif) : null,
+      composition: isFonds ? (composition || null) : null,
     };
+    return payload;
+  }
 
-    const { error } = await supabase.from("registre_mandats").insert(payload);
+  async function ensureMandantId(): Promise<string | null> {
+    if (mandant?.id) return mandant.id;
+    if (newContactMode && mandantQ.trim() && user?.id) {
+      const { data, error } = await supabase
+        .from("contacts")
+        .insert({ nom: mandantQ.trim(), user_id: user.id })
+        .select("id, nom, prenom, societe, email, telephone, adresse, code_postal, commune")
+        .limit(1);
+      if (error) {
+        toast({ title: "Erreur création contact", description: error.message, variant: "destructive" });
+        return null;
+      }
+      const c = (data as any[])?.[0];
+      if (c) { setMandant(c as ContactLite); return c.id; }
+    }
+    return null;
+  }
+
+  async function save(targetStatut: "brouillon" | "a_valider") {
+    if (!user?.id) {
+      toast({ title: "Erreur", description: "Vous devez être connecté.", variant: "destructive" });
+      return;
+    }
+    // Mandant obligatoire uniquement à la soumission
+    if (targetStatut === "a_valider" && !mandant && !newContactMode) {
+      toast({ title: "Mandant requis", description: "Sélectionnez un contact ou créez-en un.", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    const mandantId = await ensureMandantId();
+    const payload = buildPayload(targetStatut);
+    if (mandantId) payload.mandant_id = mandantId;
+    // si on repasse en a_valider depuis un refus, on nettoie le motif
+    if (targetStatut === "a_valider") payload.motif_refus = null;
+
+    let error: any = null;
+    if (isEdit && editId) {
+      const res = await supabase.from("registre_mandats").update(payload).eq("id", editId);
+      error = res.error;
+    } else {
+      payload.numero = null;
+      payload.cree_par = user.id;
+      const res = await supabase.from("registre_mandats").insert(payload);
+      error = res.error;
+    }
     setSaving(false);
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Mandat envoyé pour validation", description: "Un administrateur attribuera le n° de registre." });
-    navigate("/mandats/a-valider");
+    if (targetStatut === "brouillon") {
+      toast({ title: "Brouillon enregistré" });
+      navigate("/mandats");
+    } else {
+      toast({ title: "Mandat envoyé pour validation", description: "Un administrateur attribuera le n° de registre." });
+      navigate("/mandats/a-valider");
+    }
+  }
+
+  async function apercu() {
+    const draft = { ...buildPayload("brouillon"), mandant_id: mandant?.id ?? null } as any;
+    const agence = await getAgence();
+    const html = await generateMandatV2(draft, agence);
+    openMandat(html);
+  }
+
+  if (loadingEdit) {
+    return <div className="p-8 text-sm text-muted-foreground">Chargement du mandat…</div>;
   }
 
   return (
     <div className="space-y-4 max-w-5xl">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Button variant="ghost" size="sm" onClick={() => navigate("/mandats")}>
           <ArrowLeft className="mr-1 h-4 w-4" /> Retour au registre
         </Button>
-        <h1 className="text-2xl font-bold ml-2">Nouveau mandat</h1>
-        <Badge variant="outline" className="ml-2">Envoi pour validation</Badge>
+        <h1 className="text-2xl font-bold ml-2">{isEdit ? "Modifier le mandat" : "Nouveau mandat"}</h1>
+        <Badge variant="outline" className="ml-2">
+          {statut === "refuse" ? "Refusé — à corriger" : statut === "brouillon" ? "Brouillon" : "À valider"}
+        </Badge>
       </div>
+
+      {statut === "refuse" && motifRefus && (
+        <Card className="border-destructive/40 bg-destructive/5">
+          <CardContent className="py-3 text-sm">
+            <strong className="text-destructive">Motif du refus :</strong> {motifRefus}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader><CardTitle className="text-base">Type de mandat</CardTitle></CardHeader>
@@ -353,12 +476,8 @@ export default function NouveauMandat() {
             <>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  className="pl-9"
-                  placeholder="Rechercher un contact (nom, prénom, société)…"
-                  value={mandantQ}
-                  onChange={(e) => { setMandantQ(e.target.value); setNewContactMode(false); }}
-                />
+                <Input className="pl-9" placeholder="Rechercher un contact (nom, prénom, société)…"
+                  value={mandantQ} onChange={(e) => { setMandantQ(e.target.value); setNewContactMode(false); }} />
               </div>
               {mandantList.length > 0 && (
                 <div className="rounded-md border border-border divide-y divide-border/50 max-h-56 overflow-auto">
@@ -380,9 +499,7 @@ export default function NouveauMandat() {
                 </div>
               )}
               {newContactMode && (
-                <p className="text-xs text-amber-400">
-                  Un nouveau contact sera créé avec le nom « {mandantQ} » à l'enregistrement.
-                </p>
+                <p className="text-xs text-amber-400">Un nouveau contact sera créé avec le nom « {mandantQ} » à l'enregistrement.</p>
               )}
             </>
           )}
@@ -398,9 +515,7 @@ export default function NouveauMandat() {
                 <div className="text-sm">
                   <div className="font-medium">{bien.reference ?? "—"} — {bien.titre ?? "—"}</div>
                   <div className="text-xs text-muted-foreground">{[bien.adresse, bien.code_postal, bien.commune].filter(Boolean).join(", ") || "—"}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {bien.nature_activite ?? "—"}{buildSurfaces(bien) ? ` · ${buildSurfaces(bien)}` : ""}
-                  </div>
+                  <div className="text-xs text-muted-foreground">{bien.nature_activite ?? "—"}{buildSurfaces(bien) ? ` · ${buildSurfaces(bien)}` : ""}</div>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => { setBien(null); setBienQ(""); }}>Changer</Button>
               </div>
@@ -480,7 +595,7 @@ export default function NouveauMandat() {
               </Field>
             </>
           )}
-          {isLocation && (
+          {(isLocation || isBail) && (
             <Field label="Loyer mensuel HC (€)"><Input type="number" value={loyer} onChange={(e) => setLoyer(e.target.value)} /></Field>
           )}
           <Field label="Honoraires HT (€)" hint={honorairesAuto ? `Pré-calculé via le barème (${formatEuros(Number(honoraires) || 0)})` : "Saisie manuelle"}>
@@ -498,6 +613,46 @@ export default function NouveauMandat() {
         </CardContent>
       </Card>
 
+      {isBail && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Caractéristiques du bail</CardTitle></CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Field label="Durée restante du bail" hint="ex. 4 ans 6 mois">
+              <Input value={bailDureeRestante} onChange={(e) => setBailDureeRestante(e.target.value)} />
+            </Field>
+            <Field label="Garanties" hint="dépôt de garantie, caution…">
+              <Input value={bailGaranties} onChange={(e) => setBailGaranties(e.target.value)} />
+            </Field>
+            <Field label="Charges annuelles (€)">
+              <Input type="number" value={bailCharges} onChange={(e) => setBailCharges(e.target.value)} />
+            </Field>
+            <Field label="Taxe foncière (€)">
+              <Input type="number" value={bailTaxeFonciere} onChange={(e) => setBailTaxeFonciere(e.target.value)} />
+            </Field>
+            <Field label="Indexation" hint="ex. ILC base 4T 2021">
+              <Input value={bailIndexation} onChange={(e) => setBailIndexation(e.target.value)} />
+            </Field>
+            <Field label="Fiscalité" hint="TVA, refacturation…">
+              <Input value={bailFiscalite} onChange={(e) => setBailFiscalite(e.target.value)} />
+            </Field>
+          </CardContent>
+        </Card>
+      )}
+
+      {isFonds && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Exploitation du fonds</CardTitle></CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Field label="Effectif salarié">
+              <Input type="number" value={effectif} onChange={(e) => setEffectif(e.target.value)} />
+            </Field>
+            <Field label="Composition du fonds" hint="éléments inclus dans la cession">
+              <Textarea rows={3} value={composition} onChange={(e) => setComposition(e.target.value)} />
+            </Field>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader><CardTitle className="text-base">Durée &amp; signature</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -512,11 +667,18 @@ export default function NouveauMandat() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end gap-2 flex-wrap">
         <Button variant="outline" onClick={() => navigate("/mandats")}>Annuler</Button>
-        <Button onClick={save} disabled={saving}>
+        <Button variant="outline" onClick={apercu}>
+          <Eye className="mr-2 h-4 w-4" /> Aperçu
+        </Button>
+        <Button variant="secondary" onClick={() => save("brouillon")} disabled={saving}>
           <Save className="mr-2 h-4 w-4" />
-          {saving ? "Envoi…" : "Envoyer pour validation"}
+          {saving ? "Enregistrement…" : "Enregistrer (brouillon)"}
+        </Button>
+        <Button onClick={() => save("a_valider")} disabled={saving}>
+          <Send className="mr-2 h-4 w-4" />
+          {saving ? "Envoi…" : "Soumettre à validation"}
         </Button>
       </div>
     </div>

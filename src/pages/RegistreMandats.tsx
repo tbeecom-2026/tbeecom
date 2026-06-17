@@ -13,10 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Search, Plus, FilePen, Send } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/formatters";
 import { retirerMandatsExpires, nettyLabel, getIssueBadgeClass } from "@/lib/mandatStatus";
+import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import type { RegistreMandat } from "@/types/database";
 
 // 1er numéro de mandat de l'agence (le registre démarre ici).
@@ -42,12 +45,15 @@ type DisplayRow = { numero: number; row: RegistreMandat | null };
 
 export default function RegistreMandats() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [params] = useSearchParams();
   const focusN = params.get("focus") ? parseInt(params.get("focus")!, 10) : null;
   const [all, setAll] = useState<RegistreMandat[]>([]);
+  const [drafts, setDrafts] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
-  const [saisie, setSaisie] = useState<number | null>(null); // N° en cours de saisie (modal)
+  const [saisie, setSaisie] = useState<number | null>(null);
   const [nbAValider, setNbAValider] = useState(0);
   const PAGE_SIZE = 50;
 
@@ -56,6 +62,10 @@ export default function RegistreMandats() {
     loadCount();
   }, []);
   useEffect(() => {
+    if (user?.id) loadDrafts();
+    // eslint-disable-next-line
+  }, [user?.id, isAdmin]);
+  useEffect(() => {
     retirerMandatsExpires();
   }, []);
   useEffect(() => {
@@ -63,7 +73,6 @@ export default function RegistreMandats() {
   }, [search]);
 
   async function load() {
-    // ne lister que les mandats validés ou legacy (sans statut_validation)
     const { data } = await supabase.from("registre_mandats").select("*").limit(5000);
     const rows = ((data as RegistreMandat[]) ?? []).filter(
       (r) => !r.statut_validation || r.statut_validation === "valide"
@@ -73,6 +82,23 @@ export default function RegistreMandats() {
   async function loadCount() {
     const { data } = await supabase.from("registre_mandats").select("id").eq("statut_validation", "a_valider").limit(500);
     setNbAValider(((data as any[]) ?? []).length);
+  }
+  async function loadDrafts() {
+    let q = supabase.from("registre_mandats").select("*").in("statut_validation", ["brouillon", "refuse"]).order("created_at", { ascending: false });
+    if (!isAdmin && user?.id) q = q.eq("cree_par", user.id);
+    const { data } = await q.limit(200);
+    setDrafts(((data as any[]) ?? []));
+  }
+
+  async function soumettre(id: string) {
+    const { error } = await supabase.from("registre_mandats").update({
+      statut_validation: "a_valider",
+      motif_refus: null,
+    }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Mandat soumis pour validation.");
+    loadDrafts();
+    loadCount();
   }
 
   // Ouvre la fiche du bien correspondant à une référence (depuis le registre).
@@ -166,6 +192,47 @@ export default function RegistreMandats() {
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
+
+      {drafts.length > 0 && (
+        <Card className="border-amber-500/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <FilePen className="h-4 w-4 text-amber-400" />
+              {isAdmin ? "Brouillons & mandats refusés" : "Mes brouillons & refus"}
+              <Badge variant="outline" className="ml-1">{drafts.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {drafts.map((d) => (
+              <div key={d.id} className="flex flex-wrap items-center justify-between gap-2 text-sm border-b border-border/40 last:border-0 py-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant={d.statut_validation === "refuse" ? "destructive" : "outline"}>
+                      {d.statut_validation === "refuse" ? "Refusé" : "Brouillon"}
+                    </Badge>
+                    <span className="font-medium">{d.nature_mandat ?? "—"} · {d.forme_mandat ?? "—"}</span>
+                    <span className="text-muted-foreground">{d.mandant_nom ?? "Mandant —"}</span>
+                    {d.reference_bien && <span className="text-xs text-muted-foreground">· Réf. {d.reference_bien}</span>}
+                  </div>
+                  {d.statut_validation === "refuse" && d.motif_refus && (
+                    <p className="text-xs text-destructive mt-1">Motif : {d.motif_refus}</p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => navigate(`/mandats/${d.id}/edit`)}>
+                    <FilePen className="mr-1 h-3.5 w-3.5" /> Continuer
+                  </Button>
+                  <Button size="sm" onClick={() => soumettre(d.id)}>
+                    <Send className="mr-1 h-3.5 w-3.5" /> Soumettre
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+
 
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
