@@ -647,38 +647,68 @@ export default function NouveauMandat() {
         <Card>
           <CardHeader><CardTitle className="text-base">Caractéristiques du bail</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Field label="Durée restante du bail" hint="ex. 4 ans 6 mois">
-              <Input value={bailDureeRestante} onChange={(e) => setBailDureeRestante(e.target.value)} />
-            </Field>
-            <Field label="Garanties" hint="dépôt de garantie, caution…">
-              <Input value={bailGaranties} onChange={(e) => setBailGaranties(e.target.value)} />
-            </Field>
-            <Field label="Charges annuelles (€)">
-              <Input type="number" value={bailCharges} onChange={(e) => setBailCharges(e.target.value)} />
-            </Field>
-            <Field label="Taxe foncière (€)">
-              <Input type="number" value={bailTaxeFonciere} onChange={(e) => setBailTaxeFonciere(e.target.value)} />
-            </Field>
-            <Field label="Indexation" hint="ex. ILC base 4T 2021">
-              <Input value={bailIndexation} onChange={(e) => setBailIndexation(e.target.value)} />
-            </Field>
-            <Field label="Fiscalité" hint="TVA, refacturation…">
-              <Input value={bailFiscalite} onChange={(e) => setBailFiscalite(e.target.value)} />
-            </Field>
+      {isFonds && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Composition du fonds</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {[
+                { id: "comp_clientele", label: "Clientèle et achalandage", checked: compClientele, set: setCompClientele },
+                { id: "comp_enseigne", label: "Enseigne", checked: compEnseigne, set: setCompEnseigne },
+                { id: "comp_nom_commercial", label: "Nom commercial", checked: compNomCommercial, set: setCompNomCommercial },
+                { id: "comp_stocks", label: "Stocks, évalués au jour de la cession", checked: compStocks, set: setCompStocks },
+                { id: "comp_materiel", label: "Agencements, matériel et mobilier", checked: compMateriel, set: setCompMateriel },
+              ].map((o) => (
+                <label key={o.id} htmlFor={o.id} className="flex items-center gap-2 rounded-md border border-border/60 bg-secondary/20 px-3 py-2 text-sm cursor-pointer hover:bg-secondary/40">
+                  <Checkbox id={o.id} checked={o.checked} onCheckedChange={(v) => o.set(v === true)} />
+                  <span>{o.label}</span>
+                </label>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Field label="Effectif salarié">
+                <Input type="number" value={effectif} onChange={(e) => setEffectif(e.target.value)} />
+              </Field>
+              <Field label="Notes / composition (texte libre)" hint="précisions éventuelles">
+                <Textarea rows={3} value={composition} onChange={(e) => setComposition(e.target.value)} />
+              </Field>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {isFonds && (
+      {hasBail && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Exploitation du fonds</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Caractéristiques du bail</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Field label="Effectif salarié">
-              <Input type="number" value={effectif} onChange={(e) => setEffectif(e.target.value)} />
+            <div className="md:col-span-2">
+              <Field label="Activités autorisées au bail" hint="destination contractuelle">
+                <Textarea rows={2} value={bailActivites} onChange={(e) => setBailActivites(e.target.value)} />
+              </Field>
+            </div>
+            <Field label="Durée restante du bail" hint="ex. 4 ans 6 mois">
+              <Input value={bailDureeRestante} onChange={(e) => setBailDureeRestante(e.target.value)} />
             </Field>
-            <Field label="Composition du fonds" hint="éléments inclus dans la cession">
-              <Textarea rows={3} value={composition} onChange={(e) => setComposition(e.target.value)} />
+            <Field label="Loyer annuel brut (€)">
+              <Input type="number" value={loyer} onChange={(e) => setLoyer(e.target.value)} />
             </Field>
+            <Field label="Garanties" hint="dépôt de garantie, caution…">
+              <Input value={bailGaranties} onChange={(e) => setBailGaranties(e.target.value)} />
+            </Field>
+            <Field label="Provision annuelle de charges (€)">
+              <Input type="number" value={bailCharges} onChange={(e) => setBailCharges(e.target.value)} />
+            </Field>
+            <Field label="Taxe foncière" hint="oui / non / refacturée…">
+              <Input value={bailTaxeFonciere} onChange={(e) => setBailTaxeFonciere(e.target.value)} />
+            </Field>
+            <Field label="Indexation" hint="ex. ILC base 4T 2021">
+              <Input value={bailIndexation} onChange={(e) => setBailIndexation(e.target.value)} />
+            </Field>
+            <div className="md:col-span-2">
+              <Field label="Fiscalité" hint="TVA, refacturation…">
+                <Input value={bailFiscalite} onChange={(e) => setBailFiscalite(e.target.value)} />
+              </Field>
+            </div>
           </CardContent>
         </Card>
       )}
