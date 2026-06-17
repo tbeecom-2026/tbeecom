@@ -5,10 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Info, Percent, Euro } from "lucide-react";
+import { Save, Info, Percent, Euro, Building2 } from "lucide-react";
 import { formatEuros } from "@/lib/formatters";
 import type { BaremeTranche } from "@/lib/honoraires";
+import AgenceForm from "@/components/AgenceForm";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 export default function Parametres() {
   const { toast } = useToast();
