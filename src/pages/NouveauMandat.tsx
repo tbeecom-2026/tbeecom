@@ -178,14 +178,21 @@ export default function NouveauMandat() {
       setDateSignature(row.date_signature ?? new Date().toISOString().slice(0, 10));
       setPreavis(row.preavis_jours != null ? String(row.preavis_jours) : "15");
       setObservations(row.observations ?? "");
+      setBailActivites(row.bail_activites ?? "");
       setBailDureeRestante(row.bail_duree_restante ?? "");
       setBailGaranties(row.bail_garanties ?? "");
       setBailCharges(row.bail_charges != null ? String(row.bail_charges) : "");
       setBailTaxeFonciere(row.bail_taxe_fonciere != null ? String(row.bail_taxe_fonciere) : "");
       setBailIndexation(row.bail_indexation ?? "");
       setBailFiscalite(row.bail_fiscalite ?? "");
+      setDescriptionLocaux(row.description_locaux ?? "");
       setEffectif(row.effectif != null ? String(row.effectif) : "");
       setComposition(row.composition ?? "");
+      setCompClientele(row.comp_clientele !== false);
+      setCompEnseigne(row.comp_enseigne !== false);
+      setCompNomCommercial(row.comp_nom_commercial !== false);
+      setCompStocks(row.comp_stocks !== false);
+      setCompMateriel(row.comp_materiel !== false);
       if (row.mandant_id) {
         const { data: cd } = await supabase.from("contacts")
           .select("id, nom, prenom, societe, email, telephone, adresse, code_postal, commune")
