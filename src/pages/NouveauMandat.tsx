@@ -26,7 +26,18 @@ const FORMES = ["Simple", "Exclusif", "Semi-exclusif"];
 const CHARGE = ["Acquéreur", "Vendeur"];
 
 type ContactLite = { id: string; nom: string | null; prenom: string | null; societe: string | null; email: string | null; telephone: string | null; adresse: string | null; code_postal: string | null; commune: string | null };
-type BienLite = { id: string; reference: string | null; titre: string | null; adresse: string | null; code_postal: string | null; commune: string | null; nature_activite: string | null; surface_commerciale: number | null; surface_totale: number | null };
+type BienLite = { id: string; reference: string | null; titre: string | null; adresse: string | null; code_postal: string | null; commune: string | null; nature_activite: string | null; surface_commerciale: number | null; surface_totale: number | null; proprietaire_email?: string | null; proprietaire_nom?: string | null };
+
+function escapeOr(s: string) {
+  // PostgREST .or() : éviter virgules/parenthèses/guillemets qui cassent la syntaxe
+  return s.replace(/[,()"']/g, " ").trim();
+}
+function buildSurfaces(b: BienLite) {
+  const parts: string[] = [];
+  if (b.surface_commerciale) parts.push(`${b.surface_commerciale} m² commerciale`);
+  if (b.surface_totale) parts.push(`${b.surface_totale} m² totale`);
+  return parts.join(" / ");
+}
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -61,6 +72,19 @@ export default function NouveauMandat() {
   const [adresseBien, setAdresseBien] = useState("");
   const [activiteBien, setActiviteBien] = useState("");
   const [surfacesBien, setSurfacesBien] = useState("");
+
+  // biens liés au mandant sélectionné
+  const [biensDuMandant, setBiensDuMandant] = useState<BienLite[]>([]);
+  const [loadingBiensMandant, setLoadingBiensMandant] = useState(false);
+
+  // applique un bien au formulaire (pré-remplit les champs libres)
+  function applyBien(b: BienLite) {
+    setBien(b);
+    setDesignation((d) => d || b.titre || "");
+    setAdresseBien((a) => a || [b.adresse, b.code_postal, b.commune].filter(Boolean).join(", "));
+    setActiviteBien((a) => a || b.nature_activite || "");
+    setSurfacesBien((s) => s || buildSurfaces(b));
+  }
 
   // recherche
   const [criteres, setCriteres] = useState("");
@@ -118,13 +142,81 @@ export default function NouveauMandat() {
     const t = setTimeout(async () => {
       const { data } = await supabase
         .from("mandats")
-        .select("id, reference, titre, adresse, code_postal, commune, nature_activite, surface_commerciale, surface_totale")
+        .select("id, reference, titre, adresse, code_postal, commune, nature_activite, surface_commerciale, surface_totale, proprietaire_email, proprietaire_nom")
         .or(`reference.ilike.%${q}%,titre.ilike.%${q}%`)
         .limit(8);
       setBienList((data as BienLite[]) ?? []);
     }, 250);
     return () => clearTimeout(t);
   }, [bienQ, bien]);
+
+  // -------- mandant -> biens du mandant (auto)
+  useEffect(() => {
+    if (!mandant) { setBiensDuMandant([]); return; }
+    let cancelled = false;
+    (async () => {
+      setLoadingBiensMandant(true);
+      const cols = "id, reference, titre, adresse, code_postal, commune, nature_activite, surface_commerciale, surface_totale, proprietaire_email, proprietaire_nom";
+      const email = mandant.email?.trim();
+      let rows: BienLite[] = [];
+      if (email) {
+        const { data } = await supabase.from("mandats").select(cols).ilike("proprietaire_email", email).limit(20);
+        rows = (data as BienLite[]) ?? [];
+      }
+      if (rows.length === 0) {
+        const fullName = [mandant.prenom, mandant.nom].filter(Boolean).join(" ").trim();
+        const candidates = [fullName, mandant.nom, mandant.societe].filter((s): s is string => !!s && s.length >= 2);
+        const seen = new Set<string>();
+        for (const c of candidates) {
+          const { data } = await supabase.from("mandats").select(cols).ilike("proprietaire_nom", `%${escapeOr(c)}%`).limit(20);
+          for (const r of ((data as BienLite[]) ?? [])) {
+            if (!seen.has(r.id)) { seen.add(r.id); rows.push(r); }
+          }
+          if (rows.length >= 20) break;
+        }
+      }
+      if (cancelled) return;
+      setBiensDuMandant(rows);
+      // auto pré-sélection si un seul bien et aucun bien encore choisi
+      if (!bien && rows.length === 1) applyBien(rows[0]);
+      setLoadingBiensMandant(false);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mandant?.id]);
+
+  // -------- bien -> mandant (auto, sens inverse)
+  useEffect(() => {
+    if (!bien || mandant) return;
+    let cancelled = false;
+    (async () => {
+      const email = bien.proprietaire_email?.trim();
+      let rows: ContactLite[] = [];
+      if (email) {
+        const { data } = await supabase
+          .from("contacts")
+          .select("id, nom, prenom, societe, email, telephone, adresse, code_postal, commune")
+          .ilike("email", email)
+          .limit(5);
+        rows = (data as ContactLite[]) ?? [];
+      }
+      if (rows.length === 0 && bien.proprietaire_nom) {
+        const q = escapeOr(bien.proprietaire_nom);
+        if (q.length >= 2) {
+          const { data } = await supabase
+            .from("contacts")
+            .select("id, nom, prenom, societe, email, telephone, adresse, code_postal, commune")
+            .or(`nom.ilike.%${q}%,societe.ilike.%${q}%`)
+            .limit(5);
+          rows = (data as ContactLite[]) ?? [];
+        }
+      }
+      if (cancelled) return;
+      if (rows.length === 1) setMandant(rows[0]);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bien?.id]);
 
   // -------- honoraires auto
   const prixCalc = useMemo(() => {
@@ -306,11 +398,33 @@ export default function NouveauMandat() {
                 <div className="text-sm">
                   <div className="font-medium">{bien.reference ?? "—"} — {bien.titre ?? "—"}</div>
                   <div className="text-xs text-muted-foreground">{[bien.adresse, bien.code_postal, bien.commune].filter(Boolean).join(", ") || "—"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {bien.nature_activite ?? "—"}{buildSurfaces(bien) ? ` · ${buildSurfaces(bien)}` : ""}
+                  </div>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => { setBien(null); setBienQ(""); }}>Changer</Button>
               </div>
             ) : (
               <>
+                {mandant && (loadingBiensMandant || biensDuMandant.length > 0) && (
+                  <div className="rounded-md border border-primary/30 bg-primary/5 p-2">
+                    <div className="px-1 py-1 text-xs font-medium text-muted-foreground">
+                      Biens de ce mandant {loadingBiensMandant ? "(recherche…)" : `(${biensDuMandant.length})`}
+                    </div>
+                    {biensDuMandant.length > 0 && (
+                      <div className="divide-y divide-border/40 max-h-56 overflow-auto">
+                        {biensDuMandant.map((b) => (
+                          <button key={b.id} type="button" onClick={() => applyBien(b)}
+                            className="w-full text-left px-2 py-2 text-sm hover:bg-secondary/40 rounded-sm">
+                            <div className="font-medium">{b.reference ?? "—"} — {b.titre ?? "—"}</div>
+                            <div className="text-xs text-muted-foreground">{[b.adresse, b.code_postal, b.commune].filter(Boolean).join(", ") || "—"}</div>
+                            <div className="text-xs text-muted-foreground">{b.nature_activite ?? "—"}{buildSurfaces(b) ? ` · ${buildSurfaces(b)}` : ""}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input className="pl-9" placeholder="Rechercher un bien (référence, titre)…"
@@ -319,7 +433,7 @@ export default function NouveauMandat() {
                 {bienList.length > 0 && (
                   <div className="rounded-md border border-border divide-y divide-border/50 max-h-56 overflow-auto">
                     {bienList.map((b) => (
-                      <button key={b.id} type="button" onClick={() => setBien(b)}
+                      <button key={b.id} type="button" onClick={() => applyBien(b)}
                         className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/40">
                         <div className="font-medium">{b.reference ?? "—"} — {b.titre ?? "—"}</div>
                         <div className="text-xs text-muted-foreground">{[b.adresse, b.code_postal, b.commune].filter(Boolean).join(", ") || "—"}</div>
