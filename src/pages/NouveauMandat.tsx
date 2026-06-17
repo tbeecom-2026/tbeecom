@@ -102,7 +102,8 @@ export default function NouveauMandat() {
   const [preavis, setPreavis] = useState<string>("15");
   const [observations, setObservations] = useState("");
 
-  // Champs bail (Droit au bail / Murs / Local pro)
+  // Champs bail (Fonds / Droit au bail / Murs / Local pro)
+  const [bailActivites, setBailActivites] = useState("");
   const [bailDureeRestante, setBailDureeRestante] = useState("");
   const [bailGaranties, setBailGaranties] = useState("");
   const [bailCharges, setBailCharges] = useState<string>("");
@@ -110,9 +111,17 @@ export default function NouveauMandat() {
   const [bailIndexation, setBailIndexation] = useState("");
   const [bailFiscalite, setBailFiscalite] = useState("");
 
+  // Description détaillée des locaux
+  const [descriptionLocaux, setDescriptionLocaux] = useState("");
+
   // Champs fonds de commerce
   const [effectif, setEffectif] = useState<string>("");
   const [composition, setComposition] = useState("");
+  const [compClientele, setCompClientele] = useState(true);
+  const [compEnseigne, setCompEnseigne] = useState(true);
+  const [compNomCommercial, setCompNomCommercial] = useState(true);
+  const [compStocks, setCompStocks] = useState(true);
+  const [compMateriel, setCompMateriel] = useState(true);
 
   const [bareme, setBareme] = useState<BaremeTranche[]>([]);
   const [saving, setSaving] = useState(false);
