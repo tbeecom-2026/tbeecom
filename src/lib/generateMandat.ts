@@ -685,3 +685,226 @@ export function openMandat(html: string): void {
   win.document.write(htmlWithToolbar);
   win.document.close();
 }
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// V2 — Générateur générique paramétré par agence_parametres
+// Couvre 7 natures × 3 formes (Fonds de commerce, Droit au bail, Murs commerciaux,
+// Local pro, Cession de titres, Recherche, Location).
+// ══════════════════════════════════════════════════════════════════════════
+import type { AgenceParametres } from "@/lib/agence";
+
+export interface MandatDraft {
+  id?: string;
+  numero?: string | null;
+  nature_mandat?: string | null;
+  forme_mandat?: string | null;
+  mandant_nom?: string | null;
+  reference_bien?: string | null;
+  designation_bien?: string | null;
+  adresse_bien?: string | null;
+  activite_bien?: string | null;
+  surfaces_bien?: string | null;
+  prix?: number | null;
+  prix_net_vendeur?: number | null;
+  loyer?: number | null;
+  honoraires_montant?: number | null;
+  honoraires_charge?: string | null;
+  duree_mois?: number | null;
+  date_signature?: string | null;
+  preavis_jours?: number | null;
+  observations?: string | null;
+  negociateur?: string | null;
+  criteres_recherche?: string | null;
+  prix_max_recherche?: number | null;
+}
+
+function agenceHeader(a: AgenceParametres | null): string {
+  if (!a) {
+    return `<div class="header-brand">[ Nom commercial ]</div>
+      <div style="font-size:7.5pt;color:#64748B;margin-top:1mm;">[ Raison sociale ]</div>`;
+  }
+  return `<div class="header-brand">${a.nom_commercial ?? a.raison_sociale ?? "[ Agence ]"}</div>
+    <div style="font-size:7.5pt;color:#64748B;margin-top:1mm;">
+      ${a.raison_sociale ?? ""}${a.forme_juridique ? ` — ${a.forme_juridique}` : ""}${a.capital ? ` au capital de ${euros(a.capital)}` : ""}<br/>
+      ${a.siege ?? ""}
+    </div>`;
+}
+
+function agenceMentions(a: AgenceParametres | null): string {
+  if (!a) return `<span style="color:#C2410C">[ Paramètres « Mon agence » non renseignés ]</span>`;
+  const parts: string[] = [];
+  if (a.rcs)    parts.push(`RCS ${a.rcs}`);
+  if (a.siret)  parts.push(`SIRET ${a.siret}`);
+  if (a.ape)    parts.push(`APE ${a.ape}`);
+  if (a.tva)    parts.push(`TVA ${a.tva}`);
+  if (a.carte_t_numero) parts.push(`Carte Pro. CPI ${a.carte_t_numero}${a.carte_t_cci ? ` — ${a.carte_t_cci}` : ""}`);
+  if (a.rcp_assureur || a.rcp_contrat) {
+    parts.push(`RC Pro ${a.rcp_assureur ?? ""}${a.rcp_contrat ? ` — n° ${a.rcp_contrat}` : ""}${a.rcp_courtier ? ` (courtier : ${a.rcp_courtier})` : ""}${a.rcp_couverture ? ` — couverture ${a.rcp_couverture}` : ""}`);
+  }
+  if (a.sans_maniement_fonds) {
+    parts.push(`<em>déclare ne pouvoir ni recevoir ni détenir d'autres fonds que ceux représentatifs de sa rémunération</em>`);
+  } else if (a.garantie_financiere) {
+    parts.push(`Garantie financière : ${a.garantie_financiere}`);
+  }
+  return parts.join(" · ");
+}
+
+function mandataireV2(a: AgenceParametres | null, suivi_par: string | null | undefined): string {
+  const agent = val(suivi_par, "[ agent commercial référent ]");
+  const nom = a?.nom_commercial ?? a?.raison_sociale ?? "[ Agence ]";
+  const gerant = a?.gerant_nom ?? "[ Gérant(e) ]";
+  return `
+    <div class="partie-title">L'INTERMÉDIAIRE (Mandataire)</div>
+    <p>La société <b>${nom}</b>${a?.raison_sociale && a?.nom_commercial && a.raison_sociale !== a.nom_commercial ? ` (${a.raison_sociale})` : ""}, ${a?.forme_juridique ?? ""}${a?.capital ? ` au capital de ${euros(a.capital)}` : ""}, ${a?.siege ?? "[ siège ]"} — ${agenceMentions(a)}.</p>
+    <p>Représentée par <b>${gerant}</b>, et/ou <b>${agent}</b>, ayant tous pouvoirs à l'effet des présentes.</p>
+    <p>Ci-après désigné(e) <b>« l'INTERMÉDIAIRE »</b> ou <b>« l'AGENCE »</b>, d'autre part,</p>`;
+}
+
+function objetLibelle(nature: string): { titre: string; partieAdverse: string; objetDoc: string } {
+  switch (nature) {
+    case "Droit au bail":            return { titre: "MANDAT DE CESSION DE DROIT AU BAIL", partieAdverse: "LE CÉDANT (titulaire du droit au bail)", objetDoc: "cession du droit au bail" };
+    case "Murs commerciaux":         return { titre: "MANDAT DE VENTE — MURS COMMERCIAUX", partieAdverse: "LE VENDEUR (propriétaire des murs)", objetDoc: "vente des murs commerciaux" };
+    case "Local / immobilier d'entreprise": return { titre: "MANDAT DE VENTE — LOCAL / IMMOBILIER D'ENTREPRISE", partieAdverse: "LE VENDEUR", objetDoc: "vente du bien immobilier à usage professionnel" };
+    case "Cession de titres":        return { titre: "MANDAT DE CESSION DE TITRES SOCIAUX", partieAdverse: "LE CÉDANT (associé / actionnaire)", objetDoc: "cession des titres de la société" };
+    case "Recherche":                return { titre: "MANDAT DE RECHERCHE", partieAdverse: "LE MANDANT (acquéreur)", objetDoc: "recherche d'un bien correspondant aux critères ci-après" };
+    case "Location":                 return { titre: "MANDAT DE LOCATION", partieAdverse: "LE BAILLEUR", objetDoc: "location du local" };
+    case "Fonds de commerce":
+    default:                         return { titre: "MANDAT DE CESSION — FONDS DE COMMERCE", partieAdverse: "LE CÉDANT (propriétaire du fonds)", objetDoc: "cession du fonds de commerce" };
+  }
+}
+
+export function generateMandatV2(draft: MandatDraft, agence: AgenceParametres | null): string {
+  const nature = draft.nature_mandat ?? "Fonds de commerce";
+  const forme = draft.forme_mandat ?? "Simple";
+  const isExcl = forme === "Exclusif";
+  const isSemi = forme === "Semi-exclusif";
+  const isRecherche = nature === "Recherche";
+  const isLocation = nature === "Location";
+
+  const { titre, partieAdverse, objetDoc } = objetLibelle(nature);
+  const numero = draft.numero ?? "[ _____ ]";
+  const ht = draft.honoraires_montant ?? null;
+  const ttc = ht ? Math.round(ht * 1.2) : null;
+  const dureeMois = draft.duree_mois ?? 3;
+  const preavis = draft.preavis_jours ?? 15;
+
+  // synthèse spécifique
+  const synthese: string[] = [];
+  synthese.push(`<tr><td>N° de Mandat</td><td><b>${numero}</b></td></tr>`);
+  synthese.push(`<tr><td>Nature / Forme</td><td><b>${nature}</b> — ${forme}${isExcl ? " <span style='color:#B91C1C;font-weight:700'>(EXCLUSIF — caractères très apparents)</span>" : ""}</td></tr>`);
+  if (draft.reference_bien) synthese.push(`<tr><td>Référence interne</td><td>${val(draft.reference_bien)}</td></tr>`);
+  if (!isRecherche) {
+    synthese.push(`<tr><td>Désignation</td><td>${val(draft.designation_bien ?? draft.activite_bien)}</td></tr>`);
+    synthese.push(`<tr><td>Adresse</td><td>${val(draft.adresse_bien)}</td></tr>`);
+    if (draft.activite_bien) synthese.push(`<tr><td>Activité</td><td>${val(draft.activite_bien)}</td></tr>`);
+    if (draft.surfaces_bien) synthese.push(`<tr><td>Surfaces</td><td>${val(draft.surfaces_bien)}</td></tr>`);
+  }
+  synthese.push(`<tr><td>Date de signature</td><td>${fdate(draft.date_signature)}</td></tr>`);
+  synthese.push(`<tr><td>Durée</td><td><b>${dureeMois} mois</b>${isExcl || isSemi ? ` — préavis de résiliation ${preavis} j après 3 mois (LRAR)` : ""}</td></tr>`);
+  synthese.push(`<tr><td>Négociateur</td><td>${val(draft.negociateur)}</td></tr>`);
+
+  // prix
+  const prixBloc: string[] = [];
+  if (isLocation) {
+    prixBloc.push(`<tr><td>Loyer mensuel HC</td><td><b>${euros(draft.loyer)}</b></td></tr>`);
+  } else if (isRecherche) {
+    prixBloc.push(`<tr><td>Critères</td><td>${val(draft.criteres_recherche)}</td></tr>`);
+    prixBloc.push(`<tr><td>Prix maximum</td><td><b>${euros(draft.prix_max_recherche)}</b></td></tr>`);
+  } else {
+    prixBloc.push(`<tr><td>Prix de présentation</td><td>${euros(draft.prix)}</td></tr>`);
+    prixBloc.push(`<tr><td>Prix net ${nature === "Murs commerciaux" || nature === "Local / immobilier d'entreprise" ? "vendeur" : "cédant"}</td><td><b>${euros(draft.prix_net_vendeur)}</b> — ${eurosLettres(draft.prix_net_vendeur)}</td></tr>`);
+  }
+  if (ht != null) {
+    prixBloc.push(`<tr><td>Honoraires</td><td>${euros(ht)} HT — soit <b>${euros(ttc)} TTC</b></td></tr>`);
+  }
+  prixBloc.push(`<tr><td>Honoraires à la charge de</td><td>${val(draft.honoraires_charge, "[ Acquéreur / Cédant ]")}</td></tr>`);
+
+  // clauses exclusivité
+  const clauseExclu = isExcl ? `
+    <p class="caps" style="font-size:9pt;background:#FEF3C7;padding:2mm;border:1px solid #F59E0B;">
+      MANDAT EXCLUSIF — Pendant toute la durée du présent mandat, ${nature === "Recherche" ? "le MANDANT" : "le MANDANT"} s'interdit de traiter directement
+      ou par l'intermédiaire d'un tiers. Toute violation entraîne le paiement d'une indemnité forfaitaire
+      égale au montant TTC des honoraires prévus aux présentes (clause pénale plafonnée aux honoraires).
+    </p>` : isSemi ? `
+    <p class="caps" style="font-size:9pt;">
+      MANDAT SEMI-EXCLUSIF — Le MANDANT conserve la faculté de traiter directement avec un acquéreur de
+      sa propre connaissance ; il s'interdit en revanche tout autre mandat à un tiers professionnel.
+    </p>` : "";
+
+  return `<!DOCTYPE html><html lang="fr"><head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>${titre} N°${numero} — ${agence?.nom_commercial ?? "Agence"}</title>
+    <style>${CSS}</style>
+  </head><body>
+  <div class="page">
+    <div class="header">
+      <div>${agenceHeader(agence)}</div>
+      <div class="header-info">${agenceMentions(agence)}</div>
+    </div>
+    <hr class="gold-line"/>
+    <div class="doc-title">
+      <h1>${titre} — N°&nbsp;${numero}</h1>
+      <p>${forme.toUpperCase()}${isExcl ? " · EXCLUSIF" : ""}</p>
+    </div>
+
+    <table class="summary-table" style="margin-top:4mm;">
+      ${synthese.join("")}
+    </table>
+
+    <div class="convention">ENTRE LES SOUSSIGNÉS</div>
+
+    <div class="partie-title">${partieAdverse}</div>
+    <table class="partie-table">
+      <tr><td>Nom / Raison sociale</td><td><b>${val(draft.mandant_nom)}</b></td></tr>
+      <tr><td>Adresse</td><td>${val(draft.adresse_bien, "[ adresse du mandant ]")}</td></tr>
+    </table>
+    <p>Ci-après désigné(e) <b>« le MANDANT »</b>, d'une part,</p>
+    <hr class="thin-line"/>
+    ${mandataireV2(agence, draft.negociateur)}
+
+    <div class="convention">IL A ÉTÉ CONVENU CE QUI SUIT</div>
+
+    <div class="article">
+      <div class="article-title">ARTICLE 1 — OBJET</div>
+      <p>Le MANDANT confère à l'INTERMÉDIAIRE, qui l'accepte, un mandat de <b>${objetDoc}</b>
+      dans la forme <b>${forme}</b>${isExcl ? " (EXCLUSIF)" : ""}.</p>
+      ${clauseExclu}
+    </div>
+
+    <div class="article">
+      <div class="article-title">ARTICLE 2 — DÉSIGNATION</div>
+      ${isRecherche
+        ? `<p><b>Critères de recherche :</b> ${val(draft.criteres_recherche)}</p>
+           <p><b>Prix maximum :</b> ${euros(draft.prix_max_recherche)}</p>`
+        : `<p><b>Désignation :</b> ${val(draft.designation_bien)}<br/>
+           <b>Adresse :</b> ${val(draft.adresse_bien)}<br/>
+           ${draft.activite_bien ? `<b>Activité :</b> ${val(draft.activite_bien)}<br/>` : ""}
+           ${draft.surfaces_bien ? `<b>Surfaces :</b> ${val(draft.surfaces_bien)}` : ""}</p>`}
+    </div>
+
+    <div class="article">
+      <div class="article-title">ARTICLE 3 — ${isLocation ? "LOYER" : isRecherche ? "BUDGET" : "PRIX"} ET RÉMUNÉRATION</div>
+      <table class="summary-table">${prixBloc.join("")}</table>
+      <p>Les honoraires sont exigibles à la conclusion effective de l'opération constatée par acte écrit.</p>
+    </div>
+
+    <div class="article">
+      <div class="article-title">ARTICLE 4 — DURÉE ET RÉSILIATION</div>
+      <p>Le présent mandat est consenti pour une durée de <b>${dureeMois} (${dureeMois >= 10 ? dureeMois : "trois"}) mois</b>
+      à compter de sa signature, dans la limite de <b>douze (12) mois</b> au total.</p>
+      ${isExcl || isSemi ? `<p>Passé le délai initial de 3 mois, chaque partie peut résilier par préavis de
+        <b>${preavis} jours</b> adressé par lettre recommandée avec AR (art. 78 al. 2 du décret du 20/07/1972).</p>` : ""}
+      ${isExcl ? `<p class="caps">CLAUSE PÉNALE — En cas de violation de l'exclusivité, le MANDANT versera
+        une indemnité forfaitaire <b>égale au montant TTC des honoraires</b> prévus aux présentes,
+        sans pouvoir excéder ce montant.</p>` : ""}
+    </div>
+
+    ${clauseRgpd()}
+    ${signaturesHtml()}
+
+    <p class="footer-note">${agence?.nom_commercial ?? "Agence"} — Mandat n°&nbsp;${numero} — Document confidentiel</p>
+  </div>
+  </body></html>`;
+}
