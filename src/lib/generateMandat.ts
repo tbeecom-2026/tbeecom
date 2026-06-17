@@ -805,6 +805,18 @@ export async function generateMandatV2(draft: MandatDraft, agence: AgenceParamet
     c = (data as any[])?.[0] ?? null;
   }
 
+  // ── Si c'est un AVENANT, générer un document d'avenant ─────────────
+  if (draft.avenant_de) {
+    const { data: pd } = await supabase
+      .from("registre_mandats")
+      .select("*")
+      .eq("id", draft.avenant_de)
+      .limit(1);
+    const parent = (pd as any[])?.[0] ?? null;
+    return renderAvenant(draft, parent, agence, c);
+  }
+
+
   const nature = draft.nature_mandat ?? "Fonds de commerce";
   const forme = draft.forme_mandat ?? "Simple";
   const isExcl = forme === "Exclusif";
