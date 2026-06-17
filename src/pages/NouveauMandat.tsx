@@ -54,11 +54,18 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 export default function NouveauMandat() {
   const navigate = useNavigate();
-  const { id: editId } = useParams<{ id: string }>();
+  const location = useLocation();
+  const { id: routeId } = useParams<{ id: string }>();
+  const isAvenant = location.pathname.endsWith("/avenant");
+  const editId = isAvenant ? undefined : routeId;
+  const parentId = isAvenant ? routeId : undefined;
   const isEdit = !!editId;
   const { toast } = useToast();
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin();
+
+  const [avenantDe, setAvenantDe] = useState<string | null>(null);
+  const [parentNumero, setParentNumero] = useState<string | null>(null);
 
   const [nature, setNature] = useState<string>("Fonds de commerce");
   const [forme, setForme] = useState<string>("Simple");
