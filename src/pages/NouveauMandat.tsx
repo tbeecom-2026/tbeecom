@@ -433,7 +433,7 @@ export default function NouveauMandat() {
                 {bienList.length > 0 && (
                   <div className="rounded-md border border-border divide-y divide-border/50 max-h-56 overflow-auto">
                     {bienList.map((b) => (
-                      <button key={b.id} type="button" onClick={() => setBien(b)}
+                      <button key={b.id} type="button" onClick={() => applyBien(b)}
                         className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/40">
                         <div className="font-medium">{b.reference ?? "—"} — {b.titre ?? "—"}</div>
                         <div className="text-xs text-muted-foreground">{[b.adresse, b.code_postal, b.commune].filter(Boolean).join(", ") || "—"}</div>
