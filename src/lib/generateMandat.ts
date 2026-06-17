@@ -5,6 +5,7 @@
  */
 
 import type { Mandat, Contact, MandatVendeur } from "@/types/database";
+import type { AgenceParametres } from "@/lib/agence";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function euros(n: number | null | undefined): string {
