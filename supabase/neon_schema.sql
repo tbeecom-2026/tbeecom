@@ -368,7 +368,7 @@ GRANT SELECT ON public.biens_publics TO anonymous;
 GRANT SELECT ON public.biens_publics TO authenticated;
 
 -- 4) Contacts : aucun accès anonyme, jamais. (Sécurité explicite.)
-REVOKE ALL ON public.contacts TO anonymous;  -- no-op si pas grant, safe
+REVOKE ALL ON public.contacts FROM anonymous;  -- no-op si pas grant, safe
 
 -- 5) Leads — confirmation idempotente
 GRANT INSERT ON public.leads TO anonymous;
