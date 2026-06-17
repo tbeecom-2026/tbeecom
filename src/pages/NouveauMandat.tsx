@@ -230,7 +230,7 @@ export default function NouveauMandat() {
       setLoadingEdit(false);
     })();
     return () => { cancelled = true; };
-  }, [isEdit, editId, user?.id, isAdmin, navigate, toast]);
+  }, [isEdit, editId, parentId, isAvenant, user?.id, isAdmin, navigate, toast]);
 
   // -------- recherche contacts
   useEffect(() => {
