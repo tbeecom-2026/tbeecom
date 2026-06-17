@@ -439,6 +439,7 @@ export default function NouveauMandat() {
     } else {
       payload.numero = null;
       payload.cree_par = user.id;
+      if (avenantDe) payload.avenant_de = avenantDe;
       const res = await supabase.from("registre_mandats").insert(payload);
       error = res.error;
     }
