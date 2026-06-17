@@ -50,7 +50,7 @@ export default function Biens() {
       );
     }
     const { data, count } = await query
-      .order("reference", { ascending: false })
+      .order("mandat_numero_int", { ascending: false, nullsFirst: false })
       .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
     setBiens((data as Mandat[]) ?? []);
     setTotal(count ?? 0);
