@@ -143,9 +143,10 @@ export default function NouveauMandat() {
     });
   }, []);
 
-  // -------- chargement du brouillon en mode édition
+  // -------- chargement brouillon (édition) ou mandat parent (avenant)
   useEffect(() => {
-    if (!isEdit || !editId || !user?.id) return;
+    const sourceId = editId ?? parentId;
+    if (!sourceId || !user?.id) return;
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase.from("registre_mandats").select("*").eq("id", editId).limit(1);
