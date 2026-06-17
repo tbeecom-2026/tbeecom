@@ -1,107 +1,48 @@
+## Objectif
 
-# Plan de migration Supabase → Neon
+Ajouter dans le CRM (espace connecté) la création de mandats, un workflow de validation à deux rôles (admin/négociateur), la génération PDF par nature et un onglet « Mon agence » dans Paramètres. Aucune modification de l'auth, du public ou de la base : les colonnes/tables nécessaires seront créées par le SQL fourni.
 
-Objectif : remplacer Supabase (mort, NXDOMAIN) par Neon Data API + Neon Auth, sans toucher au comportement métier. Storage reporté. Aucune migration de données.
+## Hypothèses sur les colonnes SQL (à valider avec le SQL fourni)
 
-## 1. Dépendances & variables d'env
+- `profiles.is_admin boolean`
+- `registre_mandats` (ajouts) : `statut_validation text`, `cree_par uuid`, `valide_par uuid`, `valide_le timestamptz`, `motif_refus text`, `nature_mandat text`, `forme_mandat text`, `bien_id uuid`, `mandant_id uuid`, `prix numeric`, `prix_net_vendeur numeric`, `loyer numeric`, `honoraires_montant numeric`, `honoraires_charge text`, `duree_mois int`, `date_signature date`, `preavis_jours int`, `designation_bien text`, `adresse_bien text`, `activite_bien text`, `surfaces_bien text`, `criteres_recherche text`, `prix_max_recherche numeric`
+- `agence_parametres` (1 ligne) : `id`, `raison_sociale`, `nom_commercial`, `forme_juridique`, `capital`, `siege`, `rcs`, `siret`, `ape`, `tva`, `carte_t_numero`, `carte_t_cci`, `rcp_assureur`, `rcp_contrat`, `rcp_courtier`, `rcp_couverture`, `garantie_financiere`, `sans_maniement_fonds boolean`, `gerant_nom`
 
-- `npm install @neondatabase/neon-js`
-- Garder `@supabase/supabase-js` temporairement dans `package.json` le temps de basculer tous les imports, puis le retirer en dernière étape.
-- Créer `.env` (non commité) et `.env.example` :
-  - `VITE_NEON_DATA_API_URL=https://ep-nameless-poetry-as17tawx.apirest.c-4.eu-central-1.aws.neon.tech/neondb/rest/v1`
-  - `VITE_NEON_AUTH_URL=https://ep-nameless-poetry-as17tawx.neonauth.c-4.eu-central-1.aws.neon.tech/neondb/auth`
-- Ajouter `VITE_NEON_*` dans `src/vite-env.d.ts` (typage `ImportMetaEnv`).
+Si certains noms diffèrent, c'est un simple renommage côté UI.
 
-## 2. Nouveau client (`src/lib/neonClient.ts`)
+## Fichiers créés
 
-```ts
-import { createClient } from '@neondatabase/neon-js';
-export const client = createClient({
-  auth:    { url: import.meta.env.VITE_NEON_AUTH_URL },
-  dataApi: { url: import.meta.env.VITE_NEON_DATA_API_URL },
-});
-```
+- `src/hooks/useIsAdmin.ts` — lit `profiles.is_admin` pour l'utilisateur courant.
+- `src/lib/agence.ts` — `getAgence()` : renvoie l'unique ligne `agence_parametres`. `upsertAgence(payload)`.
+- `src/pages/NouveauMandat.tsx` — formulaire de création (route `/mandats/nouveau`).
+- `src/pages/MandatsAValider.tsx` — liste des `statut_validation = 'a_valider'` avec actions Valider/Refuser (admin) ou lecture seule (route `/mandats/a-valider`).
+- `src/components/AgenceForm.tsx` — formulaire « Mon agence » (admin uniquement).
 
-Stratégie de bascule **sans toucher chaque page** :
-- Réécrire `src/lib/supabaseClient.ts` pour ré-exporter `client` sous l'alias `supabase` :
-  ```ts
-  export { client as supabase } from './neonClient';
-  export const isSupabaseConfigured = true;
-  ```
-- Cela fonctionne car neon-js expose la même surface `.from().select()/.insert()/.update()/.delete()/.eq()/.order()/.limit()/.gte()/.ilike()/.range()/.single()` que supabase-js (PostgREST). Toutes les pages (`Dashboard`, `Mandats`, `MandatDetail`, `Contacts`, `ContactDetail`, `Acquereurs`, `AcquereurDetail`, `Activites`, `Parametres`, `PdfImportDialog`) continuent à fonctionner sans modification.
-- Une fois validé en runtime, renommer dans un second temps les imports vers `@/lib/neonClient` (cosmétique, hors scope critique).
+## Fichiers modifiés
 
-## 3. AuthContext (`src/contexts/AuthContext.tsx`)
+- `src/App.tsx` — routes `/mandats/nouveau`, `/mandats/a-valider`.
+- `src/pages/RegistreMandats.tsx` — boutons « Nouveau mandat » + « À valider (N) » avec compteur, badge `statut_validation` sur les lignes en attente.
+- `src/pages/Parametres.tsx` — wrap en `Tabs` : « Barème honoraires » (existant) + « Mon agence » (nouveau, admin).
+- `src/lib/generateMandat.ts` — ajout d'un générateur générique `generateMandatV2(draft, agence)` qui couvre les 7 natures × 3 formes : fonds de commerce, droit au bail, murs commerciaux, local pro, cession de titres, recherche, location. Mandataire injecté depuis `agence_parametres` (carte T, RCP, RCS, etc. — plus aucune mention figée codée en dur). Conserve l'exclusivité en caractères très apparents, la résiliation après 3 mois (préavis 15 j), la clause pénale ≤ honoraires, n° de registre, RGPD. Les fonctions existantes `generateMandatSimple` / `generateMandatExclusif` / `generateAvenant` restent en place et appellent désormais `agence` quand fournie.
+- `src/types/database.ts` — types `Profile` étendu (`is_admin`), `AgenceParametres`, `RegistreMandat` étendu.
 
-Remplacer les imports et appels Supabase :
+## Workflow de validation
 
-| Avant (supabase-js) | Après (neon-js) |
-| --- | --- |
-| `import { Session, User } from "@supabase/supabase-js"` | types issus de `@neondatabase/neon-js` |
-| `supabase.auth.onAuthStateChange(cb)` | `client.auth.onSessionChange(cb)` (listener neon-js) |
-| `supabase.auth.getSession()` | `client.auth.getSession()` |
-| `supabase.auth.signInWithPassword({email,password})` | `client.auth.signIn.email({email,password})` |
-| `supabase.auth.signOut()` | `client.auth.signOut()` |
+1. Négociateur ouvre `/mandats/nouveau`, remplit le formulaire (autocomplétion contacts/biens, calcul honoraires depuis `bareme_honoraires`).
+2. Enregistrement → INSERT dans `registre_mandats` : `numero = NULL`, `statut_validation = 'a_valider'`, `cree_par = user.id`, `negociateur = user.name|email`.
+3. Page `/mandats/a-valider` :
+   - Non-admin : voit uniquement ses propres demandes en attente, lecture seule.
+   - Admin : voit toutes les demandes. Boutons :
+     - **Valider** → calcule `max(numero::int)+1` (≥ `DEBUT_REGISTRE`), met à jour `numero`, `statut_validation='valide'`, `valide_par`, `valide_le=now()`. Bouton « Générer le PDF » disponible après validation.
+     - **Refuser** → ouvre dialog motif, met à jour `statut_validation='refuse'`, `motif_refus`.
+4. Compteur dans `RegistreMandats` : nombre de demandes `a_valider` visibles par l'utilisateur, affiché sur le bouton « À valider ».
 
-Le JWT Neon Auth est attaché automatiquement aux requêtes Data API par le client → aucune modification dans les pages.
+## Génération PDF
 
-`src/pages/Login.tsx` : aucune modification (utilise `useAuth().signIn`).
+- Lecture de `agence_parametres` au moment du clic « Générer le PDF ».
+- `generateMandatV2` choisit le bon template selon `nature_mandat` × `forme_mandat`. En-tête : `nom_commercial`, RCS, SIRET, TVA, carte T (n° + CCI), RC Pro, capital, siège — tout depuis `agence_parametres`. Les clauses spécifiques (exclusivité, location, recherche, etc.) sont conditionnelles.
+- Si `sans_maniement_fonds = true`, mention « ne pouvant ni recevoir ni détenir d'autres fonds que ceux représentatifs de sa rémunération » ; sinon, mention de la garantie financière (`garantie_financiere`).
 
-## 4. Storage — REPORTÉ
+## Hors-scope
 
-Retirer les appels Storage, garder le nom de fichier en base, laisser un TODO.
-
-- `src/pages/MandatDetail.tsx` (~l.569) : retirer `supabase.storage.from('mandats-docs').upload(...)` + `getPublicUrl`. Stocker uniquement `file.name` dans le champ existant. Commentaire :
-  ```ts
-  // TODO: rebrancher le stockage fichiers (R2/Neon/hybride)
-  ```
-- `src/components/PdfImportDialog.tsx` (~l.393 et ~l.406) : idem.
-- Aucun autre changement UI ; les boutons d'upload restent visibles (le parsing PDF côté client continue).
-
-## 5. Schéma SQL Neon (`supabase/neon_schema.sql`, à exécuter manuellement)
-
-Génération d'un fichier unique consolidé (issu de `schema.sql` + `migration_v2.sql` + `migration_contacts_v2.sql` + `migration_bareme.sql`) adapté Neon :
-
-- `auth.uid()` → `auth.user_id()` partout dans les policies.
-- Colonnes `user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL` → `user_id TEXT NOT NULL DEFAULT auth.user_id()` (drop de la FK vers `auth.users` inexistante côté Neon).
-- Suppression du trigger `on_auth_user_created` et de la fonction `handle_new_user`.
-- Table `profiles` : **option retenue = peupler à la 1re connexion** côté app (upsert simple dans `AuthProvider` après `getSession` si user présent). Justification : plus simple, pas de dépendance au schéma `neon_auth`, schéma `profiles` actuel conservé tel quel (avec `id TEXT` au lieu d'`uuid`/FK).
-- Rôles : remplacer toute mention `anon`/`authenticated` Supabase par les rôles Neon `anonymous`/`authenticated`.
-- `GRANT SELECT, INSERT, UPDATE, DELETE ON public.<table> TO authenticated;` pour chaque table.
-- `ENABLE ROW LEVEL SECURITY` + policies existantes `USING (true) WITH CHECK (true)` conservées (équipe TBEECOM).
-- Retrait de **tout** SQL lié au schéma `storage` (aucun n'existe actuellement, à confirmer en relisant les 3 migrations).
-
-Tables couvertes : `profiles`, `contacts`, `mandats`, `recherches`, `mandat_vendeurs`, `rapprochements`, `activites`, `bareme_honoraires` + index existants.
-
-Le fichier est livré prêt à coller dans le SQL Editor Neon — **pas exécuté par l'agent**.
-
-## 6. Nettoyage final (après validation runtime)
-
-- `npm uninstall @supabase/supabase-js`
-- Renommer (optionnel) `src/lib/supabaseClient.ts` → suppression, et migrer les imports restants vers `@/lib/neonClient`.
-- Archiver `supabase/*.sql` dans `supabase/_legacy/` pour référence.
-
-## Détails techniques
-
-- **Surface PostgREST identique** : neon-js implémente la même chaîne fluent que supabase-js. Si une méthode diverge à l'usage (ex. `.maybeSingle()`, signatures de filtres), correction ponctuelle au cas par cas — risque faible vu les appels listés à l'audit.
-- **Types `Session`/`User`** : exportés par neon-js ; si absents, on définit des types locaux dans `src/types/auth.ts`.
-- **JWT** : injection automatique via le client neon-js (header `Authorization: Bearer <jwt>`), aucune logique manuelle à ajouter.
-- **`isSupabaseConfigured`** : conservé `true` pour ne pas casser les checks éventuels ; sera supprimé à l'étape 6.
-
-## Hors scope (confirmé)
-
-- Migration des données existantes.
-- Upload/stockage fichiers (TODO).
-- Realtime, RPC, Edge Functions (aucun usage détecté).
-- Refonte UI Login (option `@neondatabase/auth-ui` non retenue).
-
-## Livrables
-
-1. `src/lib/neonClient.ts` (nouveau)
-2. `src/lib/supabaseClient.ts` (réécrit en ré-export)
-3. `src/contexts/AuthContext.tsx` (migré vers `client.auth.*`)
-4. `src/components/PdfImportDialog.tsx` + `src/pages/MandatDetail.tsx` (Storage retiré + TODO)
-5. `src/vite-env.d.ts` (types env Neon)
-6. `.env.example` + `.env` (variables Neon)
-7. `package.json` (ajout `@neondatabase/neon-js`)
-8. `supabase/neon_schema.sql` (SQL prêt à coller, **non exécuté**)
+Les politiques RLS pour ces tables sont du ressort du SQL fourni. Aucune table créée ici.
