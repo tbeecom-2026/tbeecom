@@ -16,6 +16,15 @@ import ContactDetail from "@/pages/ContactDetail";
 import Activites from "@/pages/Activites";
 import Parametres from "@/pages/Parametres";
 import NotFound from "@/pages/NotFound";
+import PublicLayout from "@/components/public/PublicLayout";
+import Accueil from "@/pages/public/Accueil";
+import NosBiens from "@/pages/public/NosBiens";
+import BienDetailPublic from "@/pages/public/BienDetail";
+import Vendre from "@/pages/public/Vendre";
+import Acheter from "@/pages/public/Acheter";
+import Agence from "@/pages/public/Agence";
+import ContactPublic from "@/pages/public/Contact";
+import Mentions from "@/pages/public/Mentions";
 const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -26,16 +35,26 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+
+            {/* Espace PUBLIC (sans authentification) */}
+            <Route path="/landingpage" element={<PublicLayout />}>
+              <Route index element={<Accueil />} />
+              <Route path="biens" element={<NosBiens />} />
+              <Route path="biens/:reference" element={<BienDetailPublic />} />
+              <Route path="vendre" element={<Vendre />} />
+              <Route path="acheter" element={<Acheter />} />
+              <Route path="agence" element={<Agence />} />
+              <Route path="contact" element={<ContactPublic />} />
+              <Route path="mentions" element={<Mentions />} />
+            </Route>
+
             <Route path="/" element={<AppLayout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
-              {/* Biens = catalogue des biens (l'objet) */}
               <Route path="biens" element={<Biens />} />
               <Route path="biens/nouveau" element={<NouveauBien />} />
               <Route path="biens/:id" element={<MandatDetail />} />
-              {/* Mandats = registre des contrats de mandat */}
               <Route path="mandats" element={<RegistreMandats />} />
-              {/* Compat : anciennes URLs /mandats/:id -> fiche bien */}
               <Route path="mandats/:id" element={<MandatDetail />} />
               <Route path="contacts" element={<Contacts />} />
               <Route path="contacts/:id" element={<ContactDetail />} />
