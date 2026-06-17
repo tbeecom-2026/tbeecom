@@ -149,7 +149,7 @@ export default function NouveauMandat() {
     if (!sourceId || !user?.id) return;
     let cancelled = false;
     (async () => {
-      const { data, error } = await supabase.from("registre_mandats").select("*").eq("id", editId).limit(1);
+      const { data, error } = await supabase.from("registre_mandats").select("*").eq("id", sourceId).limit(1);
       const row = (data as any[])?.[0];
       if (cancelled) return;
       if (error || !row) {
@@ -157,17 +157,29 @@ export default function NouveauMandat() {
         navigate("/mandats");
         return;
       }
-      // autorisation : brouillon/refuse + (créateur ou admin)
-      const editable = (row.statut_validation === "brouillon" || row.statut_validation === "refuse")
-        && (row.cree_par === user.id || isAdmin);
-      if (!editable) {
-        toast({ title: "Édition impossible", description: "Ce mandat n'est plus modifiable.", variant: "destructive" });
-        navigate("/mandats");
-        return;
+      if (isAvenant) {
+        // En mode avenant : on copie les champs du parent dans une nouvelle ligne
+        if (!row.numero || row.statut_validation !== "valide") {
+          toast({ title: "Avenant impossible", description: "Le mandat parent doit être validé.", variant: "destructive" });
+          navigate("/mandats");
+          return;
+        }
+        setAvenantDe(row.id);
+        setParentNumero(row.numero ?? null);
+        setStatut("brouillon");
+        setMotifRefus(null);
+      } else {
+        // autorisation : brouillon/refuse + (créateur ou admin)
+        const editable = (row.statut_validation === "brouillon" || row.statut_validation === "refuse")
+          && (row.cree_par === user.id || isAdmin);
+        if (!editable) {
+          toast({ title: "Édition impossible", description: "Ce mandat n'est plus modifiable.", variant: "destructive" });
+          navigate("/mandats");
+          return;
+        }
+        setStatut(row.statut_validation ?? "brouillon");
+        setMotifRefus(row.motif_refus ?? null);
       }
-      // pré-remplissage
-      setStatut(row.statut_validation ?? "brouillon");
-      setMotifRefus(row.motif_refus ?? null);
       setNature(row.nature_mandat ?? "Fonds de commerce");
       setForme(row.forme_mandat ?? "Simple");
       setDesignation(row.designation_bien ?? "");
