@@ -313,3 +313,62 @@ CREATE POLICY "Equipe TBEECOM lit les leads"
 
 CREATE INDEX IF NOT EXISTS idx_leads_type ON public.leads(type);
 CREATE INDEX IF NOT EXISTS idx_leads_created_at ON public.leads(created_at DESC);
+
+-- ──────────────────────────────────────────────────────────────────────────
+-- 🔒 DURCISSEMENT SÉCURITÉ — à exécuter dans Neon (SQL Editor)
+-- Cette section :
+--   1. RÉVOQUE tout accès anonyme direct à la table `mandats`
+--      (les policies USING(true) restent valables uniquement pour
+--      `authenticated` = équipe TBEECOM connectée au CRM).
+--   2. Ajoute une colonne `publie` (BOOLEAN, défaut TRUE) pour piloter
+--      la visibilité fine d'un bien sur le site public.
+--   3. Crée une VUE `public.biens_publics` (security_invoker=on) qui
+--      n'expose QUE les colonnes safe, filtrée sur
+--      statut='sur_le_marche' AND publie=true.
+--   4. Verrouille la table `contacts` : aucun accès anonyme.
+--   5. Re-confirme les grants/policies de `leads` (insert anonyme RGPD).
+-- ──────────────────────────────────────────────────────────────────────────
+
+-- 1) Couper l'accès direct à mandats pour les visiteurs non connectés
+REVOKE ALL ON public.mandats FROM anonymous;
+DROP POLICY IF EXISTS "Public peut lire biens sur le marche" ON public.mandats;
+
+-- 2) Drapeau de publication (par défaut TRUE pour ne rien casser sur les biens
+--    déjà importés ; passer à FALSE pour retirer un bien du site sans changer
+--    son statut interne).
+ALTER TABLE public.mandats
+  ADD COLUMN IF NOT EXISTS publie BOOLEAN NOT NULL DEFAULT true;
+CREATE INDEX IF NOT EXISTS idx_mandats_publie ON public.mandats(publie);
+
+-- 3) Vue publique — SEULES colonnes safe, jamais :
+--    adresse, prix_net_vendeur, honoraires_*, notes_internes,
+--    suivi_par, user_id, documents, document_url, raison_vente, ...
+DROP VIEW IF EXISTS public.biens_publics;
+CREATE VIEW public.biens_publics
+WITH (security_invoker = on) AS
+SELECT
+  id, reference,
+  type_mandat, statut, confidentiel,
+  type_commerce, sous_type, nature_activite, enseigne,
+  titre, description,
+  commune, code_postal, secteur,
+  surface_commerciale, surface_totale, surface_reserves, surface_cuisine,
+  nb_couverts_salle, nb_couverts_terrasse, lineaire_vitrine,
+  conforme_erp, conforme_pmr, extraction, murs_a_vendre,
+  prix_demande,
+  photo_principale, photos,
+  -- exposé seulement pour l'UI publique (catégorie = libellé métier)
+  type_commerce AS categorie,
+  created_at
+FROM public.mandats
+WHERE statut = 'sur_le_marche'
+  AND publie = true;
+
+GRANT SELECT ON public.biens_publics TO anonymous;
+GRANT SELECT ON public.biens_publics TO authenticated;
+
+-- 4) Contacts : aucun accès anonyme, jamais. (Sécurité explicite.)
+REVOKE ALL ON public.contacts TO anonymous;  -- no-op si pas grant, safe
+
+-- 5) Leads — confirmation idempotente
+GRANT INSERT ON public.leads TO anonymous;
