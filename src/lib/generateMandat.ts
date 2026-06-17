@@ -934,6 +934,29 @@ export async function generateMandatV2(draft: MandatDraft, agence: AgenceParamet
       <p>Les honoraires sont exigibles à la conclusion effective de l'opération constatée par acte écrit.</p>
     </div>
 
+    ${(nature === "Droit au bail" || nature === "Murs commerciaux" || nature === "Local / immobilier d'entreprise") ? `
+    <div class="article">
+      <div class="article-title">CARACTÉRISTIQUES DU BAIL</div>
+      <table class="summary-table">
+        <tr><td>Loyer mensuel HC</td><td>${euros(draft.loyer)}</td></tr>
+        <tr><td>Durée restante du bail</td><td>${val(draft.bail_duree_restante)}</td></tr>
+        <tr><td>Garanties (dépôt, caution…)</td><td>${val(draft.bail_garanties)}</td></tr>
+        <tr><td>Charges annuelles</td><td>${euros(draft.bail_charges)}</td></tr>
+        <tr><td>Taxe foncière</td><td>${euros(draft.bail_taxe_fonciere)}</td></tr>
+        <tr><td>Indexation</td><td>${val(draft.bail_indexation)}</td></tr>
+        <tr><td>Fiscalité</td><td>${val(draft.bail_fiscalite)}</td></tr>
+      </table>
+    </div>` : ""}
+
+    ${nature === "Fonds de commerce" ? `
+    <div class="article">
+      <div class="article-title">EXPLOITATION DU FONDS</div>
+      <table class="summary-table">
+        <tr><td>Effectif salarié</td><td>${draft.effectif != null ? `${draft.effectif} salarié(s)` : val(null, "[ ___ ]")}</td></tr>
+        <tr><td>Composition du fonds</td><td>${val(draft.composition)}</td></tr>
+      </table>
+    </div>` : ""}
+
     <div class="article">
       <div class="article-title">ARTICLE 4 — DURÉE ET RÉSILIATION</div>
       <p>Le présent mandat est consenti pour une durée de <b>${dureeMois} (${dureeMois >= 10 ? dureeMois : "trois"}) mois</b>
