@@ -398,11 +398,33 @@ export default function NouveauMandat() {
                 <div className="text-sm">
                   <div className="font-medium">{bien.reference ?? "—"} — {bien.titre ?? "—"}</div>
                   <div className="text-xs text-muted-foreground">{[bien.adresse, bien.code_postal, bien.commune].filter(Boolean).join(", ") || "—"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {bien.nature_activite ?? "—"}{buildSurfaces(bien) ? ` · ${buildSurfaces(bien)}` : ""}
+                  </div>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => { setBien(null); setBienQ(""); }}>Changer</Button>
               </div>
             ) : (
               <>
+                {mandant && (loadingBiensMandant || biensDuMandant.length > 0) && (
+                  <div className="rounded-md border border-primary/30 bg-primary/5 p-2">
+                    <div className="px-1 py-1 text-xs font-medium text-muted-foreground">
+                      Biens de ce mandant {loadingBiensMandant ? "(recherche…)" : `(${biensDuMandant.length})`}
+                    </div>
+                    {biensDuMandant.length > 0 && (
+                      <div className="divide-y divide-border/40 max-h-56 overflow-auto">
+                        {biensDuMandant.map((b) => (
+                          <button key={b.id} type="button" onClick={() => applyBien(b)}
+                            className="w-full text-left px-2 py-2 text-sm hover:bg-secondary/40 rounded-sm">
+                            <div className="font-medium">{b.reference ?? "—"} — {b.titre ?? "—"}</div>
+                            <div className="text-xs text-muted-foreground">{[b.adresse, b.code_postal, b.commune].filter(Boolean).join(", ") || "—"}</div>
+                            <div className="text-xs text-muted-foreground">{b.nature_activite ?? "—"}{buildSurfaces(b) ? ` · ${buildSurfaces(b)}` : ""}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input className="pl-9" placeholder="Rechercher un bien (référence, titre)…"
