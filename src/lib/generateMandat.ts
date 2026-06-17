@@ -894,8 +894,7 @@ export async function generateMandatV2(draft: MandatDraft, agence: AgenceParamet
 
     <div class="partie-title">${partieAdverse}</div>
     <table class="partie-table">
-      <tr><td>Nom / Raison sociale</td><td><b>${val(draft.mandant_nom)}</b></td></tr>
-      <tr><td>Adresse</td><td>${val(draft.adresse_bien, "[ adresse du mandant ]")}</td></tr>
+      ${mandantRows.join("")}
     </table>
     <p>Ci-après désigné(e) <b>« le MANDANT »</b>, d'une part,</p>
     <hr class="thin-line"/>
