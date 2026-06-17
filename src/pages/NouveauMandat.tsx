@@ -625,7 +625,7 @@ export default function NouveauMandat() {
               </Field>
             </>
           )}
-          {(isLocation || isBail) && (
+          {isLocation && (
             <Field label="Loyer mensuel HC (€)"><Input type="number" value={loyer} onChange={(e) => setLoyer(e.target.value)} /></Field>
           )}
           <Field label="Honoraires HT (€)" hint={honorairesAuto ? `Pré-calculé via le barème (${formatEuros(Number(honoraires) || 0)})` : "Saisie manuelle"}>
