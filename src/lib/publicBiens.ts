@@ -1,14 +1,11 @@
+// src/lib/publicBiens.ts
+// Accès PUBLIC aux biens : lit UNIQUEMENT la vue sécurisée `biens_publics`
+// (jamais la table `mandats`). La vue ne contient que des biens "sur le marché",
+// des colonnes sûres, sans adresse exacte, enseigne masquée si confidentiel.
+// La vraie barrière est côté Neon (RLS) : voir securite_rls_neon.sql.
 import { supabase } from "./supabaseClient";
 
-/**
- * Champs PUBLICS autorisés. On n'expose JAMAIS :
- * contacts, proprietaire_*, mandant_nom, prix_net_vendeur, honoraires,
- * notes_internes, mandats internes, adresse exacte.
- *
- * ⚠️ La vraie barrière de sécurité est côté base : on lit la VUE
- * `public.biens_publics` (security_invoker), qui exclut toutes les colonnes
- * sensibles. Le rôle `anonymous` n'a AUCUN SELECT sur `public.mandats`.
- */
+// Colonnes exposées par la vue biens_publics (PAS d'adresse, PAS d'attributs).
 export const PUBLIC_FIELDS = [
   "id","reference","categorie","type_commerce","sous_type","nature_activite",
   "titre","description","commune","code_postal","secteur",
@@ -18,8 +15,6 @@ export const PUBLIC_FIELDS = [
   "prix_demande","photo_principale","photos","enseigne","confidentiel",
   "created_at",
 ].join(",");
-
-const PUBLIC_VIEW = "biens_publics";
 
 export interface PublicBien {
   id: string;
@@ -52,7 +47,7 @@ export interface PublicBien {
   created_at: string;
 }
 
-/** Défense en profondeur côté client : masque enseigne si confidentiel. */
+/** Défense en profondeur côté client (la vue masque déjà l'enseigne si confidentiel). */
 export function sanitize(b: PublicBien): PublicBien {
   if (b.confidentiel) return { ...b, enseigne: null };
   return b;
@@ -63,7 +58,7 @@ export async function listPublicBiens(opts: {
   prixMax?: number; surfaceMin?: number; page?: number; pageSize?: number;
 }) {
   const { search, categorie, type, commune, prixMax, surfaceMin, page = 0, pageSize = 12 } = opts;
-  let q = supabase.from(PUBLIC_VIEW).select(PUBLIC_FIELDS, { count: "exact" });
+  let q = supabase.from("biens_publics").select(PUBLIC_FIELDS, { count: "exact" });
   if (categorie && categorie !== "all") q = q.eq("categorie", categorie);
   if (type && type !== "all") q = q.eq("type_commerce", type);
   if (commune && commune !== "all") q = q.eq("commune", commune);
@@ -82,7 +77,7 @@ export async function listPublicBiens(opts: {
 
 export async function getPublicBien(reference: string) {
   const { data, error } = await supabase
-    .from(PUBLIC_VIEW)
+    .from("biens_publics")
     .select(PUBLIC_FIELDS)
     .eq("reference", reference)
     .maybeSingle();
@@ -92,7 +87,7 @@ export async function getPublicBien(reference: string) {
 
 export async function distinctValues(field: "categorie" | "commune" | "type_commerce") {
   const { data } = await supabase
-    .from(PUBLIC_VIEW).select(field).not(field, "is", null).limit(2000);
+    .from("biens_publics").select(field).not(field, "is", null).limit(2000);
   const set = new Set<string>();
   (data ?? []).forEach((r: any) => r[field] && set.add(r[field]));
   return Array.from(set).sort();
