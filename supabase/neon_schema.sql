@@ -262,3 +262,54 @@ VALUES
   (5, 'fdc', 400001,  800000, 'pourcentage', 7,    '400 001 € à 800 000 € → 7 % HT'),
   (6, 'fdc', 800001,  NULL,   'pourcentage', 6,    '> 800 000 € → 6 % HT')
 ON CONFLICT DO NOTHING;
+
+-- ──────────────────────────────────────────────────────────────────────────
+-- ESPACE PUBLIC TBEECOM (landingpage) — accès anonyme
+-- ──────────────────────────────────────────────────────────────────────────
+
+-- 1) Lecture anonyme des biens "sur le marché" (champs publics uniquement).
+--    On expose la table mandats via GRANT + RLS. Les colonnes sensibles
+--    (prix_net_vendeur, honoraires, notes_internes, proprietaire_*, etc.)
+--    ne sont JAMAIS sélectionnées par le front public — la sélection est
+--    cadrée côté app dans src/lib/publicBiens.ts (PUBLIC_FIELDS).
+GRANT SELECT ON public.mandats TO anonymous;
+
+DROP POLICY IF EXISTS "Public peut lire biens sur le marche" ON public.mandats;
+CREATE POLICY "Public peut lire biens sur le marche"
+  ON public.mandats FOR SELECT TO anonymous
+  USING (statut = 'sur_le_marche');
+
+-- 2) Table leads (formulaires publics : contact / vendre / acheter / annonce)
+CREATE TABLE IF NOT EXISTS public.leads (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  type            TEXT NOT NULL,                      -- contact | vendre | acheter | annonce
+  nom             TEXT,
+  prenom          TEXT,
+  email           TEXT NOT NULL,
+  telephone       TEXT,
+  message         TEXT,
+  reference_bien  TEXT,                               -- ref mandat si "annonce"
+  payload         JSONB DEFAULT '{}'::jsonb,          -- critères wizard
+  rgpd_consent    BOOLEAN NOT NULL DEFAULT false,
+  source          TEXT,                               -- pathname
+  statut          TEXT DEFAULT 'nouveau',
+  created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+GRANT INSERT ON public.leads TO anonymous;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.leads TO authenticated;
+
+ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anonyme peut creer un lead" ON public.leads;
+CREATE POLICY "Anonyme peut creer un lead"
+  ON public.leads FOR INSERT TO anonymous
+  WITH CHECK (rgpd_consent = true);
+
+DROP POLICY IF EXISTS "Equipe TBEECOM lit les leads" ON public.leads;
+CREATE POLICY "Equipe TBEECOM lit les leads"
+  ON public.leads FOR ALL TO authenticated
+  USING (true) WITH CHECK (true);
+
+CREATE INDEX IF NOT EXISTS idx_leads_type ON public.leads(type);
+CREATE INDEX IF NOT EXISTS idx_leads_created_at ON public.leads(created_at DESC);
