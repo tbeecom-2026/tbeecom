@@ -45,6 +45,9 @@ interface Row {
   criteres_recherche: string | null;
   prix_max_recherche: number | null;
   created_at: string | null;
+  avenant_de: string | null;
+  avenant_numero: number | null;
+  parent_numero?: string | null;
 }
 
 export default function MandatsAValider() {
