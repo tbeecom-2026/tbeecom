@@ -1,17 +1,19 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 
 export default function AppLayout() {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Chargement...</div>;
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    // Garde stricte : aucun accès aux pages CRM (et donc à la BDD Neon via le client) sans session valide.
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
 
   return (
