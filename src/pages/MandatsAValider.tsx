@@ -80,23 +80,42 @@ export default function MandatsAValider() {
   async function valider(row: Row) {
     if (!isAdmin || !user?.id) return;
     setBusy(true);
-    // calcul du prochain n°
-    const { data: allNums } = await supabase.from("registre_mandats").select("numero").not("numero", "is", null).limit(5000);
-    const maxN = ((allNums as any[]) ?? []).reduce((m, r) => {
-      const n = parseInt(String(r.numero ?? "").replace(/\D/g, ""), 10);
-      return Number.isFinite(n) && n > m ? n : m;
-    }, DEBUT_REGISTRE - 1);
-    const nextN = String(maxN + 1);
-    const { error } = await supabase.from("registre_mandats").update({
-      numero: nextN,
+    let updatePayload: Record<string, any> = {
       statut_validation: "valide",
       valide_par: user.id,
       valide_le: new Date().toISOString(),
       motif_refus: null,
-    }).eq("id", row.id);
+    };
+    let messageDesc = "";
+    if (row.avenant_de) {
+      // Avenant : pas de n° de registre, mais n° d'avenant séquentiel pour ce parent
+      const { data: existing } = await supabase
+        .from("registre_mandats")
+        .select("avenant_numero")
+        .eq("avenant_de", row.avenant_de)
+        .eq("statut_validation", "valide")
+        .limit(500);
+      const maxA = ((existing as any[]) ?? []).reduce((m, r) => {
+        const n = Number(r.avenant_numero);
+        return Number.isFinite(n) && n > m ? n : m;
+      }, 0);
+      const nextA = maxA + 1;
+      updatePayload.avenant_numero = nextA;
+      messageDesc = `Avenant n° ${nextA} validé.`;
+    } else {
+      const { data: allNums } = await supabase.from("registre_mandats").select("numero").not("numero", "is", null).limit(5000);
+      const maxN = ((allNums as any[]) ?? []).reduce((m, r) => {
+        const n = parseInt(String(r.numero ?? "").replace(/\D/g, ""), 10);
+        return Number.isFinite(n) && n > m ? n : m;
+      }, DEBUT_REGISTRE - 1);
+      const nextN = String(maxN + 1);
+      updatePayload.numero = nextN;
+      messageDesc = `N° ${nextN} attribué.`;
+    }
+    const { error } = await supabase.from("registre_mandats").update(updatePayload).eq("id", row.id);
     setBusy(false);
     if (error) return toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    toast({ title: "Mandat validé", description: `N° ${nextN} attribué.` });
+    toast({ title: "Mandat validé", description: messageDesc });
     load();
   }
 
