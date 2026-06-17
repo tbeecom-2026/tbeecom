@@ -6,6 +6,7 @@
 
 import type { Mandat, Contact, MandatVendeur } from "@/types/database";
 import type { AgenceParametres } from "@/lib/agence";
+import { supabase } from "@/lib/supabaseClient";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function euros(n: number | null | undefined): string {
