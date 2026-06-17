@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Plus, FilePen, Send } from "lucide-react";
+import { Search, Plus, FilePen, Send, FilePlus2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/formatters";
 import { retirerMandatsExpires, nettyLabel, getIssueBadgeClass } from "@/lib/mandatStatus";
