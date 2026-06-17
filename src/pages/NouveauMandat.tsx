@@ -132,7 +132,7 @@ export default function NouveauMandat() {
 
   const [bareme, setBareme] = useState<BaremeTranche[]>([]);
   const [saving, setSaving] = useState(false);
-  const [loadingEdit, setLoadingEdit] = useState(isEdit);
+  const [loadingEdit, setLoadingEdit] = useState(isEdit || isAvenant);
   const [statut, setStatut] = useState<string>("brouillon");
   const [motifRefus, setMotifRefus] = useState<string | null>(null);
 
