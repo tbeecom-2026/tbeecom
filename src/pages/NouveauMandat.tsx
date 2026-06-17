@@ -589,7 +589,12 @@ export default function NouveauMandat() {
               <Field label="Désignation"><Input value={designation} onChange={(e) => setDesignation(e.target.value)} placeholder="ex. Restaurant 60 couverts" /></Field>
               <Field label="Adresse du bien"><Input value={adresseBien} onChange={(e) => setAdresseBien(e.target.value)} /></Field>
               <Field label="Activité"><Input value={activiteBien} onChange={(e) => setActiviteBien(e.target.value)} /></Field>
-              <Field label="Surfaces" hint="ex. 80 m² salle / 25 m² réserve"><Input value={surfacesBien} onChange={(e) => setSurfacesBien(e.target.value)} /></Field>
+              <Field label="Surface totale" hint="ex. 80 m² salle / 25 m² réserve"><Input value={surfacesBien} onChange={(e) => setSurfacesBien(e.target.value)} /></Field>
+              <div className="md:col-span-2">
+                <Field label="Description des locaux" hint="RDC, sous-sol, terrasse, état, équipements…">
+                  <Textarea rows={4} value={descriptionLocaux} onChange={(e) => setDescriptionLocaux(e.target.value)} />
+                </Field>
+              </div>
             </div>
           </CardContent>
         </Card>
