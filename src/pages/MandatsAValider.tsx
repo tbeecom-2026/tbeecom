@@ -162,6 +162,11 @@ export default function MandatsAValider() {
         <Card key={r.id}>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2 flex-wrap">
+              {r.avenant_de && (
+                <Badge className="bg-primary/20 text-primary border-primary/40">
+                  Avenant au mandat N° {r.parent_numero ?? "—"}
+                </Badge>
+              )}
               <Badge variant="outline">{r.nature_mandat ?? "—"}</Badge>
               <Badge variant="outline">{r.forme_mandat ?? r.nature_mandat ?? "—"}</Badge>
               <span>{r.mandant_nom ?? "—"}</span>
