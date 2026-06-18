@@ -737,7 +737,47 @@ export interface MandatDraft {
   avenant_de?: string | null;
   avenant_numero?: number | null;
   delegation_mandat_ref?: string | null;
+  delegation_de?: string | null;
+  delegation_honoraires_ref?: number | null;
+  delegation_part_delegataire?: number | null;
+  delegation_part_mode?: string | null;
+  delegataire_raison_sociale?: string | null;
+  delegataire_forme?: string | null;
+  delegataire_capital?: string | null;
+  delegataire_siege?: string | null;
+  delegataire_rcs?: string | null;
+  delegataire_siret?: string | null;
+  delegataire_carte_t?: string | null;
+  delegataire_cci?: string | null;
+  delegataire_rcp?: string | null;
+  delegataire_representant?: string | null;
+  delegataire_email?: string | null;
+  delegataire_telephone?: string | null;
 }
+
+const NATURE_CODE_TO_LABEL: Record<string, string> = {
+  fdc: "Fonds de commerce",
+  droit_bail: "Droit au bail",
+  murs: "Murs commerciaux",
+  local_pro: "Local / immobilier d'entreprise",
+  titres: "Cession de titres",
+  recherche: "Recherche",
+  location: "Location",
+  delegation: "Délégation de mandat",
+};
+
+function normNature(n?: string | null): string {
+  if (!n) return "Fonds de commerce";
+  return NATURE_CODE_TO_LABEL[n] ?? n;
+}
+
+function normForme(f?: string | null): string {
+  const x = (f ?? "Simple").toString().trim().toLowerCase();
+  if (x === "exclusif" || x === "exclusive" || x === "exclusif (non semi)") return "Exclusif";
+  if (x.startsWith("semi")) return "Semi-exclusif";
+  return "Simple";
+}
+
 
 function agenceHeader(a: AgenceParametres | null): string {
   if (!a) {
@@ -937,13 +977,28 @@ export async function generateMandatV2(draft: MandatDraft, agence: AgenceParamet
     return renderAvenant(draft, parent, agence, c);
   }
 
+  const nature = normNature(draft.nature_mandat);
 
-  const nature = draft.nature_mandat ?? "Fonds de commerce";
-  const forme = draft.forme_mandat ?? "Simple";
+  // ── DÉLÉGATION (inter-agences) — document à part, NE consomme PAS de n° de registre ──
+  if (nature === "Délégation de mandat" || draft.delegation_de) {
+    let parent: any = null;
+    if (draft.delegation_de) {
+      const { data: pd } = await supabase
+        .from("registre_mandats")
+        .select("*")
+        .eq("id", draft.delegation_de)
+        .limit(1);
+      parent = (pd as any[])?.[0] ?? null;
+    }
+    return renderDelegation(draft, parent, agence);
+  }
+
+  const forme = normForme(draft.forme_mandat);
   const isExcl = forme === "Exclusif";
   const isSemi = forme === "Semi-exclusif";
   const isRecherche = nature === "Recherche";
   const isLocation = nature === "Location";
+
 
   const { titre, partieAdverse, objetDoc } = objetLibelle(nature);
   const numero = draft.numero ?? "[ _____ ]";
@@ -1005,7 +1060,7 @@ export async function generateMandatV2(draft: MandatDraft, agence: AgenceParamet
   if (ht != null) {
     prixBloc.push(`<tr><td>Honoraires</td><td>${euros(ht)} HT — soit <b>${euros(ttc)} TTC</b></td></tr>`);
   }
-  prixBloc.push(`<tr><td>Honoraires à la charge de</td><td>${val(draft.honoraires_charge, "[ Acquéreur / Cédant ]")}</td></tr>`);
+  prixBloc.push(`<tr><td>Honoraires à la charge de</td><td>${val(draft.honoraires_charge, isLocation ? "[ Preneur / Bailleur ]" : "[ Acquéreur / Cédant ]")}</td></tr>`);
 
   // clauses exclusivité
   const clauseExclu = isExcl ? `
@@ -1130,6 +1185,133 @@ export async function generateMandatV2(draft: MandatDraft, agence: AgenceParamet
     ${signaturesHtml()}
 
     <p class="footer-note">${agence?.nom_commercial ?? "Agence"} — Mandat n°&nbsp;${numero} — Document confidentiel</p>
+  </div>
+  </body></html>`;
+}
+
+// ── Convention de délégation inter-agences ────────────────────────────────
+function renderDelegation(
+  draft: MandatDraft,
+  parent: any | null,
+  agence: AgenceParametres | null,
+): string {
+  const mandatRef = draft.delegation_mandat_ref ?? (parent?.numero ? `N° ${parent.numero}` : null);
+
+  const bienDesig = parent?.designation_bien ?? draft.designation_bien ?? draft.activite_bien ?? null;
+  const bienAdr = parent?.adresse_bien ?? draft.adresse_bien ?? null;
+  const bienSurf = parent?.surfaces_bien ?? draft.surfaces_bien ?? null;
+  const bienPrix = parent?.prix ?? draft.prix ?? null;
+
+  const honoBase = draft.delegation_honoraires_ref ?? parent?.honoraires_montant ?? draft.honoraires_montant ?? null;
+  const mode = draft.delegation_part_mode ?? "pourcentage";
+  let pct = draft.delegation_part_delegataire;
+  if (mode === "moitie" || pct == null) pct = 50;
+  const montantDelegataire = honoBase != null ? Math.round(honoBase * (pct / 100)) : null;
+  const montantDelegant = honoBase != null ? Math.round(honoBase * ((100 - pct) / 100)) : null;
+
+  const delRows: string[] = [];
+  delRows.push(`<tr><td>Raison sociale</td><td><b>${val(draft.delegataire_raison_sociale)}</b></td></tr>`);
+  const formeCap = [draft.delegataire_forme, draft.delegataire_capital ? `capital ${draft.delegataire_capital}` : null]
+    .filter(Boolean).join(" — ");
+  if (formeCap) delRows.push(`<tr><td>Forme / Capital</td><td>${val(formeCap)}</td></tr>`);
+  if (draft.delegataire_siege) delRows.push(`<tr><td>Siège</td><td>${val(draft.delegataire_siege)}</td></tr>`);
+  const rcsSiret = draft.delegataire_rcs ?? draft.delegataire_siret;
+  if (rcsSiret) delRows.push(`<tr><td>RCS / SIRET</td><td>${val(rcsSiret)}</td></tr>`);
+  if (draft.delegataire_carte_t) delRows.push(`<tr><td>Carte professionnelle</td><td>${val(draft.delegataire_carte_t)}${draft.delegataire_cci ? ` — ${val(draft.delegataire_cci)}` : ""}</td></tr>`);
+  if (draft.delegataire_rcp) delRows.push(`<tr><td>RC Pro</td><td>${val(draft.delegataire_rcp)}</td></tr>`);
+  if (draft.delegataire_representant) delRows.push(`<tr><td>Représentée par</td><td>${val(draft.delegataire_representant)}</td></tr>`);
+  const contactDel = [draft.delegataire_telephone, draft.delegataire_email].filter(Boolean).join(" · ");
+  if (contactDel) delRows.push(`<tr><td>Contact</td><td>${val(contactDel)}</td></tr>`);
+
+  const rappel: string[] = [];
+  rappel.push(`<tr><td>Mandat principal n°</td><td><b>${val(mandatRef, "[ réf. mandat principal ]")}</b></td></tr>`);
+  if (parent?.nature_mandat || parent?.forme_mandat) rappel.push(`<tr><td>Nature / Forme</td><td>${normNature(parent?.nature_mandat)} — ${parent?.forme_mandat ?? "—"}</td></tr>`);
+  if (bienDesig) rappel.push(`<tr><td>Désignation du bien</td><td>${val(bienDesig)}</td></tr>`);
+  if (bienAdr) rappel.push(`<tr><td>Adresse</td><td>${val(bienAdr)}</td></tr>`);
+  if (bienSurf) rappel.push(`<tr><td>Surfaces</td><td>${val(bienSurf)}</td></tr>`);
+  if (bienPrix != null) rappel.push(`<tr><td>Prix de présentation</td><td>${euros(bienPrix)}</td></tr>`);
+
+  const partageRows: string[] = [];
+  partageRows.push(`<tr><td>Honoraires de référence (HT)</td><td>${honoBase != null ? euros(honoBase) : "[ à préciser ]"}</td></tr>`);
+  partageRows.push(`<tr><td>Part du DÉLÉGATAIRE</td><td><b>${pct} %</b>${montantDelegataire != null ? ` — ${euros(montantDelegataire)} HT` : ""}</td></tr>`);
+  partageRows.push(`<tr><td>Part du DÉLÉGANT (${agence?.nom_commercial ?? "TBEECOM"})</td><td><b>${100 - pct} %</b>${montantDelegant != null ? ` — ${euros(montantDelegant)} HT` : ""}</td></tr>`);
+
+  return `<!DOCTYPE html><html lang="fr"><head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <title>Convention de délégation de mandat — ${agence?.nom_commercial ?? "Agence"}</title>
+    <style>${CSS}</style>
+  </head><body>
+  <div class="page">
+    <div class="header">
+      <div>${agenceHeader(agence)}</div>
+      <div class="header-info">${agenceMentions(agence)}</div>
+    </div>
+    <hr class="gold-line"/>
+    <div class="doc-title">
+      <h1>CONVENTION DE DÉLÉGATION DE MANDAT</h1>
+      <p>Entre professionnels — Mandat principal délégué : ${val(mandatRef, "réf. ___")}</p>
+    </div>
+
+    <div class="convention">ENTRE LES SOUSSIGNÉS</div>
+
+    <div class="partie-title">LE DÉLÉGANT (Mandataire principal)</div>
+    <p>La société <b>${agence?.nom_commercial ?? agence?.raison_sociale ?? "[ Agence ]"}</b>, ${agence?.forme_juridique ?? ""}${agence?.capital ? ` au capital de ${euros(agence.capital)}` : ""}, ${agence?.siege ?? "[ siège ]"} — ${agenceMentions(agence)}. Représentée par <b>${agence?.gerant_nom ?? "[ Gérant(e) ]"}</b>. Titulaire du mandat principal ci-après rappelé. Ci-après <b>« le DÉLÉGANT »</b>, d'une part,</p>
+    <hr class="thin-line"/>
+
+    <div class="partie-title">LE DÉLÉGATAIRE (Agence partenaire)</div>
+    <table class="partie-table">${delRows.join("")}</table>
+    <p>Ci-après <b>« le DÉLÉGATAIRE »</b>, d'autre part,</p>
+
+    <div class="convention">IL A ÉTÉ CONVENU CE QUI SUIT</div>
+
+    <div class="article">
+      <div class="article-title">ARTICLE 1 — RAPPEL DU MANDAT PRINCIPAL</div>
+      <table class="summary-table">${rappel.join("")}</table>
+      <p>Le DÉLÉGANT déclare être régulièrement titulaire de ce mandat, inscrit à son registre des mandats, et que celui-ci l'autorise expressément à se substituer ou à déléguer tout ou partie de sa mission à un autre professionnel titulaire d'une carte professionnelle.</p>
+    </div>
+
+    <div class="article">
+      <div class="article-title">ARTICLE 2 — OBJET DE LA DÉLÉGATION</div>
+      <p>Le DÉLÉGANT confie au DÉLÉGATAIRE, qui l'accepte, la recherche d'un acquéreur ou d'un preneur pour le bien objet du mandat principal, ainsi que sa présentation et la négociation auprès de ses propres clients et réseaux, dans le strict respect des prix, charges et conditions du mandat principal.</p>
+      <p class="caps">La présente délégation ne crée aucun lien contractuel direct entre le DÉLÉGATAIRE et le mandant du mandat principal : le DÉLÉGANT demeure seul titulaire du mandat à l'égard de son mandant.</p>
+    </div>
+
+    <div class="article">
+      <div class="article-title">ARTICLE 3 — PARTAGE DES HONORAIRES</div>
+      <table class="summary-table">${partageRows.join("")}</table>
+      <p>Le partage s'entend hors taxes ; chaque partie facture sa quote-part et acquitte la TVA dont elle est redevable. Les honoraires ne sont dus qu'en cas de réalisation effective de l'opération avec un candidat présenté par le DÉLÉGATAIRE, constatée par acte (vente, cession ou bail). La partie qui les encaisse reverse à l'autre sa quote-part dans les trente (30) jours de leur perception. Aucune avance ni indemnité n'est due en l'absence d'opération.</p>
+    </div>
+
+    <div class="article">
+      <div class="article-title">ARTICLE 4 — DURÉE</div>
+      <p>La présente délégation prend effet à sa signature et s'éteint de plein droit au terme — ou à la résiliation — du mandat principal. Le DÉLÉGANT informe sans délai le DÉLÉGATAIRE de toute modification, suspension ou cessation du mandat principal.</p>
+    </div>
+
+    <div class="article">
+      <div class="article-title">ARTICLE 5 — OBLIGATIONS DU DÉLÉGATAIRE</div>
+      <p>Le DÉLÉGATAIRE agit en son nom et sous sa responsabilité, dans le respect de la loi Hoguet, de sa carte professionnelle et de sa RC Pro. Il s'interdit de diffuser le bien à un prix ou à des conditions différents de ceux du mandat principal, communique sans délai au DÉLÉGANT toute offre reçue et l'identité des candidats présentés, rend compte de ses diligences, et s'interdit tout contact direct avec le mandant du mandat principal sans l'accord du DÉLÉGANT.</p>
+    </div>
+
+    <div class="article">
+      <div class="article-title">ARTICLE 6 — NON-CONTOURNEMENT</div>
+      <p class="caps">Chaque partie s'interdit, pendant la durée de la présente convention et les douze (12) mois suivant son terme, de traiter directement ou indirectement avec un client présenté par l'autre partie sans l'en informer et sans respecter le partage convenu. Tout manquement rend exigible, au profit de la partie lésée, une indemnité égale à la quote-part d'honoraires qui lui revenait.</p>
+    </div>
+
+    <div class="article">
+      <div class="article-title">ARTICLE 7 — CONFIDENTIALITÉ · DONNÉES · LITIGES</div>
+      <p>Les parties s'engagent à la confidentialité des informations échangées et au respect du RGPD pour les données des clients communiquées (finalité limitée à la présente opération). Elles sont chacune soumises aux obligations Tracfin. Tout différend sera soumis, à défaut d'accord amiable, aux tribunaux compétents du siège du DÉLÉGANT.</p>
+    </div>
+
+    ${draft.observations && draft.observations.trim() ? `
+    <div class="article">
+      <div class="article-title">OBSERVATIONS</div>
+      <p>${val(draft.observations)}</p>
+    </div>` : ""}
+
+    ${signaturesHtml()}
+
+    <p class="footer-note">${agence?.nom_commercial ?? "Agence"} — Délégation du mandat ${val(mandatRef, "___")} — Document confidentiel</p>
   </div>
   </body></html>`;
 }

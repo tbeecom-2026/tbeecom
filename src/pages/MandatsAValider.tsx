@@ -47,7 +47,9 @@ interface Row {
   created_at: string | null;
   avenant_de: string | null;
   avenant_numero: number | null;
+  delegation_de?: string | null;
   parent_numero?: string | null;
+
 }
 
 export default function MandatsAValider() {
@@ -87,7 +89,11 @@ export default function MandatsAValider() {
       motif_refus: null,
     };
     let messageDesc = "";
-    if (row.avenant_de) {
+    const isDelegation = row.nature_mandat === "delegation" || row.nature_mandat === "Délégation de mandat" || !!row.delegation_de;
+    if (isDelegation) {
+      // Délégation : pas de n° de registre — se rattache au mandat principal
+      messageDesc = "Délégation validée (sans n° de registre).";
+    } else if (row.avenant_de) {
       // Avenant : pas de n° de registre, mais n° d'avenant séquentiel pour ce parent
       const { data: existing } = await supabase
         .from("registre_mandats")
@@ -112,6 +118,7 @@ export default function MandatsAValider() {
       updatePayload.numero = nextN;
       messageDesc = `N° ${nextN} attribué.`;
     }
+
     const { error } = await supabase.from("registre_mandats").update(updatePayload).eq("id", row.id);
     setBusy(false);
     if (error) return toast({ title: "Erreur", description: error.message, variant: "destructive" });
