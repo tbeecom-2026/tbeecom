@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, FileUp } from "lucide-react";
 import { formatEuros, formatDate, getStatutBadge, STATUTS_MANDAT, TYPES_COMMERCE } from "@/lib/formatters";
-import { getMandatDateState, retirerMandatsExpires, getVenduClass } from "@/lib/mandatStatus";
+import { retirerMandatsExpires, etatMandat } from "@/lib/mandatStatus";
 import type { Mandat } from "@/types/database";
 import PdfImportDialog from "@/components/PdfImportDialog";
 
