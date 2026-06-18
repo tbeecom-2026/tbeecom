@@ -736,6 +736,7 @@ export interface MandatDraft {
   comp_materiel?: boolean | null;
   avenant_de?: string | null;
   avenant_numero?: number | null;
+  delegation_mandat_ref?: string | null;
 }
 
 function agenceHeader(a: AgenceParametres | null): string {

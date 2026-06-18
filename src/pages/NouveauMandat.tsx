@@ -54,7 +54,7 @@ const FORMES = ["Simple", "Exclusif", "Semi-exclusif"];
 
 type ContactLite = { id: string; nom: string | null; prenom: string | null; societe: string | null; email: string | null; telephone: string | null; adresse: string | null; code_postal: string | null; commune: string | null };
 type BienLite = { id: string; reference: string | null; titre: string | null; adresse: string | null; code_postal: string | null; commune: string | null; nature_activite: string | null; surface_commerciale: number | null; surface_totale: number | null; proprietaire_email?: string | null; proprietaire_nom?: string | null };
-type MandatLite = { id: string; numero: string | null; designation_bien: string | null; adresse_bien: string | null; activite_bien: string | null; surfaces_bien: string | null; prix: number | null; honoraires_montant: number | null };
+type MandatLite = { id: string; numero: string | null; reference_bien: string | null; designation_bien: string | null; adresse_bien: string | null; activite_bien: string | null; surfaces_bien: string | null; prix: number | null; honoraires_montant: number | null };
 
 function escapeOr(s: string) {
   return s.replace(/[,()"']/g, " ").trim();
@@ -295,7 +295,7 @@ export default function NouveauMandat() {
       }
       if (row.delegation_de) {
         const { data: pd } = await supabase.from("registre_mandats")
-          .select("id, numero, designation_bien, adresse_bien, activite_bien, surfaces_bien, prix, honoraires_montant")
+          .select("id, numero, reference_bien, designation_bien, adresse_bien, activite_bien, surfaces_bien, prix, honoraires_montant")
           .eq("id", row.delegation_de).limit(1);
         const p = (pd as any[])?.[0];
         if (p) setDelegationParent(p as MandatLite);
@@ -343,7 +343,7 @@ export default function NouveauMandat() {
     const t = setTimeout(async () => {
       const { data } = await supabase
         .from("registre_mandats")
-        .select("id, numero, designation_bien, adresse_bien, activite_bien, surfaces_bien, prix, honoraires_montant")
+        .select("id, numero, reference_bien, designation_bien, adresse_bien, activite_bien, surfaces_bien, prix, honoraires_montant")
         .eq("statut_validation", "valide")
         .not("numero", "is", null)
         .or(`numero.ilike.%${q}%,designation_bien.ilike.%${q}%,adresse_bien.ilike.%${q}%`)
@@ -356,7 +356,9 @@ export default function NouveauMandat() {
   function applyDelegationParent(p: MandatLite) {
     setDelegationParent(p);
     setDelegationDe(p.id);
-    setDelegationMandatRef(p.numero ?? "");
+    const refParts = [`N° ${p.numero ?? "—"}`];
+    if (p.reference_bien) refParts.push(`réf. ${p.reference_bien}`);
+    setDelegationMandatRef(refParts.join(" — "));
     setDesignation((d) => d || p.designation_bien || "");
     setAdresseBien((a) => a || p.adresse_bien || "");
     setActiviteBien((a) => a || p.activite_bien || "");
