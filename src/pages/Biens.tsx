@@ -195,7 +195,23 @@ export default function Biens() {
                   <td className="p-3">{m.commune ?? "—"}</td>
                   <td className="p-3">{formatEuros(m.prix_demande)}</td>
                   <td className="p-3">{formatEuros(m.ca_annuel)}</td>
-                  <td className="p-3">{m.mandat_numero ?? "—"}</td>
+                  <td className="p-3">
+                    {m.mandat_numero ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/mandats/${m.id}`);
+                        }}
+                        className="rounded-md border border-primary/60 bg-primary/15 px-2 py-1 text-sm font-semibold text-primary hover:bg-primary/25 hover:border-primary transition-colors"
+                        title={`Voir le mandat ${m.mandat_numero}`}
+                      >
+                        {m.mandat_numero}
+                      </button>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
                   <td className="p-3">{statutCell}</td>
                 </tr>
               );
