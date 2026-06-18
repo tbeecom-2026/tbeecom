@@ -54,6 +54,9 @@ export default function ContactDetail() {
   const [saving, setSaving] = useState(false);
   const [siretInput, setSiretInput] = useState("");
   const [searching, setSearching] = useState(false);
+  const [apiLoading, setApiLoading] = useState(false);
+  const [candidates, setCandidates] = useState<CandidatEntreprise[] | null>(null);
+  const [radiee, setRadiee] = useState(false);
 
   useEffect(() => {
     if (!isNew && id) loadContact(id);
