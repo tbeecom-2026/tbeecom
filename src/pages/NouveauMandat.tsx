@@ -295,7 +295,7 @@ export default function NouveauMandat() {
       }
       if (row.delegation_de) {
         const { data: pd } = await supabase.from("registre_mandats")
-          .select("id, numero, designation_bien, adresse_bien, activite_bien, surfaces_bien, prix, honoraires_montant")
+          .select("id, numero, reference_bien, designation_bien, adresse_bien, activite_bien, surfaces_bien, prix, honoraires_montant")
           .eq("id", row.delegation_de).limit(1);
         const p = (pd as any[])?.[0];
         if (p) setDelegationParent(p as MandatLite);
