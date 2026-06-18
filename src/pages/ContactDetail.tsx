@@ -194,6 +194,7 @@ export default function ContactDetail() {
       setApiLoading(false);
     }
   }
+  }
 
   async function handleSave() {
     setSaving(true);
