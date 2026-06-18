@@ -66,10 +66,12 @@ export default function Dashboard() {
       ],
     );
 
-    // Ne garder que les mandats VIVANTS : fin effective >= aujourd'hui (ou aucune date connue).
+    // Ne garder que les mandats VIVANTS : fin effective >= aujourd'hui.
+    // Sans aucune date connue => NON compté (cohérent avec audit_dashboard.sql : on ne peut pas
+    // prouver qu'un mandat sans date est en cours ; ces lignes sont des imports à fiabiliser).
     const vivants = (surLeMarche ?? []).filter((m) => {
       const fin = finEffective(m as any);
-      return fin == null ? true : fin.getTime() >= today.getTime();
+      return fin != null && fin.getTime() >= today.getTime();
     });
 
     setMandatsActifs(vivants.length);
