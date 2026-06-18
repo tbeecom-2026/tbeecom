@@ -194,6 +194,7 @@ export default function NouveauMandat() {
       setLoyer(row.loyer != null ? String(row.loyer) : "");
       setHonoraires(row.honoraires_montant != null ? String(row.honoraires_montant) : "");
       setHonorairesAuto(false);
+      setPrixNetAuto(false);
       setHonorairesCharge(row.honoraires_charge ?? "Acquéreur");
       setDureeMois(row.duree_mois != null ? String(row.duree_mois) : "3");
       setDateSignature(row.date_signature ?? new Date().toISOString().slice(0, 10));
