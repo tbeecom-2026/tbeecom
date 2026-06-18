@@ -110,6 +110,70 @@ export function getIssueBadgeClass(obs?: string | null): string {
   }
 }
 
+/** Libellés Netty considérés comme "vente réalisée". */
+const VENTE_LABELS = new Set([
+  "Réalisé par l'agence",
+  "Réalisé en inter-agences",
+  "Réalisé par un confrère",
+  "Réalisé entre particuliers",
+]);
+
+export interface MandatEtat {
+  label: string;
+  className: string;
+}
+
+/**
+ * État réel d'un mandat à afficher dans la colonne "État".
+ * - Vente réalisée  -> libellé + couleur Netty (violet/bleu)
+ * - Annulé / Non signé -> gris
+ * - Sinon (Mandat saisi, Arrivé à terme, vide) -> calculé depuis la date de fin
+ *   (date_fin sinon date_debut + 18 mois) : Arrivé à terme / Fin proche / En cours.
+ */
+export function getMandatEtat(
+  obs: string | null | undefined,
+  dateDebut: string | null | undefined,
+  dateFin: string | null | undefined,
+): MandatEtat {
+  const t = nettyLabel(obs);
+
+  if (VENTE_LABELS.has(t)) {
+    return { label: t, className: getIssueBadgeClass(obs) };
+  }
+  if (t === "Annulé" || t === "Non signé") {
+    return { label: t, className: "bg-zinc-500 text-white hover:bg-zinc-500" };
+  }
+
+  // Calcul par date de fin (réelle ou date_debut + 18 mois).
+  let fin: Date | null = null;
+  if (dateFin) {
+    const d = new Date(dateFin);
+    if (!isNaN(d.getTime())) fin = d;
+  }
+  if (!fin && dateDebut) {
+    const d = new Date(dateDebut);
+    if (!isNaN(d.getTime())) {
+      d.setMonth(d.getMonth() + 18);
+      fin = d;
+    }
+  }
+  if (!fin) {
+    return { label: "En cours", className: "bg-emerald-600 text-white hover:bg-emerald-600" };
+  }
+
+  const today = toMidnight(new Date());
+  const finM = toMidnight(fin);
+  const jours = Math.round((finM.getTime() - today.getTime()) / 86_400_000);
+
+  if (jours < 0) {
+    return { label: "Arrivé à terme", className: "bg-slate-500 text-white hover:bg-slate-500" };
+  }
+  if (jours <= ALERTE_FIN_MANDAT_JOURS) {
+    return { label: "Fin proche", className: "bg-orange-500 text-white hover:bg-orange-500" };
+  }
+  return { label: "En cours", className: "bg-emerald-600 text-white hover:bg-emerald-600" };
+}
+
 /**
  * Passe en "Retiré" tout bien dont le mandat est depasse et qui etait encore "Sur le marché".
  * Idempotent : ne touche pas aux biens Vendu / Sous compromis / Archivé / deja Retiré.

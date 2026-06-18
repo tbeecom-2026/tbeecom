@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Plus, FilePen, Send, FilePlus2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/formatters";
-import { retirerMandatsExpires, nettyLabel, getIssueBadgeClass } from "@/lib/mandatStatus";
+import { retirerMandatsExpires, getMandatEtat } from "@/lib/mandatStatus";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import type { RegistreMandat } from "@/types/database";
@@ -312,11 +312,10 @@ export default function RegistreMandats() {
                       : (m.dates_mandat ?? (m.date_debut ? formatDate(m.date_debut) : "—"))}
                   </td>
                   <td className="p-3">
-                    {m.observations ? (
-                      <Badge className={getIssueBadgeClass(m.observations)}>{nettyLabel(m.observations)}</Badge>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
+                    {(() => {
+                      const etat = getMandatEtat(m.observations, m.date_debut, m.date_fin);
+                      return <Badge className={etat.className}>{etat.label}</Badge>;
+                    })()}
                   </td>
                   <td className="p-3">
                     <div className="flex items-center justify-between gap-2">
