@@ -663,8 +663,11 @@ export default function NouveauMandat() {
           {!isLocation && (
             <>
               <Field label="Prix de présentation (€)"><Input type="number" value={prix} onChange={(e) => setPrix(e.target.value)} /></Field>
-              <Field label={isMurs ? "Prix net vendeur (€)" : "Prix net vendeur / cédant (€)"}>
-                <Input type="number" value={prixNet} onChange={(e) => setPrixNet(e.target.value)} />
+              <Field label={isMurs ? "Prix net vendeur (€)" : "Prix net vendeur / cédant (€)"} hint="Vendeur : prix − honoraires HT · Acquéreur : = prix de présentation">
+                <div className="flex gap-2">
+                  <Input type="number" value={prixNet} onChange={(e) => { setPrixNet(e.target.value); setPrixNetAuto(false); }} />
+                  <Button type="button" variant="outline" size="sm" onClick={() => setPrixNetAuto(true)}>Auto</Button>
+                </div>
               </Field>
             </>
           )}
