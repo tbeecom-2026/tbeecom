@@ -47,7 +47,9 @@ interface Row {
   created_at: string | null;
   avenant_de: string | null;
   avenant_numero: number | null;
+  delegation_de?: string | null;
   parent_numero?: string | null;
+
 }
 
 export default function MandatsAValider() {
