@@ -2,6 +2,7 @@ import { LayoutDashboard, FileText, Contact, Activity, LogOut, Building2, Settin
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import {
   Sidebar,
   SidebarContent,
@@ -28,6 +29,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { signOut, user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border pb-4">
@@ -60,6 +62,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {isAdmin && (
         <SidebarGroup>
           <SidebarGroupLabel>Administration</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -81,6 +84,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border pt-4">
         {!collapsed && <p className="text-xs text-sidebar-foreground/60 px-2 truncate">{user?.email}</p>}
