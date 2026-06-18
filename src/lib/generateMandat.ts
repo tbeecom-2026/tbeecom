@@ -977,13 +977,28 @@ export async function generateMandatV2(draft: MandatDraft, agence: AgenceParamet
     return renderAvenant(draft, parent, agence, c);
   }
 
+  const nature = normNature(draft.nature_mandat);
 
-  const nature = draft.nature_mandat ?? "Fonds de commerce";
-  const forme = draft.forme_mandat ?? "Simple";
+  // ── DÉLÉGATION (inter-agences) — document à part, NE consomme PAS de n° de registre ──
+  if (nature === "Délégation de mandat" || draft.delegation_de) {
+    let parent: any = null;
+    if (draft.delegation_de) {
+      const { data: pd } = await supabase
+        .from("registre_mandats")
+        .select("*")
+        .eq("id", draft.delegation_de)
+        .limit(1);
+      parent = (pd as any[])?.[0] ?? null;
+    }
+    return renderDelegation(draft, parent, agence);
+  }
+
+  const forme = normForme(draft.forme_mandat);
   const isExcl = forme === "Exclusif";
   const isSemi = forme === "Semi-exclusif";
   const isRecherche = nature === "Recherche";
   const isLocation = nature === "Location";
+
 
   const { titre, partieAdverse, objetDoc } = objetLibelle(nature);
   const numero = draft.numero ?? "[ _____ ]";
