@@ -297,7 +297,7 @@ export default function RegistreMandats() {
                       <button
                         type="button"
                         onClick={() => ouvrirBien(m.reference_bien!, numero)}
-                        className="rounded-md bg-primary/15 px-2 py-1 text-sm font-semibold text-primary hover:bg-primary/25 transition-colors"
+                        className="rounded-md border border-primary/60 bg-primary/15 px-2 py-1 text-sm font-semibold text-primary hover:bg-primary/25 hover:border-primary transition-colors"
                         title={`Voir la fiche du bien ${m.reference_bien}`}
                       >
                         {m.reference_bien}
