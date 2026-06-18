@@ -167,35 +167,20 @@ export default function Biens() {
           </thead>
           <tbody>
             {biens.map((m) => {
-              const badge = getStatutBadge(m.statut);
-              const etat = getMandatDateState(m.mandat_date_fin);
-              const surLeMarche = m.statut === "sur_le_marche";
-              // Libellé Netty exact (issue_mandat) si présent, sinon libellé du statut.
               const issue = (m.attributs as any)?.issue_mandat as string | undefined;
-              const label = issue ?? badge.label;
-              // Vendu : couleur selon qui a réalisé (violet = votre vente, bleu = hors agence).
-              const baseClass = m.statut === "vendu" ? getVenduClass(issue) : badge.color;
-              // Une seule colonne Statut : le mandat dépassé prime sur "sur le marché".
-              const statutCell =
-                surLeMarche && etat.level === "expired" ? (
-                  <Badge
-                    className="bg-red-600 text-white hover:bg-red-600"
-                    title={m.mandat_date_fin ? formatDate(m.mandat_date_fin) : undefined}
-                  >
-                    Date de fin de mandat dépassée
-                  </Badge>
-                ) : surLeMarche && etat.level === "soon" ? (
-                  <Badge
-                    className="bg-orange-500 text-white hover:bg-orange-500"
-                    title={m.mandat_date_fin ? formatDate(m.mandat_date_fin) : undefined}
-                  >
-                    {label} — fin dans {etat.jours} j
-                  </Badge>
-                ) : (
-                  <Badge className={baseClass} title={m.mandat_date_fin ? formatDate(m.mandat_date_fin) : undefined}>
-                    {label}
-                  </Badge>
-                );
+              const etat = etatMandat({
+                observation: issue,
+                dateDebut: m.mandat_date_debut,
+                dateFin: m.mandat_date_fin,
+              });
+              const statutCell = (
+                <Badge
+                  className={etat.className}
+                  title={m.mandat_date_fin ? formatDate(m.mandat_date_fin) : undefined}
+                >
+                  {etat.label}
+                </Badge>
+              );
               return (
                 <tr
                   key={m.id}
