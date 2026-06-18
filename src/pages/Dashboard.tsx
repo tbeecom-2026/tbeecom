@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Euro, Users, CheckCircle } from "lucide-react";
-import { formatEuros, formatDate, getStatutBadge } from "@/lib/formatters";
+import { formatEuros } from "@/lib/formatters";
 import { familleMetier, METIER_LABEL } from "@/lib/metier";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import type { Mandat } from "@/types/database";
@@ -31,6 +31,21 @@ function finEffective(m: { mandat_date_fin?: string | null; mandat_date_debut?: 
     if (!isNaN(d.getTime())) return toMidnight(addMonths(d, 18));
   }
   return null; // aucune date connue
+}
+
+// État RÉEL d'un mandat (et non le statut figé de l'import) : vente/retrait prioritaires,
+// sinon calcul par la date de fin effective. Évite d'afficher "Sur le marché" sur un mandat expiré.
+function etatMandat(m: any): { label: string; className: string } {
+  const s = (m?.statut ?? "").toString().toLowerCase();
+  if (s === "vendu") return { label: "Vendu", className: "bg-blue-500 text-white hover:bg-blue-500" };
+  if (s === "sous_compromis")
+    return { label: "Sous compromis", className: "bg-amber-500 text-white hover:bg-amber-500" };
+  if (s === "retire") return { label: "Retiré", className: "bg-slate-500 text-white hover:bg-slate-500" };
+  const fin = finEffective(m);
+  if (fin == null) return { label: "Date inconnue", className: "bg-amber-600 text-white hover:bg-amber-600" };
+  if (fin.getTime() < toMidnight(new Date()).getTime())
+    return { label: "Arrivé à terme", className: "bg-slate-500 text-white hover:bg-slate-500" };
+  return { label: "En cours", className: "bg-emerald-600 text-white hover:bg-emerald-600" };
 }
 
 export default function Dashboard() {
@@ -63,7 +78,11 @@ export default function Dashboard() {
           .select("*", { count: "exact", head: true })
           .eq("statut", "vendu")
           .gte("date_vendu", startOfMonth),
-        supabase.from("mandats").select("*").order("created_at", { ascending: false }).limit(5),
+        supabase
+          .from("mandats")
+          .select("*")
+          .order("mandat_date_debut", { ascending: false, nullsFirst: false })
+          .limit(5),
       ],
     );
 
@@ -171,7 +190,7 @@ export default function Dashboard() {
               </thead>
               <tbody>
                 {derniersMandats.map((m) => {
-                  const badge = getStatutBadge(m.statut);
+                  const badge = etatMandat(m);
                   return (
                     <tr key={m.id} className="border-b border-border/50 hover:bg-secondary/50">
                       <td className="py-2 pr-4">
@@ -182,7 +201,7 @@ export default function Dashboard() {
                       <td className="py-2 pr-4">{m.commune}</td>
                       <td className="py-2 pr-4">{formatEuros(m.prix_demande)}</td>
                       <td className="py-2">
-                        <Badge className={badge.color}>{badge.label}</Badge>
+                        <Badge className={badge.className}>{badge.label}</Badge>
                       </td>
                     </tr>
                   );
