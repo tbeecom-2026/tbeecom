@@ -99,6 +99,7 @@ export default function NouveauMandat() {
 
   const [prix, setPrix] = useState<string>("");
   const [prixNet, setPrixNet] = useState<string>("");
+  const [prixNetAuto, setPrixNetAuto] = useState(true);
   const [loyer, setLoyer] = useState<string>("");
   const [honoraires, setHonoraires] = useState<string>("");
   const [honorairesAuto, setHonorairesAuto] = useState(true);
