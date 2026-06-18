@@ -443,10 +443,27 @@ export default function ContactDetail() {
                       ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Recherche...</>
                       : <><Search className="mr-2 h-4 w-4" />Rechercher</>}
                   </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleApiSearch}
+                    disabled={apiLoading}
+                    className="shrink-0 border-primary/50 text-primary hover:bg-primary/10"
+                    title="Recherche par SIRET/SIREN ou par nom de société (+ code postal). Utilise l'API publique annuaire-entreprises.">
+                    {apiLoading
+                      ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Récupération...</>
+                      : <><Building2 className="mr-2 h-4 w-4" />Récupérer les infos (API entreprises)</>}
+                  </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  Remplit automatiquement tous les champs ci-dessous depuis la base officielle.
+                  Remplit automatiquement tous les champs ci-dessous. Le bouton « Récupérer les infos » accepte aussi un nom de société (+ code postal) si le SIRET est inconnu.
                 </p>
+                {radiee && (
+                  <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                    <span>Entreprise radiée / cessée selon l'INSEE — à vérifier avant tout engagement.</span>
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-border/50" />
