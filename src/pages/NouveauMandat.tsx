@@ -347,8 +347,9 @@ export default function NouveauMandat() {
     if (prix === "" || prix == null) return;
     const p = parseFloat(prix);
     if (!Number.isFinite(p)) return;
-    const h = honoraires === "" || honoraires == null ? 0 : (parseFloat(honoraires) || 0);
-    const net = honorairesCharge === "Vendeur" ? Math.max(0, p - h) : p;
+    const hHt = honoraires === "" || honoraires == null ? 0 : (parseFloat(honoraires) || 0);
+    const hTtc = hHt * 1.20;
+    const net = honorairesCharge === "Vendeur" ? Math.max(0, p - hTtc) : p;
     setPrixNet(String(net));
   }, [prix, honoraires, honorairesCharge, prixNetAuto]);
 
