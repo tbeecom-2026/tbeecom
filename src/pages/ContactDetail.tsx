@@ -126,7 +126,10 @@ export default function ContactDetail() {
       toast({ title: "Introuvable", description: e.message, variant: "destructive" });
     } finally {
       setSearching(false);
+    }
   }
+
+
 
   function applyInfo(info: InfoEntreprise) {
     setRadiee(!info.actif);
