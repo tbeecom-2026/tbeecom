@@ -17,20 +17,44 @@ import { formatEuros } from "@/lib/formatters";
 import { getAgence } from "@/lib/agence";
 import { generateMandatV2, openMandat } from "@/lib/generateMandat";
 
-const NATURES = [
-  "Fonds de commerce",
-  "Droit au bail",
-  "Murs commerciaux",
-  "Local / immobilier d'entreprise",
-  "Cession de titres",
-  "Recherche",
-  "Location",
+// Natures : on stocke un CODE en base (nature_mandat), on affiche un libellé.
+const NATURES: { value: string; label: string }[] = [
+  { value: "fdc",         label: "Fonds de commerce" },
+  { value: "droit_bail",  label: "Droit au bail" },
+  { value: "murs",        label: "Murs commerciaux" },
+  { value: "local_pro",   label: "Local commercial / d'activité (vente)" },
+  { value: "titres",      label: "Cession de titres" },
+  { value: "recherche",   label: "Recherche acquéreur" },
+  { value: "location",    label: "Location de local commercial" },
+  { value: "delegation",  label: "Délégation de mandat (inter-agences)" },
 ];
+
+// Rétro-compat : ancienne valeur stockée (label) → code
+function natureToCode(v: string | null | undefined): string {
+  if (!v) return "fdc";
+  const map: Record<string, string> = {
+    "Fonds de commerce": "fdc",
+    "Droit au bail": "droit_bail",
+    "Murs commerciaux": "murs",
+    "Local / immobilier d'entreprise": "local_pro",
+    "Local commercial / d'activité": "local_pro",
+    "Local commercial / d'activité (vente)": "local_pro",
+    "Cession de titres": "titres",
+    "Recherche": "recherche",
+    "Recherche acquéreur": "recherche",
+    "Location": "location",
+    "Location de local commercial": "location",
+    "Délégation de mandat": "delegation",
+    "Délégation de mandat (inter-agences)": "delegation",
+  };
+  return map[v] ?? v;
+}
+
 const FORMES = ["Simple", "Exclusif", "Semi-exclusif"];
-const CHARGE = ["Acquéreur", "Vendeur"];
 
 type ContactLite = { id: string; nom: string | null; prenom: string | null; societe: string | null; email: string | null; telephone: string | null; adresse: string | null; code_postal: string | null; commune: string | null };
 type BienLite = { id: string; reference: string | null; titre: string | null; adresse: string | null; code_postal: string | null; commune: string | null; nature_activite: string | null; surface_commerciale: number | null; surface_totale: number | null; proprietaire_email?: string | null; proprietaire_nom?: string | null };
+type MandatLite = { id: string; numero: string | null; designation_bien: string | null; adresse_bien: string | null; activite_bien: string | null; surfaces_bien: string | null; prix: number | null; honoraires_montant: number | null };
 
 function escapeOr(s: string) {
   return s.replace(/[,()"']/g, " ").trim();
@@ -67,7 +91,7 @@ export default function NouveauMandat() {
   const [avenantDe, setAvenantDe] = useState<string | null>(null);
   const [parentNumero, setParentNumero] = useState<string | null>(null);
 
-  const [nature, setNature] = useState<string>("Fonds de commerce");
+  const [nature, setNature] = useState<string>("fdc");
   const [forme, setForme] = useState<string>("Simple");
 
   const [mandantQ, setMandantQ] = useState("");
@@ -110,7 +134,7 @@ export default function NouveauMandat() {
   const [preavis, setPreavis] = useState<string>("15");
   const [observations, setObservations] = useState("");
 
-  // Champs bail (Fonds / Droit au bail / Murs / Local pro)
+  // Champs bail (Fonds / Droit au bail / Murs / Local pro / Location)
   const [bailActivites, setBailActivites] = useState("");
   const [bailDureeRestante, setBailDureeRestante] = useState("");
   const [bailGaranties, setBailGaranties] = useState("");
@@ -130,6 +154,30 @@ export default function NouveauMandat() {
   const [compNomCommercial, setCompNomCommercial] = useState(true);
   const [compStocks, setCompStocks] = useState(true);
   const [compMateriel, setCompMateriel] = useState(true);
+
+  // ---- Délégation inter-agences ----
+  const [delegationDe, setDelegationDe] = useState<string | null>(null);
+  const [delegationMandatRef, setDelegationMandatRef] = useState<string>("");
+  const [delegationQ, setDelegationQ] = useState("");
+  const [delegationList, setDelegationList] = useState<MandatLite[]>([]);
+  const [delegationParent, setDelegationParent] = useState<MandatLite | null>(null);
+
+  const [delegataireRs, setDelegataireRs] = useState("");
+  const [delegataireForme, setDelegataireForme] = useState("");
+  const [delegataireCapital, setDelegataireCapital] = useState("");
+  const [delegataireSiege, setDelegataireSiege] = useState("");
+  const [delegataireRcs, setDelegataireRcs] = useState("");
+  const [delegataireSiret, setDelegataireSiret] = useState("");
+  const [delegataireCarteT, setDelegataireCarteT] = useState("");
+  const [delegataireCci, setDelegataireCci] = useState("");
+  const [delegataireRcp, setDelegataireRcp] = useState("");
+  const [delegataireRepresentant, setDelegataireRepresentant] = useState("");
+  const [delegataireEmail, setDelegataireEmail] = useState("");
+  const [delegataireTelephone, setDelegataireTelephone] = useState("");
+
+  const [delegationHonorairesRef, setDelegationHonorairesRef] = useState<string>("");
+  const [delegationPartMode, setDelegationPartMode] = useState<string>("pourcentage");
+  const [delegationPartDelegataire, setDelegationPartDelegataire] = useState<string>("50");
 
   const [bareme, setBareme] = useState<BaremeTranche[]>([]);
   const [saving, setSaving] = useState(false);
@@ -159,7 +207,6 @@ export default function NouveauMandat() {
         return;
       }
       if (isAvenant) {
-        // En mode avenant : on copie les champs du parent dans une nouvelle ligne
         if (!row.numero || row.statut_validation !== "valide") {
           toast({ title: "Avenant impossible", description: "Le mandat parent doit être validé.", variant: "destructive" });
           navigate("/mandats");
@@ -170,7 +217,6 @@ export default function NouveauMandat() {
         setStatut("brouillon");
         setMotifRefus(null);
       } else {
-        // autorisation : brouillon/refuse + (créateur ou admin)
         const editable = (row.statut_validation === "brouillon" || row.statut_validation === "refuse")
           && (row.cree_par === user.id || isAdmin);
         if (!editable) {
@@ -181,7 +227,7 @@ export default function NouveauMandat() {
         setStatut(row.statut_validation ?? "brouillon");
         setMotifRefus(row.motif_refus ?? null);
       }
-      setNature(row.nature_mandat ?? "Fonds de commerce");
+      setNature(natureToCode(row.nature_mandat));
       setForme(row.forme_mandat ?? "Simple");
       setDesignation(row.designation_bien ?? "");
       setAdresseBien(row.adresse_bien ?? "");
@@ -215,6 +261,24 @@ export default function NouveauMandat() {
       setCompNomCommercial(row.comp_nom_commercial !== false);
       setCompStocks(row.comp_stocks !== false);
       setCompMateriel(row.comp_materiel !== false);
+      // Délégation
+      setDelegationDe(row.delegation_de ?? null);
+      setDelegationMandatRef(row.delegation_mandat_ref ?? "");
+      setDelegataireRs(row.delegataire_raison_sociale ?? "");
+      setDelegataireForme(row.delegataire_forme ?? "");
+      setDelegataireCapital(row.delegataire_capital ?? "");
+      setDelegataireSiege(row.delegataire_siege ?? "");
+      setDelegataireRcs(row.delegataire_rcs ?? "");
+      setDelegataireSiret(row.delegataire_siret ?? "");
+      setDelegataireCarteT(row.delegataire_carte_t ?? "");
+      setDelegataireCci(row.delegataire_cci ?? "");
+      setDelegataireRcp(row.delegataire_rcp ?? "");
+      setDelegataireRepresentant(row.delegataire_representant ?? "");
+      setDelegataireEmail(row.delegataire_email ?? "");
+      setDelegataireTelephone(row.delegataire_telephone ?? "");
+      setDelegationHonorairesRef(row.delegation_honoraires_ref != null ? String(row.delegation_honoraires_ref) : "");
+      setDelegationPartMode(row.delegation_part_mode ?? "pourcentage");
+      setDelegationPartDelegataire(row.delegation_part_delegataire != null ? String(row.delegation_part_delegataire) : "50");
       if (row.mandant_id) {
         const { data: cd } = await supabase.from("contacts")
           .select("id, nom, prenom, societe, email, telephone, adresse, code_postal, commune")
@@ -228,6 +292,13 @@ export default function NouveauMandat() {
           .eq("reference", row.reference_bien).limit(1);
         const b = (bd as any[])?.[0];
         if (b) setBien(b as BienLite);
+      }
+      if (row.delegation_de) {
+        const { data: pd } = await supabase.from("registre_mandats")
+          .select("id, numero, designation_bien, adresse_bien, activite_bien, surfaces_bien, prix, honoraires_montant")
+          .eq("id", row.delegation_de).limit(1);
+        const p = (pd as any[])?.[0];
+        if (p) setDelegationParent(p as MandatLite);
       }
       setLoadingEdit(false);
     })();
@@ -263,6 +334,36 @@ export default function NouveauMandat() {
     }, 250);
     return () => clearTimeout(t);
   }, [bienQ, bien]);
+
+  // -------- recherche mandats validés (pour délégation)
+  useEffect(() => {
+    const q = delegationQ.trim();
+    if (nature !== "delegation" || delegationParent) { setDelegationList([]); return; }
+    if (q.length < 1) { setDelegationList([]); return; }
+    const t = setTimeout(async () => {
+      const { data } = await supabase
+        .from("registre_mandats")
+        .select("id, numero, designation_bien, adresse_bien, activite_bien, surfaces_bien, prix, honoraires_montant")
+        .eq("statut_validation", "valide")
+        .not("numero", "is", null)
+        .or(`numero.ilike.%${q}%,designation_bien.ilike.%${q}%,adresse_bien.ilike.%${q}%`)
+        .limit(8);
+      setDelegationList((data as MandatLite[]) ?? []);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [delegationQ, delegationParent, nature]);
+
+  function applyDelegationParent(p: MandatLite) {
+    setDelegationParent(p);
+    setDelegationDe(p.id);
+    setDelegationMandatRef(p.numero ?? "");
+    setDesignation((d) => d || p.designation_bien || "");
+    setAdresseBien((a) => a || p.adresse_bien || "");
+    setActiviteBien((a) => a || p.activite_bien || "");
+    setSurfacesBien((s) => s || p.surfaces_bien || "");
+    if (p.prix != null) setPrix((v) => v || String(p.prix));
+    if (p.honoraires_montant != null) setDelegationHonorairesRef((v) => v || String(p.honoraires_montant));
+  }
 
   // -------- mandant -> biens du mandant
   useEffect(() => {
@@ -329,21 +430,47 @@ export default function NouveauMandat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bien?.id]);
 
-  // -------- honoraires auto
+  // ---- Drapeaux dérivés (codes) ----
+  const isExclusif = forme === "Exclusif" || forme === "Semi-exclusif";
+  const isRecherche = nature === "recherche";
+  const isLocation = nature === "location";
+  const isDelegation = nature === "delegation";
+  const isMurs = nature === "murs" || nature === "local_pro";
+  const isFonds = nature === "fdc";
+  const isVenteImmoPro = isMurs; // vente murs / local pro
+  const hasBail = ["fdc", "droit_bail", "murs", "local_pro", "location"].includes(nature);
+  // Choix charge honoraires selon la nature
+  const CHARGE_OPTIONS = isLocation
+    ? ["Preneur", "Bailleur"]
+    : ["Acquéreur", "Vendeur"];
+
+  // Force la valeur par défaut de honorairesCharge quand on change de nature vers Location
+  useEffect(() => {
+    if (isLocation && honorairesCharge !== "Preneur" && honorairesCharge !== "Bailleur") {
+      setHonorairesCharge("Preneur");
+    }
+    if (!isLocation && (honorairesCharge === "Preneur" || honorairesCharge === "Bailleur")) {
+      setHonorairesCharge(isMurs ? "Acquéreur" : honorairesCharge === "Bailleur" ? "Vendeur" : "Acquéreur");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLocation]);
+
+  // -------- honoraires auto (vente seulement, pas location / recherche / délégation)
   const prixCalc = useMemo(() => {
     const n = parseFloat(prix);
     return Number.isFinite(n) ? n : 0;
   }, [prix]);
 
   useEffect(() => {
-    if (!honorairesAuto || nature === "Location" || nature === "Recherche") return;
+    if (!honorairesAuto || isLocation || isRecherche || isDelegation) return;
     const c = calcHonoraires(prixCalc, bareme);
     if (c) setHonoraires(String(c.montant));
-  }, [prixCalc, bareme, honorairesAuto, nature]);
+  }, [prixCalc, bareme, honorairesAuto, isLocation, isRecherche, isDelegation]);
 
   // -------- prix net vendeur auto
   useEffect(() => {
     if (!prixNetAuto) return;
+    if (isLocation || isDelegation || isRecherche) return;
     if (prix === "" || prix == null) return;
     const p = parseFloat(prix);
     if (!Number.isFinite(p)) return;
@@ -351,15 +478,14 @@ export default function NouveauMandat() {
     const hTtc = hHt * 1.20;
     const net = honorairesCharge === "Vendeur" ? Math.max(0, p - hTtc) : p;
     setPrixNet(String(net));
-  }, [prix, honoraires, honorairesCharge, prixNetAuto]);
+  }, [prix, honoraires, honorairesCharge, prixNetAuto, isLocation, isDelegation, isRecherche]);
 
-  const isExclusif = forme === "Exclusif" || forme === "Semi-exclusif";
-  const isRecherche = nature === "Recherche";
-  const isLocation = nature === "Location";
-  const isMurs = nature === "Murs commerciaux" || nature === "Local / immobilier d'entreprise";
-  const isBail = nature === "Droit au bail" || nature === "Murs commerciaux" || nature === "Local / immobilier d'entreprise";
-  const hasBail = ["Fonds de commerce","Droit au bail","Murs commerciaux","Local / immobilier d'entreprise"].includes(nature);
-  const isFonds = nature === "Fonds de commerce";
+  // Calcul live de la part TBEECOM en délégation
+  const partTbeecom = useMemo(() => {
+    const p = parseFloat(delegationPartDelegataire);
+    if (!Number.isFinite(p)) return 50;
+    return Math.max(0, Math.min(100, 100 - p));
+  }, [delegationPartDelegataire]);
 
   // Construit le payload commun
   function buildPayload(targetStatut: "brouillon" | "a_valider") {
@@ -368,31 +494,31 @@ export default function NouveauMandat() {
     const payload: Record<string, any> = {
       statut_validation: targetStatut,
       negociateur,
-      nature_mandat: nature,
+      nature_mandat: nature, // code
       forme_mandat: forme,
       type_mandat: forme,
       objet: `${nature} — ${forme}`,
       mandant_id: mandant?.id ?? null,
       mandant_nom: mandantNom,
-      bien_id: bien?.id ?? null,
-      reference_bien: bien?.reference ?? null,
+      bien_id: isDelegation ? null : (bien?.id ?? null),
+      reference_bien: isDelegation ? null : (bien?.reference ?? null),
       designation_bien: designation || bien?.titre || null,
       adresse_bien: adresseBien || bien?.adresse || null,
       activite_bien: activiteBien || bien?.nature_activite || null,
       surfaces_bien: surfacesBien || null,
       criteres_recherche: isRecherche ? criteres : null,
       prix_max_recherche: isRecherche && prixMaxRecherche ? Number(prixMaxRecherche) : null,
-      prix: prix ? Number(prix) : null,
-      prix_net_vendeur: prixNet ? Number(prixNet) : null,
+      prix: isLocation ? null : (prix ? Number(prix) : null),
+      prix_net_vendeur: isLocation || isDelegation || isRecherche ? null : (prixNet ? Number(prixNet) : null),
       loyer: loyer ? Number(loyer) : null,
-      honoraires_montant: honoraires ? Number(honoraires) : null,
-      honoraires_charge: honorairesCharge,
+      honoraires_montant: isDelegation ? null : (honoraires ? Number(honoraires) : null),
+      honoraires_charge: isDelegation ? null : honorairesCharge,
       duree_mois: dureeMois ? Number(dureeMois) : null,
       date_signature: dateSignature || null,
       date_debut: dateSignature || null,
       preavis_jours: isExclusif && preavis ? Number(preavis) : null,
       observations: observations || null,
-      description_locaux: !isRecherche ? (descriptionLocaux || null) : null,
+      description_locaux: !isRecherche && !isDelegation ? (descriptionLocaux || null) : null,
       bail_activites: hasBail ? (bailActivites || null) : null,
       bail_duree_restante: hasBail ? (bailDureeRestante || null) : null,
       bail_garanties: hasBail ? (bailGaranties || null) : null,
@@ -407,6 +533,26 @@ export default function NouveauMandat() {
       comp_nom_commercial: isFonds ? compNomCommercial : null,
       comp_stocks: isFonds ? compStocks : null,
       comp_materiel: isFonds ? compMateriel : null,
+      // Délégation
+      delegation_de: isDelegation ? (delegationDe ?? null) : null,
+      delegation_mandat_ref: isDelegation ? (delegationMandatRef || null) : null,
+      delegataire_raison_sociale: isDelegation ? (delegataireRs || null) : null,
+      delegataire_forme: isDelegation ? (delegataireForme || null) : null,
+      delegataire_capital: isDelegation ? (delegataireCapital || null) : null,
+      delegataire_siege: isDelegation ? (delegataireSiege || null) : null,
+      delegataire_rcs: isDelegation ? (delegataireRcs || null) : null,
+      delegataire_siret: isDelegation ? (delegataireSiret || null) : null,
+      delegataire_carte_t: isDelegation ? (delegataireCarteT || null) : null,
+      delegataire_cci: isDelegation ? (delegataireCci || null) : null,
+      delegataire_rcp: isDelegation ? (delegataireRcp || null) : null,
+      delegataire_representant: isDelegation ? (delegataireRepresentant || null) : null,
+      delegataire_email: isDelegation ? (delegataireEmail || null) : null,
+      delegataire_telephone: isDelegation ? (delegataireTelephone || null) : null,
+      delegation_honoraires_ref: isDelegation && delegationHonorairesRef ? Number(delegationHonorairesRef) : null,
+      delegation_part_mode: isDelegation ? delegationPartMode : null,
+      delegation_part_delegataire: isDelegation && delegationPartDelegataire
+        ? Number(delegationPartMode === "moitie" ? 50 : delegationPartDelegataire)
+        : null,
     };
     return payload;
   }
@@ -434,16 +580,20 @@ export default function NouveauMandat() {
       toast({ title: "Erreur", description: "Vous devez être connecté.", variant: "destructive" });
       return;
     }
-    // Mandant obligatoire uniquement à la soumission
-    if (targetStatut === "a_valider" && !mandant && !newContactMode) {
+    // Mandant obligatoire à la soumission, SAUF en délégation
+    if (targetStatut === "a_valider" && !isDelegation && !mandant && !newContactMode) {
       toast({ title: "Mandant requis", description: "Sélectionnez un contact ou créez-en un.", variant: "destructive" });
       return;
     }
+    // Délégation : exiger un délégataire minimum (raison sociale)
+    if (targetStatut === "a_valider" && isDelegation && !delegataireRs.trim()) {
+      toast({ title: "Délégataire requis", description: "Saisissez au moins la raison sociale de l'agence délégataire.", variant: "destructive" });
+      return;
+    }
     setSaving(true);
-    const mandantId = await ensureMandantId();
+    const mandantId = isDelegation ? null : await ensureMandantId();
     const payload = buildPayload(targetStatut);
     if (mandantId) payload.mandant_id = mandantId;
-    // si on repasse en a_valider depuis un refus, on nettoie le motif
     if (targetStatut === "a_valider") payload.motif_refus = null;
 
     let error: any = null;
@@ -482,6 +632,10 @@ export default function NouveauMandat() {
     return <div className="p-8 text-sm text-muted-foreground">Chargement du mandat…</div>;
   }
 
+  const showMandantCard = !isDelegation;
+  const showBienCard = !isRecherche && !isDelegation;
+  const showPrixCard = !isDelegation;
+
   return (
     <div className="space-y-4 max-w-5xl">
       <div className="flex items-center gap-2 flex-wrap">
@@ -517,7 +671,9 @@ export default function NouveauMandat() {
           <Field label="Nature">
             <Select value={nature} onValueChange={setNature}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{NATURES.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                {NATURES.map((n) => <SelectItem key={n.value} value={n.value}>{n.label}</SelectItem>)}
+              </SelectContent>
             </Select>
           </Field>
           <Field label="Forme">
@@ -529,53 +685,55 @@ export default function NouveauMandat() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Mandant</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          {mandant ? (
-            <div className="flex items-start justify-between rounded-md border border-border bg-secondary/30 p-3">
-              <div className="text-sm">
-                <div className="font-medium">{[mandant.prenom, mandant.nom].filter(Boolean).join(" ")} {mandant.societe ? `— ${mandant.societe}` : ""}</div>
-                <div className="text-xs text-muted-foreground">{mandant.email ?? "—"} · {mandant.telephone ?? "—"}</div>
-                <div className="text-xs text-muted-foreground">{[mandant.adresse, mandant.code_postal, mandant.commune].filter(Boolean).join(", ") || "—"}</div>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => { setMandant(null); setMandantQ(""); }}>Changer</Button>
-            </div>
-          ) : (
-            <>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input className="pl-9" placeholder="Rechercher un contact (nom, prénom, société)…"
-                  value={mandantQ} onChange={(e) => { setMandantQ(e.target.value); setNewContactMode(false); }} />
-              </div>
-              {mandantList.length > 0 && (
-                <div className="rounded-md border border-border divide-y divide-border/50 max-h-56 overflow-auto">
-                  {mandantList.map((c) => (
-                    <button key={c.id} type="button" onClick={() => setMandant(c)}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/40">
-                      <div className="font-medium">{[c.prenom, c.nom].filter(Boolean).join(" ")} {c.societe ? `— ${c.societe}` : ""}</div>
-                      <div className="text-xs text-muted-foreground">{c.email ?? "—"} · {c.telephone ?? "—"}</div>
-                    </button>
-                  ))}
+      {showMandantCard && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">{isLocation ? "Bailleur" : "Mandant"}</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            {mandant ? (
+              <div className="flex items-start justify-between rounded-md border border-border bg-secondary/30 p-3">
+                <div className="text-sm">
+                  <div className="font-medium">{[mandant.prenom, mandant.nom].filter(Boolean).join(" ")} {mandant.societe ? `— ${mandant.societe}` : ""}</div>
+                  <div className="text-xs text-muted-foreground">{mandant.email ?? "—"} · {mandant.telephone ?? "—"}</div>
+                  <div className="text-xs text-muted-foreground">{[mandant.adresse, mandant.code_postal, mandant.commune].filter(Boolean).join(", ") || "—"}</div>
                 </div>
-              )}
-              {mandantQ.length >= 2 && mandantList.length === 0 && (
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  Aucun contact trouvé.
-                  <Button variant="outline" size="sm" onClick={() => setNewContactMode(true)}>
-                    Créer « {mandantQ} » comme nouveau contact
-                  </Button>
+                <Button variant="outline" size="sm" onClick={() => { setMandant(null); setMandantQ(""); }}>Changer</Button>
+              </div>
+            ) : (
+              <>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input className="pl-9" placeholder="Rechercher un contact (nom, prénom, société)…"
+                    value={mandantQ} onChange={(e) => { setMandantQ(e.target.value); setNewContactMode(false); }} />
                 </div>
-              )}
-              {newContactMode && (
-                <p className="text-xs text-amber-400">Un nouveau contact sera créé avec le nom « {mandantQ} » à l'enregistrement.</p>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+                {mandantList.length > 0 && (
+                  <div className="rounded-md border border-border divide-y divide-border/50 max-h-56 overflow-auto">
+                    {mandantList.map((c) => (
+                      <button key={c.id} type="button" onClick={() => setMandant(c)}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/40">
+                        <div className="font-medium">{[c.prenom, c.nom].filter(Boolean).join(" ")} {c.societe ? `— ${c.societe}` : ""}</div>
+                        <div className="text-xs text-muted-foreground">{c.email ?? "—"} · {c.telephone ?? "—"}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {mandantQ.length >= 2 && mandantList.length === 0 && (
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    Aucun contact trouvé.
+                    <Button variant="outline" size="sm" onClick={() => setNewContactMode(true)}>
+                      Créer « {mandantQ} » comme nouveau contact
+                    </Button>
+                  </div>
+                )}
+                {newContactMode && (
+                  <p className="text-xs text-amber-400">Un nouveau contact sera créé avec le nom « {mandantQ} » à l'enregistrement.</p>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-      {!isRecherche && (
+      {showBienCard && (
         <Card>
           <CardHeader><CardTitle className="text-base">Bien concerné</CardTitle></CardHeader>
           <CardContent className="space-y-3">
@@ -635,7 +793,7 @@ export default function NouveauMandat() {
               <Field label="Activité"><Input value={activiteBien} onChange={(e) => setActiviteBien(e.target.value)} /></Field>
               <Field label="Surface totale" hint="ex. 80 m² salle / 25 m² réserve"><Input value={surfacesBien} onChange={(e) => setSurfacesBien(e.target.value)} /></Field>
               <div className="md:col-span-2">
-                <Field label="Description des locaux" hint="RDC, sous-sol, terrasse, état, équipements…">
+                <Field label={isLocation ? "Description du local" : "Description des locaux"} hint="RDC, sous-sol, terrasse, état, équipements…">
                   <Textarea rows={4} value={descriptionLocaux} onChange={(e) => setDescriptionLocaux(e.target.value)} />
                 </Field>
               </div>
@@ -658,37 +816,162 @@ export default function NouveauMandat() {
         </Card>
       )}
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Prix &amp; honoraires</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {!isLocation && (
-            <>
-              <Field label="Prix de présentation (€)"><Input type="number" value={prix} onChange={(e) => setPrix(e.target.value)} /></Field>
-              <Field label={isMurs ? "Prix net vendeur (€)" : "Prix net vendeur / cédant (€)"} hint="Charge vendeur : prix − honoraires TTC · Charge acquéreur : = prix de présentation">
-                <div className="flex gap-2">
-                  <Input type="number" value={prixNet} onChange={(e) => { setPrixNet(e.target.value); setPrixNetAuto(false); }} />
-                  <Button type="button" variant="outline" size="sm" onClick={() => setPrixNetAuto(true)}>Auto</Button>
-                </div>
-              </Field>
-            </>
-          )}
-          {isLocation && (
-            <Field label="Loyer mensuel HC (€)"><Input type="number" value={loyer} onChange={(e) => setLoyer(e.target.value)} /></Field>
-          )}
-          <Field label="Honoraires HT (€)" hint={honorairesAuto ? `Pré-calculé via le barème (${formatEuros(Number(honoraires) || 0)})` : "Saisie manuelle"}>
-            <div className="flex gap-2">
-              <Input type="number" value={honoraires} onChange={(e) => { setHonoraires(e.target.value); setHonorairesAuto(false); }} />
-              <Button type="button" variant="outline" size="sm" onClick={() => setHonorairesAuto(true)}>Auto</Button>
+      {isDelegation && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Délégation inter-agences</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">
+                Convention entre <strong>TBEECOM</strong> (mandataire principal — délégant) et une <strong>agence partenaire</strong> (délégataire) à qui l'on confie la recherche d'un acquéreur / preneur, avec partage des honoraires.
+              </p>
             </div>
-          </Field>
-          <Field label="Honoraires à la charge de">
-            <Select value={honorairesCharge} onValueChange={setHonorairesCharge}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{CHARGE.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-            </Select>
-          </Field>
-        </CardContent>
-      </Card>
+
+            {/* Mandat principal délégué */}
+            <div className="rounded-md border border-border/60 bg-secondary/20 p-3 space-y-3">
+              <div className="text-sm font-medium">Mandat principal délégué</div>
+              {delegationParent ? (
+                <div className="flex items-start justify-between rounded-md border border-primary/40 bg-primary/5 p-3">
+                  <div className="text-sm">
+                    <div className="font-medium">N° {delegationParent.numero ?? "—"} — {delegationParent.designation_bien ?? "—"}</div>
+                    <div className="text-xs text-muted-foreground">{delegationParent.adresse_bien ?? "—"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {delegationParent.activite_bien ?? "—"}
+                      {delegationParent.prix != null ? ` · ${formatEuros(delegationParent.prix)}` : ""}
+                      {delegationParent.honoraires_montant != null ? ` · honoraires HT ${formatEuros(delegationParent.honoraires_montant)}` : ""}
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => { setDelegationParent(null); setDelegationDe(null); setDelegationQ(""); }}>Changer</Button>
+                </div>
+              ) : (
+                <>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input className="pl-9" placeholder="Rechercher un mandat validé (n°, désignation, adresse)…"
+                      value={delegationQ} onChange={(e) => setDelegationQ(e.target.value)} />
+                  </div>
+                  {delegationList.length > 0 && (
+                    <div className="rounded-md border border-border divide-y divide-border/50 max-h-56 overflow-auto">
+                      {delegationList.map((p) => (
+                        <button key={p.id} type="button" onClick={() => applyDelegationParent(p)}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/40">
+                          <div className="font-medium">N° {p.numero ?? "—"} — {p.designation_bien ?? "—"}</div>
+                          <div className="text-xs text-muted-foreground">{p.adresse_bien ?? "—"}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <Field label="Ou n°/réf du mandat principal (saisie libre)" hint="utile si le mandat n'est pas (encore) dans le registre">
+                    <Input value={delegationMandatRef} onChange={(e) => setDelegationMandatRef(e.target.value)} placeholder="ex. VB179 / 2024-014…" />
+                  </Field>
+                </>
+              )}
+            </div>
+
+            {/* Agence délégataire */}
+            <div className="rounded-md border border-border/60 bg-secondary/20 p-3 space-y-3">
+              <div className="text-sm font-medium">Agence délégataire (partenaire)</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Field label="Raison sociale *"><Input value={delegataireRs} onChange={(e) => setDelegataireRs(e.target.value)} /></Field>
+                <Field label="Forme juridique"><Input value={delegataireForme} onChange={(e) => setDelegataireForme(e.target.value)} placeholder="SARL, SAS…" /></Field>
+                <Field label="Capital"><Input value={delegataireCapital} onChange={(e) => setDelegataireCapital(e.target.value)} placeholder="ex. 10 000 €" /></Field>
+                <Field label="Siège social"><Input value={delegataireSiege} onChange={(e) => setDelegataireSiege(e.target.value)} /></Field>
+                <Field label="RCS"><Input value={delegataireRcs} onChange={(e) => setDelegataireRcs(e.target.value)} /></Field>
+                <Field label="SIRET"><Input value={delegataireSiret} onChange={(e) => setDelegataireSiret(e.target.value)} /></Field>
+                <Field label="N° carte professionnelle (T)"><Input value={delegataireCarteT} onChange={(e) => setDelegataireCarteT(e.target.value)} placeholder="ex. CPI 7501…" /></Field>
+                <Field label="Délivrée par (CCI)"><Input value={delegataireCci} onChange={(e) => setDelegataireCci(e.target.value)} placeholder="ex. CCI Paris Île-de-France" /></Field>
+                <Field label="RCP (assureur + n°)"><Input value={delegataireRcp} onChange={(e) => setDelegataireRcp(e.target.value)} /></Field>
+                <Field label="Représentant"><Input value={delegataireRepresentant} onChange={(e) => setDelegataireRepresentant(e.target.value)} placeholder="Nom + fonction" /></Field>
+                <Field label="Email"><Input type="email" value={delegataireEmail} onChange={(e) => setDelegataireEmail(e.target.value)} /></Field>
+                <Field label="Téléphone"><Input value={delegataireTelephone} onChange={(e) => setDelegataireTelephone(e.target.value)} /></Field>
+              </div>
+            </div>
+
+            {/* Partage des honoraires */}
+            <div className="rounded-md border border-border/60 bg-secondary/20 p-3 space-y-3">
+              <div className="text-sm font-medium">Partage des honoraires</div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Field label="Honoraires HT de référence (€)" hint="pré-rempli depuis le mandat principal">
+                  <Input type="number" value={delegationHonorairesRef} onChange={(e) => setDelegationHonorairesRef(e.target.value)} />
+                </Field>
+                <Field label="Mode de partage">
+                  <Select value={delegationPartMode} onValueChange={setDelegationPartMode}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pourcentage">Pourcentage</SelectItem>
+                      <SelectItem value="moitie">Moitié / moitié (50/50)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Part du délégataire (%)" hint={`Part TBEECOM : ${partTbeecom} %`}>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={delegationPartMode === "moitie" ? "50" : delegationPartDelegataire}
+                    disabled={delegationPartMode === "moitie"}
+                    onChange={(e) => setDelegationPartDelegataire(e.target.value)}
+                  />
+                </Field>
+              </div>
+              {delegationHonorairesRef && (
+                <p className="text-xs text-muted-foreground">
+                  Soit délégataire : <strong>{formatEuros(Math.round(Number(delegationHonorairesRef) * (delegationPartMode === "moitie" ? 50 : Number(delegationPartDelegataire) || 0) / 100))} HT</strong>
+                  {" · "}
+                  TBEECOM : <strong>{formatEuros(Math.round(Number(delegationHonorairesRef) * partTbeecom / 100))} HT</strong>
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showPrixCard && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">{isLocation ? "Loyer & honoraires" : "Prix & honoraires"}</CardTitle></CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {isLocation ? (
+              <>
+                <Field label="Loyer annuel HT / HC (€)"><Input type="number" value={loyer} onChange={(e) => setLoyer(e.target.value)} /></Field>
+                <Field label="Honoraires de location HT (€)" hint="saisie libre (le barème vente ne s'applique pas)">
+                  <Input type="number" value={honoraires} onChange={(e) => { setHonoraires(e.target.value); setHonorairesAuto(false); }} />
+                </Field>
+              </>
+            ) : (
+              <>
+                <Field label="Prix de présentation (€)"><Input type="number" value={prix} onChange={(e) => setPrix(e.target.value)} /></Field>
+                <Field label={isMurs ? "Prix net vendeur (€)" : "Prix net vendeur / cédant (€)"} hint="Charge vendeur : prix − honoraires TTC · Charge acquéreur : = prix de présentation">
+                  <div className="flex gap-2">
+                    <Input type="number" value={prixNet} onChange={(e) => { setPrixNet(e.target.value); setPrixNetAuto(false); }} />
+                    <Button type="button" variant="outline" size="sm" onClick={() => setPrixNetAuto(true)}>Auto</Button>
+                  </div>
+                </Field>
+                <Field label="Honoraires HT (€)" hint={honorairesAuto ? `Pré-calculé via le barème (${formatEuros(Number(honoraires) || 0)})` : "Saisie manuelle"}>
+                  <div className="flex gap-2">
+                    <Input type="number" value={honoraires} onChange={(e) => { setHonoraires(e.target.value); setHonorairesAuto(false); }} />
+                    <Button type="button" variant="outline" size="sm" onClick={() => setHonorairesAuto(true)}>Auto</Button>
+                  </div>
+                </Field>
+              </>
+            )}
+            <Field label="Honoraires à la charge de">
+              <Select value={honorairesCharge} onValueChange={setHonorairesCharge}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{CHARGE_OPTIONS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            {isVenteImmoPro && (
+              <>
+                <Field label="Loyer en place (€/an) — si bien occupé" hint="laisser vide si vendu libre">
+                  <Input type="number" value={loyer} onChange={(e) => setLoyer(e.target.value)} />
+                </Field>
+                <Field label="Durée restante du bail (si occupé)" hint="ex. 4 ans 6 mois">
+                  <Input value={bailDureeRestante} onChange={(e) => setBailDureeRestante(e.target.value)} />
+                </Field>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {isFonds && (
         <Card>
@@ -722,30 +1005,34 @@ export default function NouveauMandat() {
 
       {hasBail && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Caractéristiques du bail</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{isLocation ? "Conditions de location proposées" : "Caractéristiques du bail"}</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="md:col-span-2">
-              <Field label="Activités autorisées au bail" hint="destination contractuelle">
+              <Field label={isLocation ? "Destination / activités autorisées" : "Activités autorisées au bail"} hint="destination contractuelle">
                 <Textarea rows={2} value={bailActivites} onChange={(e) => setBailActivites(e.target.value)} />
               </Field>
             </div>
-            <Field label="Durée restante du bail" hint="ex. 4 ans 6 mois">
-              <Input value={bailDureeRestante} onChange={(e) => setBailDureeRestante(e.target.value)} />
-            </Field>
-            <Field label="Loyer annuel brut (€)">
-              <Input type="number" value={loyer} onChange={(e) => setLoyer(e.target.value)} />
-            </Field>
-            <Field label="Garanties" hint="dépôt de garantie, caution…">
+            {!isLocation && !isVenteImmoPro && (
+              <Field label="Durée restante du bail" hint="ex. 4 ans 6 mois">
+                <Input value={bailDureeRestante} onChange={(e) => setBailDureeRestante(e.target.value)} />
+              </Field>
+            )}
+            {!isLocation && (
+              <Field label="Loyer annuel brut (€)">
+                <Input type="number" value={loyer} onChange={(e) => setLoyer(e.target.value)} />
+              </Field>
+            )}
+            <Field label={isLocation ? "Dépôt de garantie" : "Garanties"} hint={isLocation ? "ex. 3 mois de loyer" : "dépôt de garantie, caution…"}>
               <Input value={bailGaranties} onChange={(e) => setBailGaranties(e.target.value)} />
             </Field>
-            <Field label="Provision annuelle de charges (€)">
+            <Field label={isLocation ? "Provision de charges annuelle (€)" : "Provision annuelle de charges (€)"}>
               <Input type="number" value={bailCharges} onChange={(e) => setBailCharges(e.target.value)} />
             </Field>
             <Field label="Taxe foncière" hint="oui / non / refacturée…">
               <Input value={bailTaxeFonciere} onChange={(e) => setBailTaxeFonciere(e.target.value)} />
             </Field>
-            <Field label="Indexation" hint="ex. ILC base 4T 2021">
-              <Input value={bailIndexation} onChange={(e) => setBailIndexation(e.target.value)} />
+            <Field label="Indexation" hint={isLocation ? "défaut : indice ILC" : "ex. ILC base 4T 2021"}>
+              <Input value={bailIndexation} onChange={(e) => setBailIndexation(e.target.value)} placeholder={isLocation ? "indice ILC" : ""} />
             </Field>
             <div className="md:col-span-2">
               <Field label="Fiscalité" hint="TVA, refacturation…">
