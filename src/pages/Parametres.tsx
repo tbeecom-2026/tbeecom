@@ -118,7 +118,13 @@ export default function Parametres() {
     return "—";
   }
 
-  const { isAdmin } = useIsAdmin();
+  if (adminLoading) {
+    return <div className="p-6 text-muted-foreground">Chargement...</div>;
+  }
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
 
   return (
     <div className="space-y-6 max-w-4xl">
