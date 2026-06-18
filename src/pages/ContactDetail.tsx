@@ -126,7 +126,74 @@ export default function ContactDetail() {
       toast({ title: "Introuvable", description: e.message, variant: "destructive" });
     } finally {
       setSearching(false);
+  }
+
+  function applyInfo(info: InfoEntreprise) {
+    setRadiee(!info.actif);
+    setContact((prev) => {
+      const next: any = { ...prev };
+      const setIfEmpty = (k: string, v: any) => {
+        if (v == null || v === "") return;
+        const cur = (prev as any)[k];
+        if (cur == null || cur === "") next[k] = v;
+        else if (String(cur).trim() !== String(v).trim()) {
+          if (window.confirm(`Le champ "${k}" contient déjà "${cur}". Le remplacer par "${v}" ?`)) {
+            next[k] = v;
+          }
+        }
+      };
+      setIfEmpty("societe", info.denomination);
+      setIfEmpty("siren", info.siren);
+      setIfEmpty("tva_intracommunautaire", info.num_tva);
+      setIfEmpty("nom_dirigeant", info.dirigeant);
+      setIfEmpty("forme_juridique", info.forme_code);
+      setIfEmpty("libelle_forme_juridique", info.forme_juridique);
+      setIfEmpty("code_naf", info.naf);
+      setIfEmpty("libelle_naf", info.naf_libelle);
+      setIfEmpty("date_creation_societe", info.date_creation);
+      setIfEmpty("adresse", info.adresse);
+      setIfEmpty("code_postal", info.code_postal);
+      setIfEmpty("commune", info.commune);
+      setIfEmpty("rcs", info.siren);
+      return next;
+    });
+    if (info.siret) setSiretInput(info.siret);
+    toast({
+      title: info.actif ? "✓ Infos récupérées" : "Entreprise radiée",
+      description: `${info.denomination ?? ""}${info.commune ? " — " + info.commune : ""}`,
+      variant: info.actif ? "default" : "destructive",
+    });
+  }
+
+  async function handleApiSearch() {
+    const numRaw = (siretInput || contact.siret || contact.siren || "").replace(/\D/g, "");
+    setApiLoading(true);
+    try {
+      if (numRaw.length === 9 || numRaw.length === 14) {
+        const info = await chercherParSiret(numRaw);
+        if (!info) {
+          toast({ title: "Aucune entreprise pour ce numéro", variant: "destructive" });
+        } else {
+          applyInfo(info);
+        }
+      } else if (contact.societe && contact.societe.trim()) {
+        const list = await chercherParNom(contact.societe.trim(), contact.code_postal ?? undefined);
+        if (list.length === 0) {
+          toast({ title: "Aucune entreprise trouvée", description: "Précise le nom ou le code postal.", variant: "destructive" });
+        } else if (list.length === 1) {
+          applyInfo(list[0]);
+        } else {
+          setCandidates(list);
+        }
+      } else {
+        toast({ title: "Saisis d'abord un nom de société ou un SIRET", variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "API entreprises indisponible", description: e.message, variant: "destructive" });
+    } finally {
+      setApiLoading(false);
     }
+  }
   }
 
   async function handleSave() {
