@@ -99,6 +99,7 @@ export default function NouveauMandat() {
 
   const [prix, setPrix] = useState<string>("");
   const [prixNet, setPrixNet] = useState<string>("");
+  const [prixNetAuto, setPrixNetAuto] = useState(true);
   const [loyer, setLoyer] = useState<string>("");
   const [honoraires, setHonoraires] = useState<string>("");
   const [honorairesAuto, setHonorairesAuto] = useState(true);
@@ -193,6 +194,7 @@ export default function NouveauMandat() {
       setLoyer(row.loyer != null ? String(row.loyer) : "");
       setHonoraires(row.honoraires_montant != null ? String(row.honoraires_montant) : "");
       setHonorairesAuto(false);
+      setPrixNetAuto(false);
       setHonorairesCharge(row.honoraires_charge ?? "Acquéreur");
       setDureeMois(row.duree_mois != null ? String(row.duree_mois) : "3");
       setDateSignature(row.date_signature ?? new Date().toISOString().slice(0, 10));
@@ -338,6 +340,17 @@ export default function NouveauMandat() {
     const c = calcHonoraires(prixCalc, bareme);
     if (c) setHonoraires(String(c.montant));
   }, [prixCalc, bareme, honorairesAuto, nature]);
+
+  // -------- prix net vendeur auto
+  useEffect(() => {
+    if (!prixNetAuto) return;
+    if (prix === "" || prix == null) return;
+    const p = parseFloat(prix);
+    if (!Number.isFinite(p)) return;
+    const h = honoraires === "" || honoraires == null ? 0 : (parseFloat(honoraires) || 0);
+    const net = honorairesCharge === "Vendeur" ? Math.max(0, p - h) : p;
+    setPrixNet(String(net));
+  }, [prix, honoraires, honorairesCharge, prixNetAuto]);
 
   const isExclusif = forme === "Exclusif" || forme === "Semi-exclusif";
   const isRecherche = nature === "Recherche";
@@ -650,8 +663,11 @@ export default function NouveauMandat() {
           {!isLocation && (
             <>
               <Field label="Prix de présentation (€)"><Input type="number" value={prix} onChange={(e) => setPrix(e.target.value)} /></Field>
-              <Field label={isMurs ? "Prix net vendeur (€)" : "Prix net vendeur / cédant (€)"}>
-                <Input type="number" value={prixNet} onChange={(e) => setPrixNet(e.target.value)} />
+              <Field label={isMurs ? "Prix net vendeur (€)" : "Prix net vendeur / cédant (€)"} hint="Vendeur : prix − honoraires HT · Acquéreur : = prix de présentation">
+                <div className="flex gap-2">
+                  <Input type="number" value={prixNet} onChange={(e) => { setPrixNet(e.target.value); setPrixNetAuto(false); }} />
+                  <Button type="button" variant="outline" size="sm" onClick={() => setPrixNetAuto(true)}>Auto</Button>
+                </div>
               </Field>
             </>
           )}
