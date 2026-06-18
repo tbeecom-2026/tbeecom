@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, DollarSign, Users, CheckCircle } from "lucide-react";
+import { FileText, Euro, Users, CheckCircle } from "lucide-react";
 import { formatEuros, formatDate, getStatutBadge, TYPES_COMMERCE } from "@/lib/formatters";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import type { Mandat } from "@/types/database";
@@ -93,7 +93,7 @@ export default function Dashboard() {
 
   const kpis = [
     { label: "Mandats en cours", value: mandatsActifs, icon: FileText, fmt: (v: number) => String(v) },
-    { label: "CA potentiel (honoraires)", value: caPotentiel, icon: DollarSign, fmt: formatEuros },
+    { label: "CA potentiel (honoraires)", value: caPotentiel, icon: Euro, fmt: formatEuros },
     { label: "Acquéreurs actifs", value: acquereursActifs, icon: Users, fmt: (v: number) => String(v) },
     { label: "Vendus ce mois", value: vendus, icon: CheckCircle, fmt: (v: number) => String(v) },
   ];
