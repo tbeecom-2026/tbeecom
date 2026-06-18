@@ -341,6 +341,17 @@ export default function NouveauMandat() {
     if (c) setHonoraires(String(c.montant));
   }, [prixCalc, bareme, honorairesAuto, nature]);
 
+  // -------- prix net vendeur auto
+  useEffect(() => {
+    if (!prixNetAuto) return;
+    if (prix === "" || prix == null) return;
+    const p = parseFloat(prix);
+    if (!Number.isFinite(p)) return;
+    const h = honoraires === "" || honoraires == null ? 0 : (parseFloat(honoraires) || 0);
+    const net = honorairesCharge === "Vendeur" ? Math.max(0, p - h) : p;
+    setPrixNet(String(net));
+  }, [prix, honoraires, honorairesCharge, prixNetAuto]);
+
   const isExclusif = forme === "Exclusif" || forme === "Semi-exclusif";
   const isRecherche = nature === "Recherche";
   const isLocation = nature === "Location";
