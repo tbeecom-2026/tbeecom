@@ -122,22 +122,26 @@ export interface MandatEtat {
 }
 
 /**
- * État réel d'un mandat à afficher dans la colonne "État".
+ * État réel d'un mandat à afficher (colonne "État" dans Mandats et "Statut" dans Biens).
  * - Vente réalisée  -> libellé + couleur Netty (violet/bleu)
  * - Annulé / Non signé -> gris
- * - Sinon (y compris "Mandat saisi", "Arrivé à terme", vide) -> calculé depuis la date de fin
- *   (date_fin sinon date_debut + 18 mois) : Arrivé à terme (gris) / En cours (vert).
- *   Ne jamais afficher "Mandat saisi" ni "Fin proche".
+ * - Sinon (y compris "Mandat saisi") -> calculé depuis la date de fin
+ *   (dateFin sinon dateDebut + 18 mois) :
+ *     passée                     -> "Arrivé à terme" (gris)
+ *     ≤ ALERTE_FIN_MANDAT_JOURS  -> "À terme dans N j" / "À terme aujourd'hui" (orange)
+ *     sinon                      -> "En cours" (vert)
+ *   Ne jamais afficher "Mandat saisi".
  */
-export function getMandatEtat(
-  obs: string | null | undefined,
-  dateDebut: string | null | undefined,
-  dateFin: string | null | undefined,
-): MandatEtat {
-  const t = nettyLabel(obs);
+export function etatMandat(args: {
+  observation: string | null | undefined;
+  dateDebut: string | null | undefined;
+  dateFin: string | null | undefined;
+}): MandatEtat {
+  const { observation, dateDebut, dateFin } = args;
+  const t = nettyLabel(observation);
 
   if (VENTE_LABELS.has(t)) {
-    return { label: t, className: getIssueBadgeClass(obs) };
+    return { label: t, className: getIssueBadgeClass(observation) };
   }
   if (t === "Annulé" || t === "Non signé") {
     return { label: t, className: "bg-zinc-500 text-white hover:bg-zinc-500" };
@@ -167,7 +171,22 @@ export function getMandatEtat(
   if (jours < 0) {
     return { label: "Arrivé à terme", className: "bg-slate-500 text-white hover:bg-slate-500" };
   }
+  if (jours <= ALERTE_FIN_MANDAT_JOURS) {
+    return {
+      label: jours === 0 ? "À terme aujourd'hui" : `À terme dans ${jours} j`,
+      className: "bg-orange-500 text-white hover:bg-orange-500",
+    };
+  }
   return { label: "En cours", className: "bg-emerald-600 text-white hover:bg-emerald-600" };
+}
+
+/** @deprecated utiliser etatMandat({ observation, dateDebut, dateFin }) */
+export function getMandatEtat(
+  obs: string | null | undefined,
+  dateDebut: string | null | undefined,
+  dateFin: string | null | undefined,
+): MandatEtat {
+  return etatMandat({ observation: obs, dateDebut, dateFin });
 }
 
 /**
