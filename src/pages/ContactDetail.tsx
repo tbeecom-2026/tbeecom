@@ -17,11 +17,13 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Save, Phone, Mail, MapPin, Building2,
   FileText, ChevronDown, ExternalLink, User, Briefcase,
-  Search, Loader2, Globe, Euro, Calendar, Hash, Target, Plus
+  Search, Loader2, Globe, Euro, Calendar, Hash, Target, Plus, AlertTriangle
 } from "lucide-react";
 import { formatDate, formatEuros, getActiviteBadge, getStatutBadge, ROLES_CONTACT, TYPES_COMMERCE } from "@/lib/formatters";
 import { generateMandatSimple, generateMandatExclusif, generateAvenant, openMandat } from "@/lib/generateMandat";
 import { lookupSiret, lookupSiren, sireneToContact } from "@/lib/sirene";
+import { chercherParSiret, chercherParNom, type InfoEntreprise, type CandidatEntreprise } from "@/lib/rechercheEntreprise";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Contact, Mandat, MandatVendeur, Activite, Recherche, Rapprochement } from "@/types/database";
 
 const Field = ({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) => (
@@ -52,6 +54,9 @@ export default function ContactDetail() {
   const [saving, setSaving] = useState(false);
   const [siretInput, setSiretInput] = useState("");
   const [searching, setSearching] = useState(false);
+  const [apiLoading, setApiLoading] = useState(false);
+  const [candidates, setCandidates] = useState<CandidatEntreprise[] | null>(null);
+  const [radiee, setRadiee] = useState(false);
 
   useEffect(() => {
     if (!isNew && id) loadContact(id);
@@ -121,6 +126,75 @@ export default function ContactDetail() {
       toast({ title: "Introuvable", description: e.message, variant: "destructive" });
     } finally {
       setSearching(false);
+    }
+  }
+
+
+
+  function applyInfo(info: InfoEntreprise) {
+    setRadiee(!info.actif);
+    setContact((prev) => {
+      const next: any = { ...prev };
+      const setIfEmpty = (k: string, v: any) => {
+        if (v == null || v === "") return;
+        const cur = (prev as any)[k];
+        if (cur == null || cur === "") next[k] = v;
+        else if (String(cur).trim() !== String(v).trim()) {
+          if (window.confirm(`Le champ "${k}" contient déjà "${cur}". Le remplacer par "${v}" ?`)) {
+            next[k] = v;
+          }
+        }
+      };
+      setIfEmpty("societe", info.denomination);
+      setIfEmpty("siren", info.siren);
+      setIfEmpty("tva_intracommunautaire", info.num_tva);
+      setIfEmpty("nom_dirigeant", info.dirigeant);
+      setIfEmpty("forme_juridique", info.forme_code);
+      setIfEmpty("libelle_forme_juridique", info.forme_juridique);
+      setIfEmpty("code_naf", info.naf);
+      setIfEmpty("libelle_naf", info.naf_libelle);
+      setIfEmpty("date_creation_societe", info.date_creation);
+      setIfEmpty("adresse", info.adresse);
+      setIfEmpty("code_postal", info.code_postal);
+      setIfEmpty("commune", info.commune);
+      setIfEmpty("rcs", info.siren);
+      return next;
+    });
+    if (info.siret) setSiretInput(info.siret);
+    toast({
+      title: info.actif ? "✓ Infos récupérées" : "Entreprise radiée",
+      description: `${info.denomination ?? ""}${info.commune ? " — " + info.commune : ""}`,
+      variant: info.actif ? "default" : "destructive",
+    });
+  }
+
+  async function handleApiSearch() {
+    const numRaw = (siretInput || contact.siret || contact.siren || "").replace(/\D/g, "");
+    setApiLoading(true);
+    try {
+      if (numRaw.length === 9 || numRaw.length === 14) {
+        const info = await chercherParSiret(numRaw);
+        if (!info) {
+          toast({ title: "Aucune entreprise pour ce numéro", variant: "destructive" });
+        } else {
+          applyInfo(info);
+        }
+      } else if (contact.societe && contact.societe.trim()) {
+        const list = await chercherParNom(contact.societe.trim(), contact.code_postal ?? undefined);
+        if (list.length === 0) {
+          toast({ title: "Aucune entreprise trouvée", description: "Précise le nom ou le code postal.", variant: "destructive" });
+        } else if (list.length === 1) {
+          applyInfo(list[0]);
+        } else {
+          setCandidates(list);
+        }
+      } else {
+        toast({ title: "Saisis d'abord un nom de société ou un SIRET", variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "API entreprises indisponible", description: e.message, variant: "destructive" });
+    } finally {
+      setApiLoading(false);
     }
   }
 
@@ -371,10 +445,27 @@ export default function ContactDetail() {
                       ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Recherche...</>
                       : <><Search className="mr-2 h-4 w-4" />Rechercher</>}
                   </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleApiSearch}
+                    disabled={apiLoading}
+                    className="shrink-0 border-primary/50 text-primary hover:bg-primary/10"
+                    title="Recherche par SIRET/SIREN ou par nom de société (+ code postal). Utilise l'API publique annuaire-entreprises.">
+                    {apiLoading
+                      ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Récupération...</>
+                      : <><Building2 className="mr-2 h-4 w-4" />Récupérer les infos (API entreprises)</>}
+                  </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  Remplit automatiquement tous les champs ci-dessous depuis la base officielle.
+                  Remplit automatiquement tous les champs ci-dessous. Le bouton « Récupérer les infos » accepte aussi un nom de société (+ code postal) si le SIRET est inconnu.
                 </p>
+                {radiee && (
+                  <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                    <span>Entreprise radiée / cessée selon l'INSEE — à vérifier avant tout engagement.</span>
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-border/50" />
@@ -696,6 +787,34 @@ export default function ContactDetail() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={candidates !== null} onOpenChange={(o) => !o && setCandidates(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Sélectionner l'entreprise</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+            {(candidates ?? []).map((c) => (
+              <button
+                key={c.siret ?? c.siren ?? Math.random()}
+                onClick={() => { applyInfo(c); setCandidates(null); }}
+                className="w-full text-left p-3 rounded-md border border-border hover:border-primary hover:bg-primary/5 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="font-semibold">{c.denomination ?? "—"}</div>
+                  {!c.actif && <Badge className="bg-red-600/80 text-white text-xs">Radiée</Badge>}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {[c.commune, c.code_postal].filter(Boolean).join(" ")} {c.siret && `— SIRET ${c.siret}`}
+                </div>
+                {c.forme_juridique && (
+                  <div className="text-xs text-muted-foreground">{c.forme_juridique}{c.naf_libelle ? ` · ${c.naf_libelle}` : ""}</div>
+                )}
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
