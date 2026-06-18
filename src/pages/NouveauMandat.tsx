@@ -54,7 +54,7 @@ const FORMES = ["Simple", "Exclusif", "Semi-exclusif"];
 
 type ContactLite = { id: string; nom: string | null; prenom: string | null; societe: string | null; email: string | null; telephone: string | null; adresse: string | null; code_postal: string | null; commune: string | null };
 type BienLite = { id: string; reference: string | null; titre: string | null; adresse: string | null; code_postal: string | null; commune: string | null; nature_activite: string | null; surface_commerciale: number | null; surface_totale: number | null; proprietaire_email?: string | null; proprietaire_nom?: string | null };
-type MandatLite = { id: string; numero: string | null; designation_bien: string | null; adresse_bien: string | null; activite_bien: string | null; surfaces_bien: string | null; prix: number | null; honoraires_montant: number | null };
+type MandatLite = { id: string; numero: string | null; reference_bien: string | null; designation_bien: string | null; adresse_bien: string | null; activite_bien: string | null; surfaces_bien: string | null; prix: number | null; honoraires_montant: number | null };
 
 function escapeOr(s: string) {
   return s.replace(/[,()"']/g, " ").trim();
