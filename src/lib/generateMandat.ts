@@ -1060,7 +1060,7 @@ export async function generateMandatV2(draft: MandatDraft, agence: AgenceParamet
   if (ht != null) {
     prixBloc.push(`<tr><td>Honoraires</td><td>${euros(ht)} HT — soit <b>${euros(ttc)} TTC</b></td></tr>`);
   }
-  prixBloc.push(`<tr><td>Honoraires à la charge de</td><td>${val(draft.honoraires_charge, "[ Acquéreur / Cédant ]")}</td></tr>`);
+  prixBloc.push(`<tr><td>Honoraires à la charge de</td><td>${val(draft.honoraires_charge, isLocation ? "[ Preneur / Bailleur ]" : "[ Acquéreur / Cédant ]")}</td></tr>`);
 
   // clauses exclusivité
   const clauseExclu = isExcl ? `
