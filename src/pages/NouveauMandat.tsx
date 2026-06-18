@@ -356,7 +356,9 @@ export default function NouveauMandat() {
   function applyDelegationParent(p: MandatLite) {
     setDelegationParent(p);
     setDelegationDe(p.id);
-    setDelegationMandatRef(p.numero ?? "");
+    const refParts = [`N° ${p.numero ?? "—"}`];
+    if (p.reference_bien) refParts.push(`réf. ${p.reference_bien}`);
+    setDelegationMandatRef(refParts.join(" — "));
     setDesignation((d) => d || p.designation_bien || "");
     setAdresseBien((a) => a || p.adresse_bien || "");
     setActiviteBien((a) => a || p.activite_bien || "");
