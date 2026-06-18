@@ -98,8 +98,6 @@ export function getIssueBadgeClass(obs?: string | null): string {
     case "Réalisé par un confrère":
     case "Réalisé entre particuliers":
       return "bg-blue-500 text-white hover:bg-blue-500"; // vendu hors agence
-    case "Mandat saisi":
-      return "bg-emerald-600 text-white hover:bg-emerald-600"; // actif
     case "Arrivé à terme":
       return "bg-slate-500 text-white hover:bg-slate-500"; // expiré
     case "Annulé":
@@ -127,8 +125,9 @@ export interface MandatEtat {
  * État réel d'un mandat à afficher dans la colonne "État".
  * - Vente réalisée  -> libellé + couleur Netty (violet/bleu)
  * - Annulé / Non signé -> gris
- * - Sinon (Mandat saisi, Arrivé à terme, vide) -> calculé depuis la date de fin
- *   (date_fin sinon date_debut + 18 mois) : Arrivé à terme / Fin proche / En cours.
+ * - Sinon (y compris "Mandat saisi", "Arrivé à terme", vide) -> calculé depuis la date de fin
+ *   (date_fin sinon date_debut + 18 mois) : Arrivé à terme (gris) / En cours (vert).
+ *   Ne jamais afficher "Mandat saisi" ni "Fin proche".
  */
 export function getMandatEtat(
   obs: string | null | undefined,
@@ -167,9 +166,6 @@ export function getMandatEtat(
 
   if (jours < 0) {
     return { label: "Arrivé à terme", className: "bg-slate-500 text-white hover:bg-slate-500" };
-  }
-  if (jours <= ALERTE_FIN_MANDAT_JOURS) {
-    return { label: "Fin proche", className: "bg-orange-500 text-white hover:bg-orange-500" };
   }
   return { label: "En cours", className: "bg-emerald-600 text-white hover:bg-emerald-600" };
 }
