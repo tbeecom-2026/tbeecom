@@ -737,7 +737,47 @@ export interface MandatDraft {
   avenant_de?: string | null;
   avenant_numero?: number | null;
   delegation_mandat_ref?: string | null;
+  delegation_de?: string | null;
+  delegation_honoraires_ref?: number | null;
+  delegation_part_delegataire?: number | null;
+  delegation_part_mode?: string | null;
+  delegataire_raison_sociale?: string | null;
+  delegataire_forme?: string | null;
+  delegataire_capital?: string | null;
+  delegataire_siege?: string | null;
+  delegataire_rcs?: string | null;
+  delegataire_siret?: string | null;
+  delegataire_carte_t?: string | null;
+  delegataire_cci?: string | null;
+  delegataire_rcp?: string | null;
+  delegataire_representant?: string | null;
+  delegataire_email?: string | null;
+  delegataire_telephone?: string | null;
 }
+
+const NATURE_CODE_TO_LABEL: Record<string, string> = {
+  fdc: "Fonds de commerce",
+  droit_bail: "Droit au bail",
+  murs: "Murs commerciaux",
+  local_pro: "Local / immobilier d'entreprise",
+  titres: "Cession de titres",
+  recherche: "Recherche",
+  location: "Location",
+  delegation: "Délégation de mandat",
+};
+
+function normNature(n?: string | null): string {
+  if (!n) return "Fonds de commerce";
+  return NATURE_CODE_TO_LABEL[n] ?? n;
+}
+
+function normForme(f?: string | null): string {
+  const x = (f ?? "Simple").toString().trim().toLowerCase();
+  if (x === "exclusif" || x === "exclusive" || x === "exclusif (non semi)") return "Exclusif";
+  if (x.startsWith("semi")) return "Semi-exclusif";
+  return "Simple";
+}
+
 
 function agenceHeader(a: AgenceParametres | null): string {
   if (!a) {
