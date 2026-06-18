@@ -4,7 +4,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Euro, Users, CheckCircle } from "lucide-react";
-import { formatEuros, formatDate, getStatutBadge, TYPES_COMMERCE } from "@/lib/formatters";
+import { formatEuros, formatDate, getStatutBadge } from "@/lib/formatters";
+import { familleMetier, METIER_LABEL } from "@/lib/metier";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import type { Mandat } from "@/types/database";
 
@@ -54,7 +55,7 @@ export default function Dashboard() {
         // On récupère les biens "sur le marché" AVEC leurs dates + honoraires pour filtrer/calculer côté client.
         supabase
           .from("mandats")
-          .select("mandat_date_debut, mandat_date_fin, honoraires_montant, type_commerce")
+          .select("mandat_date_debut, mandat_date_fin, honoraires_montant, type_commerce, nature_activite")
           .eq("statut", "sur_le_marche"),
         supabase.from("recherches").select("*", { count: "exact", head: true }).eq("statut", "actif"),
         supabase
@@ -81,14 +82,18 @@ export default function Dashboard() {
     setVendus(vendusMois ?? 0);
     setDerniersMandats((derniers as Mandat[]) ?? []);
 
-    // Répartition par type de commerce : sur le périmètre des mandats vivants.
-    const typeCounts: Record<string, number> = {};
-    TYPES_COMMERCE.forEach((t) => (typeCounts[t] = 0));
+    // Répartition par MÉTIER (nature_activite normalisée) sur les mandats vivants.
+    // On n'affiche que les familles présentes, triées par volume décroissant.
+    const counts: Record<string, number> = {};
     vivants.forEach((m: any) => {
-      const t = m.type_commerce || "Autres";
-      typeCounts[t] = (typeCounts[t] ?? 0) + 1;
+      const label = METIER_LABEL[familleMetier(m.nature_activite, m.type_commerce)];
+      counts[label] = (counts[label] ?? 0) + 1;
     });
-    setChartData(Object.entries(typeCounts).map(([type, count]) => ({ type, count })));
+    setChartData(
+      Object.entries(counts)
+        .map(([type, count]) => ({ type, count }))
+        .sort((a, b) => b.count - a.count),
+    );
   }
 
   const kpis = [
