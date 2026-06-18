@@ -17,11 +17,13 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Save, Phone, Mail, MapPin, Building2,
   FileText, ChevronDown, ExternalLink, User, Briefcase,
-  Search, Loader2, Globe, Euro, Calendar, Hash, Target, Plus
+  Search, Loader2, Globe, Euro, Calendar, Hash, Target, Plus, AlertTriangle
 } from "lucide-react";
 import { formatDate, formatEuros, getActiviteBadge, getStatutBadge, ROLES_CONTACT, TYPES_COMMERCE } from "@/lib/formatters";
 import { generateMandatSimple, generateMandatExclusif, generateAvenant, openMandat } from "@/lib/generateMandat";
 import { lookupSiret, lookupSiren, sireneToContact } from "@/lib/sirene";
+import { chercherParSiret, chercherParNom, type InfoEntreprise, type CandidatEntreprise } from "@/lib/rechercheEntreprise";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Contact, Mandat, MandatVendeur, Activite, Recherche, Rapprochement } from "@/types/database";
 
 const Field = ({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) => (
