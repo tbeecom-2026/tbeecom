@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,18 +8,30 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Info, Percent, Euro, Building2 } from "lucide-react";
+import { Save, Info, Percent, Euro, Building2, Users, Plus, Trash2 } from "lucide-react";
 import { formatEuros } from "@/lib/formatters";
 import type { BaremeTranche } from "@/lib/honoraires";
 import AgenceForm from "@/components/AgenceForm";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
+interface AccesAutorise {
+  id: string;
+  email: string;
+  nom: string | null;
+  created_at?: string;
+}
+
 export default function Parametres() {
   const { toast } = useToast();
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const [tranches, setTranches] = useState<BaremeTranche[]>([]);
   const [saving, setSaving] = useState(false);
+  const [acces, setAcces] = useState<AccesAutorise[]>([]);
+  const [newEmail, setNewEmail] = useState("");
+  const [newNom, setNewNom] = useState("");
+  const [addingAcces, setAddingAcces] = useState(false);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); loadAcces(); }, []);
 
   async function load() {
     const { data } = await supabase
@@ -27,6 +40,40 @@ export default function Parametres() {
       .eq("type_trans", "fdc")
       .order("ordre");
     setTranches((data as BaremeTranche[]) ?? []);
+  }
+
+  async function loadAcces() {
+    const { data } = await supabase
+      .from("acces_autorises")
+      .select("*")
+      .order("email");
+    setAcces((data as AccesAutorise[]) ?? []);
+  }
+
+  async function addAcces() {
+    const email = newEmail.trim().toLowerCase();
+    if (!email) return;
+    setAddingAcces(true);
+    const { error } = await supabase
+      .from("acces_autorises")
+      .insert({ email, nom: newNom.trim() || null });
+    setAddingAcces(false);
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    setNewEmail(""); setNewNom("");
+    toast({ title: "Utilisateur autorisé", description: email });
+    loadAcces();
+  }
+
+  async function removeAcces(id: string) {
+    const { error } = await supabase.from("acces_autorises").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    loadAcces();
   }
 
   function updateTranche(id: string, field: keyof BaremeTranche, value: any) {
