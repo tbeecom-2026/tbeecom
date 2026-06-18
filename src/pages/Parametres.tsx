@@ -139,7 +139,75 @@ export default function Parametres() {
         <TabsList>
           <TabsTrigger value="bareme"><Euro className="mr-1 h-4 w-4" /> Barème honoraires</TabsTrigger>
           <TabsTrigger value="agence"><Building2 className="mr-1 h-4 w-4" /> Mon agence</TabsTrigger>
+          <TabsTrigger value="acces"><Users className="mr-1 h-4 w-4" /> Utilisateurs autorisés</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="acces" className="mt-4 space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" />
+                Liste blanche des accès au CRM
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <label className="text-xs text-muted-foreground">Email</label>
+                  <Input
+                    type="email"
+                    placeholder="negociateur@exemple.com"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs text-muted-foreground">Nom</label>
+                  <Input
+                    placeholder="Nom complet"
+                    value={newNom}
+                    onChange={(e) => setNewNom(e.target.value)}
+                  />
+                </div>
+                <Button onClick={addAcces} disabled={addingAcces || !newEmail.trim()}>
+                  <Plus className="mr-1 h-4 w-4" /> Ajouter
+                </Button>
+              </div>
+
+              <div className="border border-border rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-secondary/30 text-muted-foreground">
+                    <tr>
+                      <th className="text-left p-2">Email</th>
+                      <th className="text-left p-2">Nom</th>
+                      <th className="w-12"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/40">
+                    {acces.length === 0 && (
+                      <tr><td colSpan={3} className="p-4 text-center text-muted-foreground text-xs">Aucun utilisateur autorisé. Ajoutez-en un ci-dessus.</td></tr>
+                    )}
+                    {acces.map((a) => (
+                      <tr key={a.id} className="hover:bg-secondary/20">
+                        <td className="p-2 font-medium">{a.email}</td>
+                        <td className="p-2 text-muted-foreground">{a.nom ?? "—"}</td>
+                        <td className="p-2 text-right">
+                          <Button variant="ghost" size="icon" onClick={() => removeAcces(a.id)} className="h-7 w-7 text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Les administrateurs ont toujours accès. Les autres utilisateurs doivent être ajoutés ici pour pouvoir se connecter au CRM.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
 
         <TabsContent value="agence" className="mt-4">
           <AgenceForm canEdit={isAdmin} />
