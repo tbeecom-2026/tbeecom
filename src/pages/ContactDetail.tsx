@@ -787,6 +787,34 @@ export default function ContactDetail() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={candidates !== null} onOpenChange={(o) => !o && setCandidates(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Sélectionner l'entreprise</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+            {(candidates ?? []).map((c) => (
+              <button
+                key={c.siret ?? c.siren ?? Math.random()}
+                onClick={() => { applyInfo(c); setCandidates(null); }}
+                className="w-full text-left p-3 rounded-md border border-border hover:border-primary hover:bg-primary/5 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="font-semibold">{c.denomination ?? "—"}</div>
+                  {!c.actif && <Badge className="bg-red-600/80 text-white text-xs">Radiée</Badge>}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {[c.commune, c.code_postal].filter(Boolean).join(" ")} {c.siret && `— SIRET ${c.siret}`}
+                </div>
+                {c.forme_juridique && (
+                  <div className="text-xs text-muted-foreground">{c.forme_juridique}{c.naf_libelle ? ` · ${c.naf_libelle}` : ""}</div>
+                )}
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
