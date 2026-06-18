@@ -343,7 +343,7 @@ export default function NouveauMandat() {
     const t = setTimeout(async () => {
       const { data } = await supabase
         .from("registre_mandats")
-        .select("id, numero, designation_bien, adresse_bien, activite_bien, surfaces_bien, prix, honoraires_montant")
+        .select("id, numero, reference_bien, designation_bien, adresse_bien, activite_bien, surfaces_bien, prix, honoraires_montant")
         .eq("statut_validation", "valide")
         .not("numero", "is", null)
         .or(`numero.ilike.%${q}%,designation_bien.ilike.%${q}%,adresse_bien.ilike.%${q}%`)
