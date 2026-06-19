@@ -8,11 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Info, Percent, Euro, Building2, Users, Plus, Trash2 } from "lucide-react";
+import { Save, Info, Percent, Euro, Building2, Users, Plus, Trash2, UserCog } from "lucide-react";
 import { formatEuros } from "@/lib/formatters";
 import type { BaremeTranche } from "@/lib/honoraires";
 import AgenceForm from "@/components/AgenceForm";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import UtilisateursAdmin from "@/components/UtilisateursAdmin";
 
 interface AccesAutorise {
   id: string;
@@ -140,7 +141,13 @@ export default function Parametres() {
           <TabsTrigger value="bareme"><Euro className="mr-1 h-4 w-4" /> Barème honoraires</TabsTrigger>
           <TabsTrigger value="agence"><Building2 className="mr-1 h-4 w-4" /> Mon agence</TabsTrigger>
           <TabsTrigger value="acces"><Users className="mr-1 h-4 w-4" /> Utilisateurs autorisés</TabsTrigger>
+          <TabsTrigger value="users"><UserCog className="mr-1 h-4 w-4" /> Utilisateurs</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="users" className="mt-4">
+          <UtilisateursAdmin />
+        </TabsContent>
+
 
         <TabsContent value="acces" className="mt-4 space-y-4">
           <Card>
