@@ -98,7 +98,13 @@ export default function ContactDetail() {
   }
   function toggleRole(role: string) {
     const roles = contact.roles ?? [];
-    update("roles", roles.includes(role) ? roles.filter((r) => r !== role) : [...roles, role]);
+    const has = roles.includes(role);
+    const next = has ? roles.filter((r) => r !== role) : [...roles, role];
+    setContact((prev) => ({
+      ...prev,
+      roles: next,
+      ...(role === "autre" && has ? { role_autre: null } : {}),
+    }));
   }
   function toggleTypeCommerce(type: string) {
     const current = recherche.types_commerce ?? [];
