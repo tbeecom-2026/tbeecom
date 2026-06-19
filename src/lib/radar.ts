@@ -89,12 +89,17 @@ function adresseTxt(a: any): string | null {
 }
 
 // Prix stipulé d'une cession, depuis le texte origineFonds ("prix stipulé de 360000.00 euros").
+// Gère point OU virgule décimale (sans confondre milliers et décimale).
 function prixCession(etab: any): number | null {
-  const t = etab?.origineFonds ?? "";
-  const m = t.match(/prix stipul[ée] de\s+([\d  .,]+)\s*euros/i);
+  const m = (etab?.origineFonds ?? "").match(/prix stipul[ée] de\s+([\d  .,]+)\s*euros/i);
   if (!m) return null;
-  const n = Number(m[1].replace(/[ .]/g, "").replace(",", "."));
-  return isNaN(n) ? null : n;
+  let s = String(m[1]).trim().replace(/\s/g, "");
+  const lc = s.lastIndexOf(","),
+    ld = s.lastIndexOf(".");
+  if (lc > -1 && ld > -1) s = lc > ld ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  else if (lc > -1) s = s.replace(",", ".");
+  const n = Number(s);
+  return isNaN(n) || n <= 0 ? null : n;
 }
 
 // Date de référence (il y a `jours` jours) au format AAAA-MM-JJ.
