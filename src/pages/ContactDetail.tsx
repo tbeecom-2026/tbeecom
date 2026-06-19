@@ -98,7 +98,13 @@ export default function ContactDetail() {
   }
   function toggleRole(role: string) {
     const roles = contact.roles ?? [];
-    update("roles", roles.includes(role) ? roles.filter((r) => r !== role) : [...roles, role]);
+    const has = roles.includes(role);
+    const next = has ? roles.filter((r) => r !== role) : [...roles, role];
+    setContact((prev) => ({
+      ...prev,
+      roles: next,
+      ...(role === "autre" && has ? { role_autre: null } : {}),
+    }));
   }
   function toggleTypeCommerce(type: string) {
     const current = recherche.types_commerce ?? [];
@@ -272,7 +278,9 @@ export default function ContactDetail() {
             <div className="flex flex-wrap gap-1 mt-1">
               {contact.roles.map((r) => {
                 const role = ROLES_CONTACT.find((rc) => rc.value === r);
-                return <Badge key={r} className={`text-xs ${role?.color ?? "bg-slate-500 text-white"}`}>{role?.label ?? r}</Badge>;
+                const label = role?.label ?? r;
+                const suffix = r === "autre" && contact.role_autre ? ` — ${contact.role_autre}` : "";
+                return <Badge key={r} className={`text-xs ${role?.color ?? "bg-slate-500 text-white"}`}>{label}{suffix}</Badge>;
               })}
             </div>
           )}
@@ -356,6 +364,14 @@ export default function ContactDetail() {
                         </label>
                       ))}
                     </div>
+                    {contact.roles?.includes("autre") && (
+                      <Input
+                        value={contact.role_autre ?? ""}
+                        onChange={(e) => update("role_autre", e.target.value)}
+                        placeholder="Précisez la situation (ex. Liquidateur, Curateur, Ex-gérant…)"
+                        className="mt-1"
+                      />
+                    )}
                   </div>
                 </div>
               </div>
