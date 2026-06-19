@@ -12,8 +12,41 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Radar, Search as SearchIcon, Save, UserPlus, X, Loader2, AlertTriangle } from "lucide-react";
+import {
+  Radar,
+  Search as SearchIcon,
+  Save,
+  UserPlus,
+  X,
+  Loader2,
+  AlertTriangle,
+  FolderPlus,
+  Folder,
+  Trash2,
+  Pencil,
+  Info,
+  ExternalLink,
+  SaveAll,
+} from "lucide-react";
 import { METIER_LABEL, type FamilleMetier } from "@/lib/metier";
 import {
   rechercherProspects,
@@ -22,6 +55,7 @@ import {
   type EtatDifficulte,
   type Zone,
 } from "@/lib/prospection";
+import { chercherParSiret, type InfoEntreprise } from "@/lib/rechercheEntreprise";
 
 const FAMILLES: FamilleMetier[] = [
   "restauration_assise",
@@ -39,6 +73,16 @@ const ETAT_LABEL: Record<EtatDifficulte, string> = {
   liquidation: "Liquidation",
   avis_en_cours: "Avis en cours",
 };
+
+interface Dossier {
+  id: string;
+  nom: string;
+  description: string | null;
+  created_at: string;
+}
+
+const NO_DOSSIER = "__none__";
+const NEW_DOSSIER = "__new__";
 
 function badgeEtat(etat: EtatDifficulte) {
   const cls: Record<EtatDifficulte, string> = {
@@ -58,11 +102,29 @@ function badgeScore(score: number) {
   return <Badge variant="outline" className={cls}>{score}</Badge>;
 }
 
+function formatDateFr(s: string | null | undefined): string {
+  if (!s) return "—";
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s;
+  return d.toLocaleDateString("fr-FR");
+}
+
 export default function Prospection() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // --- Filtres ---
+  // --- Dossiers ---
+  const [dossiers, setDossiers] = useState<Dossier[]>([]);
+  const [dossierActif, setDossierActif] = useState<string | null>(null);
+  const [dossierCible, setDossierCible] = useState<string>(NO_DOSSIER); // pour enregistrement
+  const [openCreateDossier, setOpenCreateDossier] = useState(false);
+  const [newDossierNom, setNewDossierNom] = useState("");
+  const [newDossierDesc, setNewDossierDesc] = useState("");
+  const [renameDossier, setRenameDossier] = useState<Dossier | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [deleteDossier, setDeleteDossier] = useState<Dossier | null>(null);
+
+  // --- Filtres recherche ---
   const [familles, setFamilles] = useState<FamilleMetier[]>([]);
   const [niveauZone, setNiveauZone] = useState<"cp" | "commune" | "departement">("cp");
   const [zoneTexte, setZoneTexte] = useState("");
@@ -79,21 +141,109 @@ export default function Prospection() {
   const [mesLeads, setMesLeads] = useState<any[]>([]);
   const [filtreStatut, setFiltreStatut] = useState<string>("all");
   const [filtreFamille, setFiltreFamille] = useState<string>("all");
+  const [filtreDossier, setFiltreDossier] = useState<string>("all");
+  const [leadToDelete, setLeadToDelete] = useState<any | null>(null);
+
+  // --- Détail lead ---
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailLead, setDetailLead] = useState<Prospect | any | null>(null);
+  const [detailInfo, setDetailInfo] = useState<InfoEntreprise | null>(null);
+
+  useEffect(() => {
+    loadDossiers();
+  }, []);
 
   useEffect(() => {
     loadMesLeads();
-  }, [filtreStatut, filtreFamille]);
+  }, [filtreStatut, filtreFamille, filtreDossier]);
+
+  async function loadDossiers() {
+    const { data, error } = await supabase
+      .from("dossiers_prospection")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) {
+      toast.error("Impossible de charger les dossiers", { description: error.message });
+      return;
+    }
+    setDossiers(data ?? []);
+  }
 
   async function loadMesLeads() {
     let q = supabase.from("prospects").select("*").order("score", { ascending: false });
     if (filtreStatut !== "all") q = q.eq("statut", filtreStatut);
     if (filtreFamille !== "all") q = q.eq("famille_metier", filtreFamille);
+    if (filtreDossier === "none") q = q.is("dossier_id", null);
+    else if (filtreDossier !== "all") q = q.eq("dossier_id", filtreDossier);
     const { data, error } = await q;
     if (error) {
       toast.error("Impossible de charger les leads", { description: error.message });
       return;
     }
     setMesLeads(data ?? []);
+  }
+
+  async function creerDossier() {
+    const nom = newDossierNom.trim();
+    if (!nom) {
+      toast.error("Nom requis");
+      return;
+    }
+    const { data, error } = await supabase
+      .from("dossiers_prospection")
+      .insert({ nom, description: newDossierDesc.trim() || null })
+      .select("*")
+      .single();
+    if (error) {
+      toast.error("Erreur création dossier", { description: error.message });
+      return;
+    }
+    toast.success("Dossier créé");
+    setDossiers((prev) => [data as Dossier, ...prev]);
+    setDossierActif((data as Dossier).id);
+    setDossierCible((data as Dossier).id);
+    setNewDossierNom("");
+    setNewDossierDesc("");
+    setOpenCreateDossier(false);
+  }
+
+  async function renommerDossierConfirm() {
+    if (!renameDossier) return;
+    const nom = renameValue.trim();
+    if (!nom) {
+      toast.error("Nom requis");
+      return;
+    }
+    const { error } = await supabase
+      .from("dossiers_prospection")
+      .update({ nom })
+      .eq("id", renameDossier.id);
+    if (error) {
+      toast.error("Erreur", { description: error.message });
+      return;
+    }
+    toast.success("Dossier renommé");
+    setRenameDossier(null);
+    loadDossiers();
+  }
+
+  async function supprimerDossierConfirm() {
+    if (!deleteDossier) return;
+    const { error } = await supabase
+      .from("dossiers_prospection")
+      .delete()
+      .eq("id", deleteDossier.id);
+    if (error) {
+      toast.error("Erreur", { description: error.message });
+      return;
+    }
+    toast.success("Dossier supprimé (les leads sont conservés)");
+    if (dossierActif === deleteDossier.id) setDossierActif(null);
+    if (dossierCible === deleteDossier.id) setDossierCible(NO_DOSSIER);
+    setDeleteDossier(null);
+    loadDossiers();
+    loadMesLeads();
   }
 
   function toggleFamille(f: FamilleMetier) {
@@ -134,7 +284,12 @@ export default function Prospection() {
       setTronque(res.tronque);
       setTotalCommerces(res.total_commerces);
       if (res.prospects.length === 0) toast.info("Aucun lead pour ces critères");
-      else toast.success(`${res.prospects.length} lead${res.prospects.length > 1 ? "s" : ""} trouvé${res.prospects.length > 1 ? "s" : ""} sur ${res.total_commerces} commerces analysés`);
+      else
+        toast.success(
+          `${res.prospects.length} lead${res.prospects.length > 1 ? "s" : ""} trouvé${
+            res.prospects.length > 1 ? "s" : ""
+          } sur ${res.total_commerces} commerces analysés`
+        );
     } catch (e: any) {
       toast.error("Erreur lors de la recherche", { description: e?.message ?? "API indisponible" });
     } finally {
@@ -142,12 +297,24 @@ export default function Prospection() {
     }
   }
 
+  function resoudreDossierCible(): string | null {
+    if (dossierCible === NO_DOSSIER) return null;
+    if (dossierCible === NEW_DOSSIER) return null;
+    return dossierCible;
+  }
+
   async function enregistrerProspect(p: Prospect) {
     if (!p.siren) {
       toast.error("SIREN manquant — impossible d'enregistrer");
       return;
     }
-    const row = { ...toProspectRow(p), user_id: user?.id };
+    if (dossierCible === NEW_DOSSIER) {
+      setOpenCreateDossier(true);
+      toast.info("Crée d'abord le dossier de destination");
+      return;
+    }
+    const dossier_id = resoudreDossierCible();
+    const row = { ...toProspectRow(p), dossier_id };
     const { error } = await supabase.from("prospects").upsert(row, { onConflict: "siren" });
     if (error) {
       toast.error("Erreur d'enregistrement", { description: error.message });
@@ -157,9 +324,34 @@ export default function Prospection() {
     loadMesLeads();
   }
 
+  async function enregistrerTout() {
+    if (leads.length === 0) return;
+    if (dossierCible === NEW_DOSSIER) {
+      setOpenCreateDossier(true);
+      toast.info("Crée d'abord le dossier de destination");
+      return;
+    }
+    const dossier_id = resoudreDossierCible();
+    const rows = leads
+      .filter((p) => p.siren)
+      .map((p) => ({ ...toProspectRow(p), dossier_id }));
+    if (rows.length === 0) {
+      toast.error("Aucun lead avec SIREN");
+      return;
+    }
+    const { error } = await supabase.from("prospects").upsert(rows, { onConflict: "siren" });
+    if (error) {
+      toast.error("Erreur d'enregistrement", { description: error.message });
+      return;
+    }
+    toast.success(`${rows.length} lead${rows.length > 1 ? "s" : ""} enregistré${rows.length > 1 ? "s" : ""}`);
+    loadMesLeads();
+  }
+
   async function ecarterProspect(p: Prospect) {
     if (!p.siren) return;
-    const row = { ...toProspectRow(p), statut: "ecarte", user_id: user?.id };
+    const dossier_id = resoudreDossierCible();
+    const row = { ...toProspectRow(p), statut: "ecarte", dossier_id };
     const { error } = await supabase.from("prospects").upsert(row, { onConflict: "siren" });
     if (error) {
       toast.error("Erreur", { description: error.message });
@@ -169,7 +361,7 @@ export default function Prospection() {
     loadMesLeads();
   }
 
-  async function convertirEnContact(p: Prospect) {
+  async function convertirEnContact(p: Prospect | any) {
     const contactPayload = {
       societe: p.denomination,
       siret: null,
@@ -194,15 +386,23 @@ export default function Prospection() {
       return;
     }
     if (p.siren) {
-      const row = {
-        ...toProspectRow(p),
-        statut: "converti",
-        contact_id: contactCree.id,
-        user_id: user?.id,
-      };
-      await supabase.from("prospects").upsert(row, { onConflict: "siren" });
+      // Si on a un objet Prospect (avec score_detail) on upsert, sinon on update juste
+      if ("score_detail" in p) {
+        const row = {
+          ...toProspectRow(p as Prospect),
+          statut: "converti",
+          contact_id: contactCree.id,
+        };
+        await supabase.from("prospects").upsert(row, { onConflict: "siren" });
+      } else {
+        await supabase
+          .from("prospects")
+          .update({ statut: "converti", contact_id: contactCree.id })
+          .eq("id", p.id);
+      }
     }
     toast.success("Contact créé");
+    setDetailOpen(false);
     loadMesLeads();
     navigate(`/contacts/${contactCree.id}`);
   }
@@ -221,14 +421,108 @@ export default function Prospection() {
     if (error) toast.error("Erreur", { description: error.message });
   }
 
+  async function deplacerLead(id: string, dossier_id: string | null) {
+    const { error } = await supabase.from("prospects").update({ dossier_id }).eq("id", id);
+    if (error) {
+      toast.error("Erreur", { description: error.message });
+      return;
+    }
+    toast.success("Lead déplacé");
+    loadMesLeads();
+  }
+
+  async function supprimerLeadConfirm() {
+    if (!leadToDelete) return;
+    const { error } = await supabase.from("prospects").delete().eq("id", leadToDelete.id);
+    if (error) {
+      toast.error("Erreur", { description: error.message });
+      return;
+    }
+    toast.success("Lead supprimé");
+    setLeadToDelete(null);
+    loadMesLeads();
+  }
+
+  async function ouvrirDetail(lead: Prospect | any) {
+    setDetailLead(lead);
+    setDetailInfo(null);
+    setDetailOpen(true);
+    if (!lead.siren) return;
+    setDetailLoading(true);
+    try {
+      const info = await chercherParSiret(lead.siren);
+      setDetailInfo(info);
+    } catch (e: any) {
+      toast.error("Erreur récupération infos", { description: e?.message });
+    } finally {
+      setDetailLoading(false);
+    }
+  }
+
   const familesActives = useMemo(() => new Set(familles), [familles]);
+  const dossierMap = useMemo(() => {
+    const m = new Map<string, Dossier>();
+    dossiers.forEach((d) => m.set(d.id, d));
+    return m;
+  }, [dossiers]);
 
   return (
     <TooltipProvider>
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Radar className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-bold">Prospection</h1>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Radar className="w-6 h-6 text-primary" />
+            <h1 className="text-2xl font-bold">Prospection</h1>
+          </div>
+
+          {/* Sélecteur dossier global */}
+          <div className="flex items-center gap-2">
+            <Folder className="w-4 h-4 text-slate-400" />
+            <Select
+              value={dossierActif ?? "all"}
+              onValueChange={(v) => setDossierActif(v === "all" ? null : v)}
+            >
+              <SelectTrigger className="w-64 h-9">
+                <SelectValue placeholder="Tous les dossiers" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les dossiers</SelectItem>
+                {dossiers.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>{d.nom}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button size="sm" variant="outline" onClick={() => setOpenCreateDossier(true)}>
+              <FolderPlus className="h-4 w-4 mr-1" /> Nouveau
+            </Button>
+            {dossierActif && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const d = dossierMap.get(dossierActif);
+                    if (d) {
+                      setRenameDossier(d);
+                      setRenameValue(d.nom);
+                    }
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const d = dossierMap.get(dossierActif);
+                    if (d) setDeleteDossier(d);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 text-red-400" />
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         <Tabs defaultValue="recherche">
@@ -311,7 +605,7 @@ export default function Prospection() {
               {tronque && (
                 <div className="flex items-center gap-2 rounded-md bg-orange-900/30 border border-orange-700/50 px-3 py-2 text-sm text-orange-200">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
-                  Zone large, {totalCommerces} commerces analysés — seuls les 300 premiers ont été parcourus. Affinez la zone ou l’activité pour un résultat complet.
+                  Zone large, {totalCommerces} commerces analysés — seuls les 300 premiers ont été parcourus. Affinez la zone ou l'activité pour un résultat complet.
                 </div>
               )}
 
@@ -322,6 +616,38 @@ export default function Prospection() {
                 </Button>
               </div>
             </div>
+
+            {/* Barre dossier de destination + tout enregistrer */}
+            {leads.length > 0 && (
+              <div className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-700 bg-slate-800/30 p-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Dossier de destination</Label>
+                  <Select
+                    value={dossierCible}
+                    onValueChange={(v) => {
+                      if (v === NEW_DOSSIER) {
+                        setOpenCreateDossier(true);
+                      } else {
+                        setDossierCible(v);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-72 h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NO_DOSSIER}>— Sans dossier —</SelectItem>
+                      {dossiers.map((d) => (
+                        <SelectItem key={d.id} value={d.id}>{d.nom}</SelectItem>
+                      ))}
+                      <SelectItem value={NEW_DOSSIER}>+ Nouveau dossier…</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={enregistrerTout} variant="default">
+                  <SaveAll className="h-4 w-4 mr-1" />
+                  Tout enregistrer dans le dossier ({leads.length})
+                </Button>
+              </div>
+            )}
 
             {/* Résultats */}
             <div className="rounded-lg border border-slate-700 overflow-hidden">
@@ -347,7 +673,11 @@ export default function Prospection() {
                     </tr>
                   )}
                   {leads.map((p, i) => (
-                    <tr key={(p.siren ?? "x") + i} className="border-t border-slate-700 hover:bg-slate-800/40">
+                    <tr
+                      key={(p.siren ?? "x") + i}
+                      className="border-t border-slate-700 hover:bg-slate-800/40 cursor-pointer"
+                      onClick={() => ouvrirDetail(p)}
+                    >
                       <td className="p-2">
                         <div className="font-medium text-slate-100">{p.denomination ?? "—"}</div>
                         {p.mandataire && (
@@ -377,15 +707,18 @@ export default function Prospection() {
                           </TooltipContent>
                         </Tooltip>
                       </td>
-                      <td className="p-2">
+                      <td className="p-2" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end gap-1">
-                          <Button size="sm" variant="outline" onClick={() => enregistrerProspect(p)}>
+                          <Button size="sm" variant="outline" onClick={() => ouvrirDetail(p)} title="Détails">
+                            <Info className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => enregistrerProspect(p)} title="Enregistrer">
                             <Save className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => convertirEnContact(p)}>
+                          <Button size="sm" variant="outline" onClick={() => convertirEnContact(p)} title="Convertir en contact">
                             <UserPlus className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => ecarterProspect(p)}>
+                          <Button size="sm" variant="outline" onClick={() => ecarterProspect(p)} title="Écarter">
                             <X className="h-3.5 w-3.5" />
                           </Button>
                         </div>
@@ -399,7 +732,20 @@ export default function Prospection() {
 
           {/* ============ ONGLET MES LEADS ============ */}
           <TabsContent value="mes-leads" className="space-y-4">
-            <div className="flex gap-3 items-end">
+            <div className="flex gap-3 items-end flex-wrap">
+              <div className="space-y-1">
+                <Label className="text-xs">Dossier</Label>
+                <Select value={filtreDossier} onValueChange={setFiltreDossier}>
+                  <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous</SelectItem>
+                    <SelectItem value="none">— Sans dossier —</SelectItem>
+                    {dossiers.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>{d.nom}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1">
                 <Label className="text-xs">Statut</Label>
                 <Select value={filtreStatut} onValueChange={setFiltreStatut}>
@@ -436,17 +782,19 @@ export default function Prospection() {
                     <th className="text-left p-2">Commune</th>
                     <th className="text-left p-2">État</th>
                     <th className="text-left p-2">Score</th>
+                    <th className="text-left p-2">Dossier</th>
                     <th className="text-left p-2">Statut</th>
-                    <th className="text-left p-2 w-64">Notes</th>
+                    <th className="text-left p-2 w-56">Notes</th>
+                    <th className="text-right p-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {mesLeads.length === 0 && (
-                    <tr><td colSpan={7} className="p-6 text-center text-slate-400">Aucun lead enregistré</td></tr>
+                    <tr><td colSpan={9} className="p-6 text-center text-slate-400">Aucun lead enregistré</td></tr>
                   )}
                   {mesLeads.map((l) => (
                     <tr key={l.id} className="border-t border-slate-700 hover:bg-slate-800/40">
-                      <td className="p-2">
+                      <td className="p-2 cursor-pointer" onClick={() => ouvrirDetail(l)}>
                         <div className="font-medium text-slate-100">{l.denomination ?? "—"}</div>
                         <div className="text-xs text-slate-400">SIREN {l.siren}</div>
                       </td>
@@ -456,6 +804,20 @@ export default function Prospection() {
                       <td className="p-2 text-slate-300 text-xs">{l.code_postal} {l.commune}</td>
                       <td className="p-2">{badgeEtat(l.etat as EtatDifficulte)}</td>
                       <td className="p-2">{badgeScore(l.score ?? 0)}</td>
+                      <td className="p-2">
+                        <Select
+                          value={l.dossier_id ?? NO_DOSSIER}
+                          onValueChange={(v) => deplacerLead(l.id, v === NO_DOSSIER ? null : v)}
+                        >
+                          <SelectTrigger className="w-40 h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NO_DOSSIER}>— Sans dossier —</SelectItem>
+                            {dossiers.map((d) => (
+                              <SelectItem key={d.id} value={d.id}>{d.nom}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </td>
                       <td className="p-2">
                         <Select value={l.statut ?? "nouveau"} onValueChange={(v) => updateStatutLead(l.id, v)}>
                           <SelectTrigger className="w-36 h-8"><SelectValue /></SelectTrigger>
@@ -475,6 +837,16 @@ export default function Prospection() {
                           className="text-xs"
                         />
                       </td>
+                      <td className="p-2">
+                        <div className="flex justify-end gap-1">
+                          <Button size="sm" variant="outline" onClick={() => ouvrirDetail(l)} title="Détails">
+                            <Info className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setLeadToDelete(l)} title="Supprimer">
+                            <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -482,7 +854,184 @@ export default function Prospection() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* ===== Dialog création dossier ===== */}
+        <Dialog open={openCreateDossier} onOpenChange={setOpenCreateDossier}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nouveau dossier</DialogTitle>
+              <DialogDescription>
+                Regroupe tes leads par zone, secteur ou campagne.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label>Nom*</Label>
+                <Input
+                  value={newDossierNom}
+                  onChange={(e) => setNewDossierNom(e.target.value)}
+                  placeholder="17e arrondissement"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Description</Label>
+                <Textarea
+                  value={newDossierDesc}
+                  onChange={(e) => setNewDossierDesc(e.target.value)}
+                  rows={2}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpenCreateDossier(false)}>Annuler</Button>
+              <Button onClick={creerDossier}>Créer</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* ===== Dialog renommer dossier ===== */}
+        <Dialog open={!!renameDossier} onOpenChange={(o) => !o && setRenameDossier(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Renommer le dossier</DialogTitle>
+            </DialogHeader>
+            <Input value={renameValue} onChange={(e) => setRenameValue(e.target.value)} />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRenameDossier(null)}>Annuler</Button>
+              <Button onClick={renommerDossierConfirm}>Enregistrer</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* ===== Alert suppression dossier ===== */}
+        <AlertDialog open={!!deleteDossier} onOpenChange={(o) => !o && setDeleteDossier(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer ce dossier ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Le dossier « {deleteDossier?.nom} » sera supprimé. Les leads qu'il contient
+                seront conservés mais détachés (sans dossier).
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={supprimerDossierConfirm}>Supprimer</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* ===== Alert suppression lead ===== */}
+        <AlertDialog open={!!leadToDelete} onOpenChange={(o) => !o && setLeadToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer ce lead ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                « {leadToDelete?.denomination ?? leadToDelete?.siren} » sera définitivement supprimé.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={supprimerLeadConfirm}>Supprimer</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* ===== Dialog détail lead ===== */}
+        <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {detailLead?.denomination ?? "Détail du lead"}
+              </DialogTitle>
+              <DialogDescription>
+                Données publiques (Annuaire des Entreprises + BODACC). Téléphone et e-mail ne
+                sont pas dans l'open data — à compléter manuellement.
+              </DialogDescription>
+            </DialogHeader>
+
+            {detailLoading && (
+              <div className="flex items-center gap-2 text-slate-400 py-6">
+                <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
+              </div>
+            )}
+
+            {detailLead && !detailLoading && (
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <DetailRow label="Dénomination" value={detailInfo?.denomination ?? detailLead.denomination} />
+                <DetailRow label="SIREN" value={detailInfo?.siren ?? detailLead.siren} />
+                <DetailRow label="SIRET (siège)" value={detailInfo?.siret} />
+                <DetailRow label="N° TVA" value={detailInfo?.num_tva} />
+                <DetailRow
+                  label="Forme juridique"
+                  value={detailInfo?.forme_juridique ? `${detailInfo.forme_juridique}${detailInfo.forme_code ? ` (${detailInfo.forme_code})` : ""}` : null}
+                />
+                <DetailRow
+                  label="Code NAF"
+                  value={detailInfo?.naf ? `${detailInfo.naf}${detailInfo.naf_libelle ? ` — ${detailInfo.naf_libelle}` : ""}` : detailLead.naf}
+                />
+                <DetailRow label="Date de création" value={formatDateFr(detailInfo?.date_creation)} />
+                <DetailRow
+                  label="Dirigeant"
+                  value={
+                    detailInfo?.dirigeant ??
+                    [detailLead.dirigeant_nom, detailLead.dirigeant_age ? `(${detailLead.dirigeant_age} ans)` : null]
+                      .filter(Boolean)
+                      .join(" ")
+                  }
+                />
+                <DetailRow
+                  label="Adresse siège"
+                  value={
+                    [
+                      detailInfo?.adresse ?? detailLead.adresse,
+                      `${detailInfo?.code_postal ?? detailLead.code_postal ?? ""} ${detailInfo?.commune ?? detailLead.commune ?? ""}`.trim(),
+                    ]
+                      .filter(Boolean)
+                      .join(" — ")
+                  }
+                />
+                <DetailRow
+                  label="État"
+                  value={detailLead.etat ? ETAT_LABEL[detailLead.etat as EtatDifficulte] : null}
+                />
+                {detailLead.mandataire && (
+                  <DetailRow label="Mandataire judiciaire" value={detailLead.mandataire} />
+                )}
+                {detailLead.bodacc_id && (
+                  <div className="col-span-2">
+                    <a
+                      href={`https://bodacc.fr/annonce/detail-annonce/${detailLead.bodacc_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary text-sm inline-flex items-center gap-1 hover:underline"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" /> Voir l'annonce BODACC
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDetailOpen(false)}>Fermer</Button>
+              {detailLead && (
+                <Button onClick={() => convertirEnContact(detailLead)}>
+                  <UserPlus className="h-4 w-4 mr-1" /> Convertir en contact
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </TooltipProvider>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string | null | undefined }) {
+  return (
+    <div>
+      <div className="text-xs text-slate-400">{label}</div>
+      <div className="text-slate-100">{value && value.trim() ? value : "—"}</div>
+    </div>
   );
 }
