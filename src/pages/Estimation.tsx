@@ -63,6 +63,7 @@ export default function Estimation() {
   const [famille, setFamille] = useState<FamilleMetier>(
     (params.get("famille") as FamilleMetier) || "restauration_assise",
   );
+  const [adresseInput, setAdresseInput] = useState(params.get("adresse") ?? "");
   const [niveau, setNiveau] = useState<"cp" | "dep">(
     params.get("departement") && !params.get("codePostal") ? "dep" : "cp",
   );
@@ -72,39 +73,44 @@ export default function Estimation() {
   const [moisRetour, setMoisRetour] = useState<number>(24);
 
   const enseigne = params.get("enseigne") ?? "";
-  const adresse = params.get("adresse") ?? "";
 
   const [loading, setLoading] = useState(false);
   const [est, setEst] = useState<Estimation | null>(null);
 
-  // Auto-estimer si la page est ouverte avec une zone pré-remplie
+  // Auto-estimer si l'URL contient déjà adresse ou zone
   useEffect(() => {
-    if ((codePostal || departement) && !est) {
+    if ((adresseInput.trim() || codePostal || departement) && !est) {
       void run();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function run() {
-    if (niveau === "cp" && !codePostal.trim()) {
-      toast.error("Renseigne un code postal");
-      return;
-    }
-    if (niveau === "dep" && !departement.trim()) {
-      toast.error("Renseigne un département");
-      return;
+    const adr = adresseInput.trim();
+    if (!adr) {
+      if (niveau === "cp" && !codePostal.trim()) {
+        toast.error("Renseigne une adresse ou un code postal");
+        return;
+      }
+      if (niveau === "dep" && !departement.trim()) {
+        toast.error("Renseigne une adresse ou un département");
+        return;
+      }
     }
     setLoading(true);
     try {
-      const zone: ZoneEstim =
-        niveau === "cp" ? { codePostal: codePostal.trim() } : { departement: departement.trim() };
       const caNum = ca.trim() ? Number(ca.replace(/\s/g, "").replace(",", ".")) : null;
-      const res = await estimationFonds({
-        famille,
-        zone,
-        ca: caNum && caNum > 0 ? caNum : null,
-        moisRetour,
-      });
+      const caFinal = caNum && caNum > 0 ? caNum : null;
+      let res: Estimation;
+      if (adr) {
+        res = await estimationFonds({ famille, adresse: adr, ca: caFinal, moisRetour });
+      } else {
+        const zone: ZoneEstim =
+          niveau === "cp"
+            ? { codePostal: codePostal.trim() }
+            : { departement: departement.trim() };
+        res = await estimationFonds({ famille, zone, ca: caFinal, moisRetour });
+      }
       setEst(res);
     } catch (e: any) {
       console.error(e);
@@ -120,7 +126,7 @@ export default function Estimation() {
       const agence = await getAgence();
       const html = genererAvisValeurHtml(est, {
         enseigne: enseigne || undefined,
-        adresse: adresse || undefined,
+        adresse: adresseInput.trim() || undefined,
         agence: agence ?? undefined,
       });
       openMandat(html);
@@ -150,8 +156,8 @@ export default function Estimation() {
           <CardTitle className="text-base">Paramètres</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div className="space-y-1 md:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1">
               <Label className="text-xs">Activité</Label>
               <Select value={famille} onValueChange={(v) => setFamille(v as FamilleMetier)}>
                 <SelectTrigger>
@@ -168,36 +174,51 @@ export default function Estimation() {
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs">Zone</Label>
-              <Tabs value={niveau} onValueChange={(v) => setNiveau(v as "cp" | "dep")}>
-                <TabsList className="bg-slate-900">
-                  <TabsTrigger value="cp">Code postal</TabsTrigger>
-                  <TabsTrigger value="dep">Département</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <Label className="text-xs">Adresse du fonds (recommandé)</Label>
+              <Input
+                value={adresseInput}
+                onChange={(e) => setAdresseInput(e.target.value)}
+                placeholder="100 rue Montorgueil 75002 Paris"
+              />
             </div>
+          </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs">
-                {niveau === "cp" ? "Code postal" : "Département (n°)"}
-              </Label>
-              {niveau === "cp" ? (
-                <Input
-                  value={codePostal}
-                  onChange={(e) => setCodePostal(e.target.value)}
-                  placeholder="75017"
-                  maxLength={5}
-                />
-              ) : (
-                <Input
-                  value={departement}
-                  onChange={(e) => setDepartement(e.target.value)}
-                  placeholder="75"
-                  maxLength={3}
-                />
-              )}
+          <div className="rounded border border-slate-700 p-3 space-y-2">
+            <div className="text-xs text-slate-400">ou estimer par zone (si pas d'adresse)</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Niveau</Label>
+                <Tabs value={niveau} onValueChange={(v) => setNiveau(v as "cp" | "dep")}>
+                  <TabsList className="bg-slate-900">
+                    <TabsTrigger value="cp">Code postal</TabsTrigger>
+                    <TabsTrigger value="dep">Département</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">
+                  {niveau === "cp" ? "Code postal" : "Département (n°)"}
+                </Label>
+                {niveau === "cp" ? (
+                  <Input
+                    value={codePostal}
+                    onChange={(e) => setCodePostal(e.target.value)}
+                    placeholder="75017"
+                    maxLength={5}
+                  />
+                ) : (
+                  <Input
+                    value={departement}
+                    onChange={(e) => setDepartement(e.target.value)}
+                    placeholder="75"
+                    maxLength={3}
+                  />
+                )}
+              </div>
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">CA HT annuel (facultatif)</Label>
               <Input
@@ -207,7 +228,6 @@ export default function Estimation() {
                 inputMode="numeric"
               />
             </div>
-
             <div className="space-y-1">
               <Label className="text-xs">Période (mois)</Label>
               <Input
@@ -218,7 +238,6 @@ export default function Estimation() {
                 onChange={(e) => setMoisRetour(Number(e.target.value) || 24)}
               />
             </div>
-
             <div className="flex items-end">
               <Button onClick={run} disabled={loading} className="w-full">
                 {loading ? (
@@ -233,12 +252,6 @@ export default function Estimation() {
               </Button>
             </div>
           </div>
-
-          {niveau === "cp" && (
-            <p className="text-xs text-slate-400">
-              Astuce : pour disposer d'assez de comparables, préférez le <b>département</b>.
-            </p>
-          )}
         </CardContent>
       </Card>
 
@@ -260,6 +273,15 @@ export default function Estimation() {
                 <Badge className={fiabBadge[est.fiabilite]}>{est.fiabilite}</Badge>
                 <span className="text-slate-400">· {est.stats.n} comparable(s)</span>
               </div>
+              <div className="text-xs text-slate-400">
+                {est.mode === "proximite"
+                  ? `Comparables dans un rayon de ${est.rayon_km} km de ${est.cible_label}`
+                  : `Zone : ${est.cible_label}`}
+              </div>
+              <p className="text-[11px] text-slate-500 italic max-w-2xl mx-auto pt-1">
+                Comparables locaux datés — la valeur finale dépend de l'emplacement précis,
+                du bail et de la rentabilité, à apprécier à dire d'expert.
+              </p>
             </CardContent>
           </Card>
 
@@ -289,6 +311,9 @@ export default function Estimation() {
                       <tr>
                         <th className="text-left p-2">Enseigne</th>
                         <th className="text-left p-2">Lieu</th>
+                        {est.mode === "proximite" && (
+                          <th className="text-right p-2">Distance</th>
+                        )}
                         <th className="text-right p-2">Prix</th>
                         <th className="text-left p-2">Date</th>
                         <th className="p-2"></th>
@@ -297,7 +322,10 @@ export default function Estimation() {
                     <tbody>
                       {est.comparables.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="p-4 text-center text-slate-400">
+                          <td
+                            colSpan={est.mode === "proximite" ? 6 : 5}
+                            className="p-4 text-center text-slate-400"
+                          >
                             Aucun comparable
                           </td>
                         </tr>
@@ -308,6 +336,11 @@ export default function Estimation() {
                           <td className="p-2 text-slate-400">
                             {c.ville ?? ""} {c.code_postal ?? ""}
                           </td>
+                          {est.mode === "proximite" && (
+                            <td className="p-2 text-right text-slate-300">
+                              {c.distance_km != null ? `${c.distance_km} km` : "—"}
+                            </td>
+                          )}
                           <td className="p-2 text-right text-slate-100 font-medium">
                             {eur(c.prix)}
                           </td>
