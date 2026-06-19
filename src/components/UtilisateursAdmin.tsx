@@ -256,23 +256,33 @@ export default function UtilisateursAdmin() {
               Aucun utilisateur.
             </div>
           )}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {users.map((u) => {
               const initials = (u.name ?? u.email ?? "?")
                 .split(/\s+/).map((s) => s[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+              const statusColor = u.banned
+                ? "border-l-red-500"
+                : u.role === "admin"
+                ? "border-l-amber-500"
+                : "border-l-emerald-500";
               return (
                 <div
                   key={u.id}
-                  className="rounded-lg border border-border bg-card/40 hover:bg-card/60 transition-colors p-4 flex flex-col gap-3"
+                  className={
+                    "rounded-xl border-2 border-border bg-card shadow-sm " +
+                    "hover:shadow-md hover:border-primary/30 transition-all duration-200 " +
+                    "p-0 flex flex-col overflow-hidden " + statusColor
+                  }
+                  style={{ borderLeftWidth: 4 }}
                 >
                   {/* Header : identité + badges */}
-                  <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center text-sm font-semibold shrink-0">
+                  <div className="flex items-start gap-3 p-4 pb-3 border-b border-border/60 bg-secondary/20">
+                    <div className="h-11 w-11 rounded-full bg-primary/15 text-primary flex items-center justify-center text-sm font-bold shrink-0 ring-2 ring-border">
                       {initials}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <div className="font-semibold truncate">{u.name ?? "—"}</div>
+                        <div className="font-semibold truncate text-sm">{u.name ?? "—"}</div>
                         <Badge variant={u.role === "admin" ? "default" : "outline"} className="text-[10px]">
                           {u.role ?? "user"}
                         </Badge>
@@ -280,7 +290,7 @@ export default function UtilisateursAdmin() {
                           ? <Badge variant="destructive" className="text-[10px]">désactivé</Badge>
                           : <Badge variant="outline" className="text-[10px] border-green-700/50 text-green-400">actif</Badge>}
                       </div>
-                      <div className="text-xs text-muted-foreground truncate">{u.email}</div>
+                      <div className="text-xs text-muted-foreground truncate mt-0.5">{u.email}</div>
                       <div className="text-[11px] text-muted-foreground/70 mt-0.5">
                         Créé le {fmtDate(u.createdAt)}
                       </div>
@@ -288,16 +298,16 @@ export default function UtilisateursAdmin() {
                   </div>
 
                   {/* Reset mot de passe */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 p-4 pb-2">
                     <Input
-                      className="h-9 text-xs"
+                      className="h-9 text-xs bg-background"
                       placeholder="Nouveau mot de passe"
                       value={pwById[u.id] ?? ""}
                       onChange={(e) => setPwById((p) => ({ ...p, [u.id]: e.target.value }))}
                     />
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="secondary"
                       disabled={busyId === u.id}
                       onClick={() => resetPassword(u)}
                       className="shrink-0"
@@ -307,14 +317,14 @@ export default function UtilisateursAdmin() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-wrap gap-2 pt-1 border-t border-border/50">
-                    <Button size="sm" variant="ghost" className="h-8" onClick={() => openSessions(u)}>
+                  <div className="flex flex-wrap gap-2 p-4 pt-2">
+                    <Button size="sm" variant="outline" className="h-8 bg-background" onClick={() => openSessions(u)}>
                       <Monitor className="h-3.5 w-3.5 mr-1" /> Connexions
                     </Button>
                     <Button
                       size="sm"
-                      variant="ghost"
-                      className="h-8"
+                      variant="outline"
+                      className="h-8 bg-background"
                       disabled={busyId === u.id}
                       onClick={() => toggleRole(u)}
                     >
@@ -324,8 +334,8 @@ export default function UtilisateursAdmin() {
                     </Button>
                     <Button
                       size="sm"
-                      variant="ghost"
-                      className="h-8"
+                      variant="outline"
+                      className="h-8 bg-background"
                       disabled={busyId === u.id}
                       onClick={() => toggleBan(u)}
                     >
@@ -335,8 +345,8 @@ export default function UtilisateursAdmin() {
                     </Button>
                     <Button
                       size="sm"
-                      variant="ghost"
-                      className="h-8 ml-auto"
+                      variant="outline"
+                      className="h-8 ml-auto bg-background"
                       disabled={busyId === u.id}
                       onClick={() => revokeSessions(u)}
                     >
