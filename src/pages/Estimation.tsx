@@ -126,7 +126,7 @@ export default function Estimation() {
       const agence = await getAgence();
       const html = genererAvisValeurHtml(est, {
         enseigne: enseigne || undefined,
-        adresse: adresse || undefined,
+        adresse: adresseInput.trim() || undefined,
         agence: agence ?? undefined,
       });
       openMandat(html);
