@@ -16,18 +16,28 @@ const API_ENTREPRISES = "https://recherche-entreprises.api.gouv.fr/search";
 // Sert à écarter les sociétés déjà radiées dont une vieille procédure traîne dans BODACC.
 async function etatsParSiren(sirens: string[]): Promise<Map<string, string | null>> {
   const m = new Map<string, string | null>();
-  const uniques = [...new Set(sirens.filter(Boolean))].slice(0, 40); // plafond de sécurité
-  const LIMIT = 4; // recherche-entreprises limite ~7 req/s -> on bride par petits lots
+  const uniques = [...new Set(sirens.filter(Boolean))].slice(0, 16); // plafond bas (anti-blocage)
+  const LIMIT = 4; // recherche-entreprises limite ~7 req/s -> petits lots
+  // fetch avec timeout court : ne jamais rester bloqué si l'API ne répond pas
+  const fetchT = async (url: string, ms = 3500) => {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    try {
+      return await fetch(url, { signal: ctrl.signal });
+    } finally {
+      clearTimeout(t);
+    }
+  };
   for (let i = 0; i < uniques.length; i += LIMIT) {
     await Promise.all(
       uniques.slice(i, i + LIMIT).map(async (s) => {
         try {
-          const r = await fetch(`${API_ENTREPRISES}?q=${s}&per_page=1&minimal=true`);
-          if (r.status === 429) {
+          const r = await fetchT(`${API_ENTREPRISES}?q=${s}&per_page=1&minimal=true`);
+          if (!r.ok) {
             m.set(s, null);
             return;
-          } // throttlé -> on garde le lead par défaut
-          const d = r.ok ? await r.json() : null;
+          } // 429/erreur -> on garde le lead par défaut
+          const d = await r.json();
           const res = (d?.results ?? []).find((x: any) => x?.siren === s) ?? (d?.results ?? [])[0];
           m.set(s, res?.etat_administratif ?? null);
         } catch {
@@ -243,12 +253,21 @@ export async function radarDuJour(opts?: {
   const sirensDiff = filtres.filter((i) => i.type === "difficulte").map((i) => i.siren ?? "");
   let finale = filtres;
   if (sirensDiff.length) {
-    const etats = await etatsParSiren(sirensDiff);
-    finale = filtres.filter((i) => {
-      if (i.type !== "difficulte") return true;
-      const e = etats.get(i.siren ?? "");
-      return e !== "C" && e !== "F"; // garde actif ("A") ou inconnu (null)
-    });
+    try {
+      // Best-effort : si recherche-entreprises est lent/indispo, on n'attend pas plus de 6 s
+      // et on garde tous les leads plutôt que de bloquer tout le radar.
+      const etats = await Promise.race([
+        etatsParSiren(sirensDiff),
+        new Promise<Map<string, string | null>>((_, rej) => setTimeout(() => rej(new Error("timeout")), 6000)),
+      ]);
+      finale = filtres.filter((i) => {
+        if (i.type !== "difficulte") return true;
+        const e = etats.get(i.siren ?? "");
+        return e !== "C" && e !== "F"; // garde actif ("A") ou inconnu (null)
+      });
+    } catch {
+      finale = filtres; // API d'état indispo -> on n'exclut pas les radiées cette fois
+    }
   }
 
   // Tri : difficultés d'abord, puis par date décroissante.
