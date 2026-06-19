@@ -855,7 +855,7 @@ function renderAvenant(
   const mandantRows: string[] = [];
   mandantRows.push(`<tr><td>Nom / Raison sociale</td><td><b>${val(mandantNom)}</b></td></tr>`);
   if (c?.societe) {
-    const formeCapital = [c.forme_juridique, c.capital ? `Capital : ${euros(c.capital)}` : null].filter(Boolean).join(" — ");
+    const formeCapital = [(c.libelle_forme_juridique ?? c.forme_juridique), c.capital ? `Capital : ${euros(c.capital)}` : null].filter(Boolean).join(" — ");
     if (formeCapital) mandantRows.push(`<tr><td>Forme / Capital</td><td>${val(formeCapital)}</td></tr>`);
     const rcsSiret = c.rcs ?? c.siret;
     if (rcsSiret) mandantRows.push(`<tr><td>RCS / SIRET</td><td>${val(rcsSiret)}</td></tr>`);
@@ -1018,7 +1018,7 @@ export async function generateMandatV2(draft: MandatDraft, agence: AgenceParamet
   const mandantRows: string[] = [];
   mandantRows.push(`<tr><td>Nom / Raison sociale</td><td><b>${val(mandantNom)}</b></td></tr>`);
   if (c?.societe) {
-    const formeCapital = [c.forme_juridique, c.capital ? `Capital : ${euros(c.capital)}` : null]
+    const formeCapital = [(c.libelle_forme_juridique ?? c.forme_juridique), c.capital ? `Capital : ${euros(c.capital)}` : null]
       .filter(Boolean).join(" — ");
     if (formeCapital) mandantRows.push(`<tr><td>Forme / Capital</td><td>${val(formeCapital)}</td></tr>`);
     const rcsSiret = c.rcs ?? c.siret;
