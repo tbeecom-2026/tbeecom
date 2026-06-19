@@ -46,6 +46,7 @@ import {
   Info,
   ExternalLink,
   SaveAll,
+  Calculator,
 } from "lucide-react";
 import { METIER_LABEL, type FamilleMetier } from "@/lib/metier";
 import {
@@ -1014,6 +1015,22 @@ export default function Prospection() {
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setDetailOpen(false)}>Fermer</Button>
+              {detailLead && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const p = new URLSearchParams();
+                    if (detailLead.famille_metier) p.set("famille", detailLead.famille_metier);
+                    if (detailLead.code_postal) p.set("codePostal", detailLead.code_postal);
+                    if (detailLead.denomination) p.set("enseigne", detailLead.denomination);
+                    const adr = [detailLead.adresse, detailLead.code_postal, detailLead.commune].filter(Boolean).join(" ");
+                    if (adr) p.set("adresse", adr);
+                    navigate(`/estimation?${p.toString()}`);
+                  }}
+                >
+                  <Calculator className="h-4 w-4 mr-1" /> Estimer le fonds
+                </Button>
+              )}
               {detailLead && (
                 <Button onClick={() => convertirEnContact(detailLead)}>
                   <UserPlus className="h-4 w-4 mr-1" /> Convertir en contact

@@ -17,8 +17,9 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Save, Phone, Mail, MapPin, Building2,
   FileText, ChevronDown, ExternalLink, User, Briefcase,
-  Search, Loader2, Globe, Euro, Calendar, Hash, Target, Plus, AlertTriangle
+  Search, Loader2, Globe, Euro, Calendar, Hash, Target, Plus, AlertTriangle, Calculator
 } from "lucide-react";
+import { familleMetier } from "@/lib/metier";
 import { formatDate, formatEuros, getActiviteBadge, getStatutBadge, ROLES_CONTACT, TYPES_COMMERCE } from "@/lib/formatters";
 import { generateMandatSimple, generateMandatExclusif, generateAvenant, openMandat } from "@/lib/generateMandat";
 import { lookupSiret, lookupSiren, sireneToContact } from "@/lib/sirene";
@@ -285,6 +286,23 @@ export default function ContactDetail() {
             </div>
           )}
         </div>
+        {contact.societe && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              const fam = familleMetier(contact.libelle_naf, contact.code_naf);
+              const p = new URLSearchParams();
+              if (fam && fam !== "non_precise") p.set("famille", fam);
+              if (contact.code_postal) p.set("codePostal", contact.code_postal);
+              if (contact.societe) p.set("enseigne", contact.societe);
+              const adr = [contact.adresse, contact.code_postal, contact.commune].filter(Boolean).join(" ");
+              if (adr) p.set("adresse", adr);
+              navigate(`/estimation?${p.toString()}`);
+            }}
+          >
+            <Calculator className="mr-2 h-4 w-4" /> Estimer le fonds
+          </Button>
+        )}
         {peutGenerer && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
