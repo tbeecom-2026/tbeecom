@@ -362,6 +362,14 @@ export default function ContactDetail() {
                         </label>
                       ))}
                     </div>
+                    {contact.roles?.includes("autre") && (
+                      <Input
+                        value={contact.role_autre ?? ""}
+                        onChange={(e) => update("role_autre", e.target.value)}
+                        placeholder="Précisez la situation (ex. Liquidateur, Curateur, Ex-gérant…)"
+                        className="mt-1"
+                      />
+                    )}
                   </div>
                 </div>
               </div>
