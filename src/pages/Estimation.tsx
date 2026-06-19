@@ -156,8 +156,8 @@ export default function Estimation() {
           <CardTitle className="text-base">Paramètres</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div className="space-y-1 md:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1">
               <Label className="text-xs">Activité</Label>
               <Select value={famille} onValueChange={(v) => setFamille(v as FamilleMetier)}>
                 <SelectTrigger>
@@ -174,36 +174,51 @@ export default function Estimation() {
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs">Zone</Label>
-              <Tabs value={niveau} onValueChange={(v) => setNiveau(v as "cp" | "dep")}>
-                <TabsList className="bg-slate-900">
-                  <TabsTrigger value="cp">Code postal</TabsTrigger>
-                  <TabsTrigger value="dep">Département</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <Label className="text-xs">Adresse du fonds (recommandé)</Label>
+              <Input
+                value={adresseInput}
+                onChange={(e) => setAdresseInput(e.target.value)}
+                placeholder="100 rue Montorgueil 75002 Paris"
+              />
             </div>
+          </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs">
-                {niveau === "cp" ? "Code postal" : "Département (n°)"}
-              </Label>
-              {niveau === "cp" ? (
-                <Input
-                  value={codePostal}
-                  onChange={(e) => setCodePostal(e.target.value)}
-                  placeholder="75017"
-                  maxLength={5}
-                />
-              ) : (
-                <Input
-                  value={departement}
-                  onChange={(e) => setDepartement(e.target.value)}
-                  placeholder="75"
-                  maxLength={3}
-                />
-              )}
+          <div className="rounded border border-slate-700 p-3 space-y-2">
+            <div className="text-xs text-slate-400">ou estimer par zone (si pas d'adresse)</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Niveau</Label>
+                <Tabs value={niveau} onValueChange={(v) => setNiveau(v as "cp" | "dep")}>
+                  <TabsList className="bg-slate-900">
+                    <TabsTrigger value="cp">Code postal</TabsTrigger>
+                    <TabsTrigger value="dep">Département</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">
+                  {niveau === "cp" ? "Code postal" : "Département (n°)"}
+                </Label>
+                {niveau === "cp" ? (
+                  <Input
+                    value={codePostal}
+                    onChange={(e) => setCodePostal(e.target.value)}
+                    placeholder="75017"
+                    maxLength={5}
+                  />
+                ) : (
+                  <Input
+                    value={departement}
+                    onChange={(e) => setDepartement(e.target.value)}
+                    placeholder="75"
+                    maxLength={3}
+                  />
+                )}
+              </div>
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">CA HT annuel (facultatif)</Label>
               <Input
@@ -213,7 +228,6 @@ export default function Estimation() {
                 inputMode="numeric"
               />
             </div>
-
             <div className="space-y-1">
               <Label className="text-xs">Période (mois)</Label>
               <Input
@@ -224,7 +238,6 @@ export default function Estimation() {
                 onChange={(e) => setMoisRetour(Number(e.target.value) || 24)}
               />
             </div>
-
             <div className="flex items-end">
               <Button onClick={run} disabled={loading} className="w-full">
                 {loading ? (
@@ -239,12 +252,6 @@ export default function Estimation() {
               </Button>
             </div>
           </div>
-
-          {niveau === "cp" && (
-            <p className="text-xs text-slate-400">
-              Astuce : pour disposer d'assez de comparables, préférez le <b>département</b>.
-            </p>
-          )}
         </CardContent>
       </Card>
 
