@@ -16,19 +16,26 @@ const API_ENTREPRISES = "https://recherche-entreprises.api.gouv.fr/search";
 // Sert à écarter les sociétés déjà radiées dont une vieille procédure traîne dans BODACC.
 async function etatsParSiren(sirens: string[]): Promise<Map<string, string | null>> {
   const m = new Map<string, string | null>();
-  const uniques = [...new Set(sirens.filter(Boolean))];
-  await Promise.all(
-    uniques.map(async (s) => {
-      try {
-        const r = await fetch(`${API_ENTREPRISES}?q=${s}&per_page=1&minimal=true`);
-        const d = r.ok ? await r.json() : null;
-        const res = (d?.results ?? []).find((x: any) => x?.siren === s) ?? (d?.results ?? [])[0];
-        m.set(s, res?.etat_administratif ?? null);
-      } catch {
-        m.set(s, null);
-      }
-    }),
-  );
+  const uniques = [...new Set(sirens.filter(Boolean))].slice(0, 40); // plafond de sécurité
+  const LIMIT = 4; // recherche-entreprises limite ~7 req/s -> on bride par petits lots
+  for (let i = 0; i < uniques.length; i += LIMIT) {
+    await Promise.all(
+      uniques.slice(i, i + LIMIT).map(async (s) => {
+        try {
+          const r = await fetch(`${API_ENTREPRISES}?q=${s}&per_page=1&minimal=true`);
+          if (r.status === 429) {
+            m.set(s, null);
+            return;
+          } // throttlé -> on garde le lead par défaut
+          const d = r.ok ? await r.json() : null;
+          const res = (d?.results ?? []).find((x: any) => x?.siren === s) ?? (d?.results ?? [])[0];
+          m.set(s, res?.etat_administratif ?? null);
+        } catch {
+          m.set(s, null);
+        }
+      }),
+    );
+  }
   return m;
 }
 
@@ -151,10 +158,15 @@ function commun(rec: any): Partial<RadarItem> {
   };
 }
 
+// Cache mémoire du radar (15 min) : évite de tout re-télécharger à chaque retour sur le
+// Dashboard (et de marteler les API), ce qui faisait "disparaître" le radar au 2e affichage.
+const _radarCache = new Map<string, { t: number; data: RadarItem[] }>();
+const RADAR_TTL = 15 * 60 * 1000;
+
 /**
- * Radar du jour IDF. `jours` = fenêtre glissante (défaut 3, pour ne rien manquer si on
- * n'ouvre pas l'app chaque jour). `types` = signaux à inclure. `famillesCible` (optionnel)
- * = ne garder que ces familles métier ; sinon on exclut juste les "non précisé".
+ * Radar du jour IDF. `jours` = fenêtre glissante (défaut 1). `types` = signaux à inclure.
+ * `famillesCible` (optionnel) = ne garder que ces familles ; sinon tous les commerces.
+ * Résultat mis en cache 15 min (clé = jours + types + familles).
  */
 export async function radarDuJour(opts?: {
   jours?: number;
@@ -163,6 +175,9 @@ export async function radarDuJour(opts?: {
 }): Promise<RadarItem[]> {
   const jours = opts?.jours ?? 1;
   const types = opts?.types ?? ["difficulte", "cession", "immatriculation"];
+  const _key = JSON.stringify([jours, [...types].sort(), [...(opts?.famillesCible ?? [])].sort()]);
+  const _hit = _radarCache.get(_key);
+  if (_hit && Date.now() - _hit.t < RADAR_TTL) return _hit.data; // retour instantané, pas de refetch
   const since = depuis(jours);
   const items: RadarItem[] = [];
 
@@ -239,5 +254,6 @@ export async function radarDuJour(opts?: {
   // Tri : difficultés d'abord, puis par date décroissante.
   const poids: Record<RadarType, number> = { difficulte: 0, cession: 1, immatriculation: 2 };
   finale.sort((a, b) => poids[a.type] - poids[b.type] || String(b.date).localeCompare(String(a.date)));
+  _radarCache.set(_key, { t: Date.now(), data: finale }); // mise en cache (15 min)
   return finale;
 }
