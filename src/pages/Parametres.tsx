@@ -8,11 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Info, Percent, Euro, Building2, Users, Plus, Trash2 } from "lucide-react";
+import { Save, Info, Percent, Euro, Building2, Users, Plus, Trash2, UserCog } from "lucide-react";
 import { formatEuros } from "@/lib/formatters";
 import type { BaremeTranche } from "@/lib/honoraires";
 import AgenceForm from "@/components/AgenceForm";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import UtilisateursAdmin from "@/components/UtilisateursAdmin";
 
 interface AccesAutorise {
   id: string;
