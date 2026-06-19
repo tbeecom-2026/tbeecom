@@ -16,6 +16,7 @@ import MandatsAValider from "@/pages/MandatsAValider";
 import Contacts from "@/pages/Contacts";
 import ContactDetail from "@/pages/ContactDetail";
 import Activites from "@/pages/Activites";
+import Prospection from "@/pages/Prospection";
 import Parametres from "@/pages/Parametres";
 import NotFound from "@/pages/NotFound";
 import PublicLayout from "@/components/public/PublicLayout";
@@ -64,6 +65,7 @@ const App = () => (
               <Route path="mandats/:id" element={<MandatDetail />} />
               <Route path="contacts" element={<Contacts />} />
               <Route path="contacts/:id" element={<ContactDetail />} />
+              <Route path="prospection" element={<Prospection />} />
               <Route path="activites" element={<Activites />} />
               <Route path="parametres" element={<Parametres />} />
             </Route>
