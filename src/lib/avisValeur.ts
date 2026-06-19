@@ -225,12 +225,16 @@ export async function estimationFonds(e: EntreeEstimation): Promise<Estimation> 
     const dep = (cible.citycode || cible.cp).slice(0, 2);
     const bruts = await comparablesFonds(e.famille, { departement: dep }, e.moisRetour ?? 24);
     // géocoder les comparables (cap 80) et calculer la distance
-    await Promise.all(
-      bruts.slice(0, 80).map(async (c) => {
-        const g = await geocode([c.adresse, c.code_postal, c.ville].filter(Boolean).join(" "));
-        c.distance_km = g ? Math.round(distanceKm(cible.lat, cible.lon, g.lat, g.lon) * 100) / 100 : null;
-      }),
-    );
+    const aGeo = bruts.slice(0, 80);
+    for (let i = 0; i < aGeo.length; i += 6) {
+      // par lots de 6 pour ne pas se faire throttler (429)
+      await Promise.all(
+        aGeo.slice(i, i + 6).map(async (c) => {
+          const g = await geocode([c.adresse, c.code_postal, c.ville].filter(Boolean).join(" "));
+          c.distance_km = g ? Math.round(distanceKm(cible.lat, cible.lon, g.lat, g.lon) * 100) / 100 : null;
+        }),
+      );
+    }
     const avecDist = bruts.filter((c) => c.distance_km != null).sort((a, b) => a.distance_km! - b.distance_km!);
     // rayon croissant jusqu'à atteindre `min` comparables
     for (const R of RAYONS) {
