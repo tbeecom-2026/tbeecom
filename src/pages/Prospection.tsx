@@ -263,10 +263,27 @@ export default function Prospection() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">Code postal*</Label>
-                  <Input value={codePostal} onChange={(e) => setCodePostal(e.target.value)} placeholder="75001" />
+                  <Label className="text-xs">Niveau zone</Label>
+                  <Select value={niveauZone} onValueChange={(v: any) => setNiveauZone(v)}>
+                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cp">Code postal</SelectItem>
+                      <SelectItem value="commune">Commune (INSEE)</SelectItem>
+                      <SelectItem value="departement">Département</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">
+                    {niveauZone === "cp" ? "Code postal*" : niveauZone === "commune" ? "Code INSEE*" : "Département*"}
+                  </Label>
+                  <Input
+                    value={zoneTexte}
+                    onChange={(e) => setZoneTexte(e.target.value)}
+                    placeholder={niveauZone === "cp" ? "75001" : niveauZone === "commune" ? "92073" : "92"}
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Âge dirigeant min</Label>
@@ -290,6 +307,13 @@ export default function Prospection() {
                   </label>
                 </div>
               </div>
+
+              {tronque && (
+                <div className="flex items-center gap-2 rounded-md bg-orange-900/30 border border-orange-700/50 px-3 py-2 text-sm text-orange-200">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  Zone large, {totalCommerces} commerces analysés — seuls les 300 premiers ont été parcourus. Affinez la zone ou l’activité pour un résultat complet.
+                </div>
+              )}
 
               <div className="flex justify-end">
                 <Button onClick={lancerRecherche} disabled={loading}>
