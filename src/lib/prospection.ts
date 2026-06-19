@@ -3,6 +3,7 @@
 //   • Commerces réels d'une zone : Annuaire des Entreprises (recherche-entreprises)
 //   • Difficultés (procédures collectives vivantes) : BODACC
 //   • Croisement par SIREN, calcul de l'âge du dirigeant, score 0–100.
+// Zone = code postal OU code commune (INSEE) OU département entier.
 // Appelable directement depuis le front (les 2 API sont gratuites, sans clé, CORS ouvert).
 // Voir PROSPECTION_SPEC.md. Réutilise familleMetier() de metier.ts.
 
@@ -11,6 +12,9 @@ import { familleMetier, METIER_LABEL, type FamilleMetier } from "@/lib/metier";
 const API_ENTREPRISES = "https://recherche-entreprises.api.gouv.fr/search";
 const API_BODACC =
   "https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/annonces-commerciales/records";
+
+// Plafond de pages Annuaire (25/page) : un département d'une activité courante peut être énorme.
+const MAX_PAGES = 12; // -> 300 commerces max ; au-delà on tronque (affiner la zone/activité).
 
 // Familles métier -> codes NAF représentatifs (pour le filtre activite_principale).
 export const NAF_PAR_FAMILLE: Record<FamilleMetier, string[]> = {
@@ -26,6 +30,13 @@ export const NAF_PAR_FAMILLE: Record<FamilleMetier, string[]> = {
 };
 
 export type EtatDifficulte = "sain" | "redressement" | "liquidation" | "avis_en_cours";
+
+// Zone géographique : renseigne UN des trois (priorité CP > commune > département).
+export interface Zone {
+  codePostal?: string; // ex. "75002"
+  codeCommune?: string; // INSEE, ex. "92073" (Suresnes)
+  departement?: string; // ex. "92"
+}
 
 export interface Prospect {
   siren: string | null;
@@ -53,8 +64,39 @@ export interface Prospect {
   score_detail: { age: number; difficulte: number; anciennete: number };
 }
 
+export interface ResultatProspection {
+  prospects: Prospect[];
+  total_commerces: number; // nb de commerces analysés dans la zone
+  tronque: boolean; // true si on a atteint le plafond (zone trop large)
+}
+
 const ANNEE = new Date().getFullYear();
 const digits = (s: any) => String(s ?? "").replace(/\D/g, "");
+
+// ---------- Géo : paramètre Annuaire + clause BODACC ----------
+function paramEntreprises(z: Zone): [string, string] | null {
+  if (z.codePostal) return ["code_postal", digits(z.codePostal).slice(0, 5)];
+  if (z.codeCommune) return ["code_commune", digits(z.codeCommune).slice(0, 5)];
+  if (z.departement) return ["departement", digits(z.departement).slice(0, 3)];
+  return null;
+}
+function whereBodacc(z: Zone): string {
+  if (z.codePostal) return `cp="${digits(z.codePostal).slice(0, 5)}"`;
+  // commune ou département -> on scope au département (le match par SIREN affine ensuite)
+  const dep = z.departement ? digits(z.departement).slice(0, 3) : digits(z.codeCommune).slice(0, 2);
+  return `numerodepartement="${dep}"`;
+}
+// Établissement réellement situé dans la zone (≠ siège, qui peut être ailleurs).
+function etabZone(e: any, z: Zone): any {
+  const ms: any[] = e?.matching_etablissements ?? [];
+  const ok = (m: any) => {
+    if (z.codePostal) return m?.code_postal === digits(z.codePostal).slice(0, 5);
+    if (z.codeCommune) return m?.commune === digits(z.codeCommune).slice(0, 5);
+    if (z.departement) return String(m?.code_postal ?? "").slice(0, 2) === digits(z.departement).slice(0, 2);
+    return true;
+  };
+  return ms.find((m) => ok(m) && m?.etat_administratif === "A") ?? ms.find(ok) ?? ms[0] ?? e?.siege ?? null;
+}
 
 // ---------- Dirigeant exploitant (personne physique, gérant/président) ----------
 function extraireDirigeant(dirigeants: any[]): { nom: string; annee: number | null; qualite: string } | null {
@@ -65,12 +107,10 @@ function extraireDirigeant(dirigeants: any[]): { nom: string; annee: number | nu
       !/commissaire/i.test(d?.qualite ?? "") &&
       /g[ée]rant|pr[ée]sident|exploitant|associ[ée]|directeur g/i.test(d?.qualite ?? ""),
   );
-  // à défaut, toute personne physique non-CAC
   const pool = pp.length
     ? pp
     : dirigeants.filter((d) => d?.type_dirigeant === "personne physique" && !/commissaire/i.test(d?.qualite ?? ""));
   if (!pool.length) return null;
-  // le plus âgé (le plus pertinent pour un départ retraite)
   pool.sort((a, b) => Number(a?.annee_de_naissance ?? 9999) - Number(b?.annee_de_naissance ?? 9999));
   const d = pool[0];
   const annee = d?.annee_de_naissance ? Number(d.annee_de_naissance) : null;
@@ -79,10 +119,12 @@ function extraireDirigeant(dirigeants: any[]): { nom: string; annee: number | nu
 }
 
 // ---------- Score 0–100 ----------
+// Garde-fou : un âge > 92 ans est jugé NON fiable (fiche périmée) -> pas de points d'âge.
 export function scoreProspect(p: Partial<Prospect>): { score: number; detail: Prospect["score_detail"] } {
   let age = 0;
   const a = p.dirigeant_age ?? 0;
-  if (a >= 70) age = 45;
+  if (a > 92) age = 0;
+  else if (a >= 70) age = 45;
   else if (a >= 65) age = 35;
   else if (a >= 60) age = 25;
 
@@ -100,16 +142,14 @@ export function scoreProspect(p: Partial<Prospect>): { score: number; detail: Pr
 }
 
 // ---------- Étape 1 : commerces réels d'une zone (Annuaire) ----------
-async function chercherCommerces(nafCodes: string[], codePostal: string, maxPages = 4): Promise<any[]> {
+async function chercherCommerces(nafCodes: string[], z: Zone): Promise<{ liste: any[]; tronque: boolean }> {
   const naf = nafCodes.join(",");
+  const geo = paramEntreprises(z);
   const out: any[] = [];
-  for (let page = 1; page <= maxPages; page++) {
-    const params = new URLSearchParams({
-      code_postal: digits(codePostal).slice(0, 5),
-      etat_administratif: "A",
-      per_page: "25",
-      page: String(page),
-    });
+  let tronque = false;
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const params = new URLSearchParams({ etat_administratif: "A", per_page: "25", page: String(page) });
+    if (geo) params.set(geo[0], geo[1]);
     if (naf) params.set("activite_principale", naf);
     const r = await fetch(`${API_ENTREPRISES}?${params}`);
     if (!r.ok) break;
@@ -117,14 +157,14 @@ async function chercherCommerces(nafCodes: string[], codePostal: string, maxPage
     const res = data?.results ?? [];
     out.push(...res);
     if (res.length < 25 || page >= (data?.total_pages ?? 1)) break;
+    if (page === MAX_PAGES && (data?.total_pages ?? 1) > MAX_PAGES) tronque = true;
   }
-  return out;
+  return { liste: out, tronque };
 }
 
 // ---------- Étape 2 : difficultés vivantes d'une zone (BODACC) ----------
-// Renvoie une map SIREN -> infos difficulté, + détecte les adresses de domiciliation.
-async function chercherDifficultes(codePostal: string): Promise<Map<string, any>> {
-  const where = `familleavis="collective" and cp="${digits(codePostal).slice(0, 5)}"`;
+async function chercherDifficultes(z: Zone): Promise<Map<string, any>> {
+  const where = `familleavis="collective" and ${whereBodacc(z)}`;
   const url = `${API_BODACC}?where=${encodeURIComponent(where)}&order_by=${encodeURIComponent("dateparution desc")}&limit=100`;
   const map = new Map<string, any>();
   const r = await fetch(url);
@@ -143,8 +183,7 @@ async function chercherDifficultes(codePostal: string): Promise<Map<string, any>
     } catch {}
     const famille = jug?.famille ?? "";
     const nature = (jug?.nature ?? "").toLowerCase();
-    // on ne garde QUE les procédures vivantes
-    if (/cl[oô]ture/i.test(famille)) continue;
+    if (/cl[oô]ture/i.test(famille)) continue; // on ne garde QUE les procédures vivantes
     let etat: EtatDifficulte | null = null;
     if (/ouverture/i.test(famille)) etat = nature.includes("redressement") ? "redressement" : "liquidation";
     else if (/avis|d[ée]p[oô]t/i.test(famille)) etat = "avis_en_cours";
@@ -170,7 +209,6 @@ async function chercherDifficultes(codePostal: string): Promise<Map<string, any>
       });
     }
   }
-  // domiciliation probable : une même adresse qui concentre > 3 procédures
   for (const v of map.values()) {
     if (v.adresse && adresseCount[v.adresse] > 3) v.domiciliation_probable = true;
   }
@@ -180,18 +218,18 @@ async function chercherDifficultes(codePostal: string): Promise<Map<string, any>
 // ---------- Orchestrateur : recherche de prospects ----------
 export interface FiltresProspection {
   familles: FamilleMetier[]; // familles métier ciblées
-  codePostal: string; // zone (commune)
+  zone: Zone; // CP, commune INSEE ou département
   ageMin?: number; // âge dirigeant minimum (filtre côté appli)
   ancienneteMin?: number; // ancienneté minimale (années)
   enDifficulteUniquement?: boolean;
   scoreMin?: number;
 }
 
-export async function rechercherProspects(f: FiltresProspection): Promise<Prospect[]> {
+export async function rechercherProspects(f: FiltresProspection): Promise<ResultatProspection> {
   const nafCodes = [...new Set(f.familles.flatMap((fam) => NAF_PAR_FAMILLE[fam] ?? []))];
-  const [commerces, diff] = await Promise.all([
-    chercherCommerces(nafCodes, f.codePostal),
-    chercherDifficultes(f.codePostal),
+  const [{ liste: commerces, tronque }, diff] = await Promise.all([
+    chercherCommerces(nafCodes, f.zone),
+    chercherDifficultes(f.zone),
   ]);
 
   const out: Prospect[] = [];
@@ -216,6 +254,7 @@ export async function rechercherProspects(f: FiltresProspection): Promise<Prospe
     const anc = dateCrea ? ANNEE - Number(String(dateCrea).slice(0, 4)) : null;
     const d = siren ? diff.get(siren) : null;
     const etat: EtatDifficulte = d?.etat ?? "sain";
+    const etab = etabZone(e, f.zone); // l'établissement DANS la zone (vrai local), pas le siège
 
     // filtres
     if (f.enDifficulteUniquement && etat === "sain") continue;
@@ -232,9 +271,9 @@ export async function rechercherProspects(f: FiltresProspection): Promise<Prospe
       naf,
       famille_metier: fam,
       famille_label: METIER_LABEL[fam],
-      adresse: d?.adresse ?? e?.siege?.adresse ?? null,
-      code_postal: e?.siege?.code_postal ?? digits(f.codePostal).slice(0, 5),
-      commune: e?.siege?.libelle_commune ?? null,
+      adresse: etab?.adresse ?? e?.siege?.adresse ?? null,
+      code_postal: etab?.code_postal ?? null,
+      commune: etab?.libelle_commune ?? null,
       dirigeant_nom: dir?.nom || null,
       dirigeant_annee_naissance: dir?.annee ?? null,
       dirigeant_age: age,
@@ -253,7 +292,8 @@ export async function rechercherProspects(f: FiltresProspection): Promise<Prospe
     });
   }
 
-  return out.sort((a, b) => b.score - a.score);
+  out.sort((a, b) => b.score - a.score);
+  return { prospects: out, total_commerces: commerces.length, tronque };
 }
 
 // ---------- Mapping vers une ligne de la table `prospects` (pour l'enregistrement) ----------
