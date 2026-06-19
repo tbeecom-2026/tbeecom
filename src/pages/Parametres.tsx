@@ -141,7 +141,13 @@ export default function Parametres() {
           <TabsTrigger value="bareme"><Euro className="mr-1 h-4 w-4" /> Barème honoraires</TabsTrigger>
           <TabsTrigger value="agence"><Building2 className="mr-1 h-4 w-4" /> Mon agence</TabsTrigger>
           <TabsTrigger value="acces"><Users className="mr-1 h-4 w-4" /> Utilisateurs autorisés</TabsTrigger>
+          <TabsTrigger value="users"><UserCog className="mr-1 h-4 w-4" /> Utilisateurs</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="users" className="mt-4">
+          <UtilisateursAdmin />
+        </TabsContent>
+
 
         <TabsContent value="acces" className="mt-4 space-y-4">
           <Card>
