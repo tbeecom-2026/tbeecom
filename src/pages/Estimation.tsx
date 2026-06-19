@@ -311,6 +311,9 @@ export default function Estimation() {
                       <tr>
                         <th className="text-left p-2">Enseigne</th>
                         <th className="text-left p-2">Lieu</th>
+                        {est.mode === "proximite" && (
+                          <th className="text-right p-2">Distance</th>
+                        )}
                         <th className="text-right p-2">Prix</th>
                         <th className="text-left p-2">Date</th>
                         <th className="p-2"></th>
@@ -319,7 +322,10 @@ export default function Estimation() {
                     <tbody>
                       {est.comparables.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="p-4 text-center text-slate-400">
+                          <td
+                            colSpan={est.mode === "proximite" ? 6 : 5}
+                            className="p-4 text-center text-slate-400"
+                          >
                             Aucun comparable
                           </td>
                         </tr>
@@ -330,6 +336,11 @@ export default function Estimation() {
                           <td className="p-2 text-slate-400">
                             {c.ville ?? ""} {c.code_postal ?? ""}
                           </td>
+                          {est.mode === "proximite" && (
+                            <td className="p-2 text-right text-slate-300">
+                              {c.distance_km != null ? `${c.distance_km} km` : "—"}
+                            </td>
+                          )}
                           <td className="p-2 text-right text-slate-100 font-medium">
                             {eur(c.prix)}
                           </td>
