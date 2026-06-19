@@ -3,6 +3,7 @@
 // Aucun stockage : un appel à radarDuJour() au chargement (ou changement de fenêtre/familles),
 // puis répartition par onglet. Le bouton « Ajouter en lead » (difficultés + cessions)
 // upserte dans la table `prospects` (source: "radar"), sans bloquer l'UI en cas d'échec.
+// Filtre Département : appliqué CÔTÉ CLIENT sur les items déjà chargés (pas de rechargement réseau).
 
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,12 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ExternalLink, Plus, Radar as RadarIcon } from "lucide-react";
 import { toast } from "sonner";
-import {
-  radarDuJour,
-  RADAR_TYPE_LABEL,
-  type RadarItem,
-  type RadarType,
-} from "@/lib/radar";
+import { radarDuJour, RADAR_TYPE_LABEL, type RadarItem, type RadarType } from "@/lib/radar";
 import { METIER_LABEL, type FamilleMetier } from "@/lib/metier";
 import { supabase } from "@/lib/supabaseClient";
 import { formatEuros } from "@/lib/formatters";
@@ -31,6 +27,18 @@ const FAMILLES: FamilleMetier[] = [
   "fleuriste",
   "coiffure_esthetique",
   "autre",
+];
+
+const DEPARTEMENTS: { code: string; label: string }[] = [
+  { code: "tous", label: "Toute l'IDF" },
+  { code: "75", label: "75 · Paris" },
+  { code: "92", label: "92 · Hauts-de-Seine" },
+  { code: "78", label: "78 · Yvelines" },
+  { code: "93", label: "93 · Seine-Saint-Denis" },
+  { code: "94", label: "94 · Val-de-Marne" },
+  { code: "91", label: "91 · Essonne" },
+  { code: "95", label: "95 · Val-d'Oise" },
+  { code: "77", label: "77 · Seine-et-Marne" },
 ];
 
 function fmtDate(s: string | null): string {
@@ -47,8 +55,7 @@ function villeCp(it: RadarItem): string {
 function badgeEtat(etat: string | null) {
   if (etat === "redressement")
     return <Badge className="bg-orange-500 text-white hover:bg-orange-500">Redressement</Badge>;
-  if (etat === "liquidation")
-    return <Badge className="bg-red-600 text-white hover:bg-red-600">Liquidation</Badge>;
+  if (etat === "liquidation") return <Badge className="bg-red-600 text-white hover:bg-red-600">Liquidation</Badge>;
   return <span className="text-muted-foreground">—</span>;
 }
 
@@ -83,6 +90,7 @@ async function ajouterEnLead(it: RadarItem) {
 
 export default function RadarDuJour() {
   const [jours, setJours] = useState<1 | 7>(1);
+  const [departement, setDepartement] = useState<string>("tous");
   const [familles, setFamilles] = useState<FamilleMetier[]>([]);
   const [items, setItems] = useState<RadarItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -113,11 +121,17 @@ export default function RadarDuJour() {
     };
   }, [jours, familles]);
 
+  // Filtre Département côté client (instantané, pas de rechargement)
+  const itemsVisibles = useMemo(() => {
+    if (departement === "tous") return items;
+    return items.filter((it) => it.departement === departement || (it.code_postal ?? "").startsWith(departement));
+  }, [items, departement]);
+
   const parType = useMemo(() => {
     const g: Record<RadarType, RadarItem[]> = { difficulte: [], cession: [], immatriculation: [] };
-    for (const it of items) g[it.type].push(it);
+    for (const it of itemsVisibles) g[it.type].push(it);
     return g;
-  }, [items]);
+  }, [itemsVisibles]);
 
   function toggleFamille(f: FamilleMetier) {
     setFamilles((prev) => (prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]));
@@ -131,18 +145,22 @@ export default function RadarDuJour() {
           Radar du jour — Île-de-France
         </CardTitle>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant={jours === 1 ? "default" : "outline"}
-            onClick={() => setJours(1)}
+          <select
+            value={departement}
+            onChange={(e) => setDepartement(e.target.value)}
+            className="text-xs bg-secondary border border-border rounded px-2 py-1 text-foreground"
+            title="Filtrer par département"
           >
+            {DEPARTEMENTS.map((d) => (
+              <option key={d.code} value={d.code}>
+                {d.label}
+              </option>
+            ))}
+          </select>
+          <Button size="sm" variant={jours === 1 ? "default" : "outline"} onClick={() => setJours(1)}>
             Hier
           </Button>
-          <Button
-            size="sm"
-            variant={jours === 7 ? "default" : "outline"}
-            onClick={() => setJours(7)}
-          >
+          <Button size="sm" variant={jours === 7 ? "default" : "outline"} onClick={() => setJours(7)}>
             7 jours
           </Button>
         </div>
@@ -230,11 +248,7 @@ export default function RadarDuJour() {
 
 function RadarTable({ items, type }: { items: RadarItem[]; type: RadarType }) {
   if (items.length === 0) {
-    return (
-      <div className="py-8 text-center text-sm text-muted-foreground">
-        Rien de neuf sur cette fenêtre.
-      </div>
-    );
+    return <div className="py-8 text-center text-sm text-muted-foreground">Rien de neuf sur cette fenêtre.</div>;
   }
   const showLead = type === "difficulte" || type === "cession";
   return (
@@ -255,10 +269,7 @@ function RadarTable({ items, type }: { items: RadarItem[]; type: RadarType }) {
         </thead>
         <tbody>
           {items.map((it, i) => (
-            <tr
-              key={(it.bodacc_id ?? "") + i}
-              className="border-b border-border/50 hover:bg-secondary/50"
-            >
+            <tr key={(it.bodacc_id ?? "") + i} className="border-b border-border/50 hover:bg-secondary/50">
               <td className="py-2 pr-3 font-medium">{it.denomination ?? "—"}</td>
               <td className="py-2 pr-3">
                 <Badge variant="outline" className="font-normal">
@@ -272,9 +283,7 @@ function RadarTable({ items, type }: { items: RadarItem[]; type: RadarType }) {
                   {it.mandataire ?? "—"}
                 </td>
               )}
-              {type === "cession" && (
-                <td className="py-2 pr-3">{it.prix != null ? formatEuros(it.prix) : "—"}</td>
-              )}
+              {type === "cession" && <td className="py-2 pr-3">{it.prix != null ? formatEuros(it.prix) : "—"}</td>}
               <td className="py-2 pr-3">{fmtDate(it.date)}</td>
               <td className="py-2 pr-3">
                 {it.url ? (
