@@ -8,6 +8,7 @@ import { formatEuros } from "@/lib/formatters";
 import { familleMetier, METIER_LABEL } from "@/lib/metier";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import type { Mandat } from "@/types/database";
+import RadarDuJour from "@/components/RadarDuJour";
 
 // --- Helpers "mandat vivant" (même logique que mandatStatus.ts : fin par date) ---
 function toMidnight(d: Date): Date {
@@ -141,6 +142,8 @@ export default function Dashboard() {
           </Card>
         ))}
       </div>
+
+      <RadarDuJour />
 
       <Card>
         <CardHeader>
