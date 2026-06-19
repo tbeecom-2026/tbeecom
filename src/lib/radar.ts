@@ -10,6 +10,27 @@ import { familleMetier, METIER_LABEL, type FamilleMetier } from "@/lib/metier";
 
 const API_BODACC =
   "https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/annonces-commerciales/records";
+const API_ENTREPRISES = "https://recherche-entreprises.api.gouv.fr/search";
+
+// État administratif réel par SIREN (A = actif, C/F = cessé/radié), via l'Annuaire.
+// Sert à écarter les sociétés déjà radiées dont une vieille procédure traîne dans BODACC.
+async function etatsParSiren(sirens: string[]): Promise<Map<string, string | null>> {
+  const m = new Map<string, string | null>();
+  const uniques = [...new Set(sirens.filter(Boolean))];
+  await Promise.all(
+    uniques.map(async (s) => {
+      try {
+        const r = await fetch(`${API_ENTREPRISES}?q=${s}&per_page=1&minimal=true`);
+        const d = r.ok ? await r.json() : null;
+        const res = (d?.results ?? []).find((x: any) => x?.siren === s) ?? (d?.results ?? [])[0];
+        m.set(s, res?.etat_administratif ?? null);
+      } catch {
+        m.set(s, null);
+      }
+    }),
+  );
+  return m;
+}
 
 export const DEPARTEMENTS_IDF = ["75", "77", "78", "91", "92", "93", "94", "95"];
 
@@ -32,20 +53,28 @@ export interface RadarItem {
   ville: string | null;
   departement: string | null;
   siren: string | null;
-  date: string | null;          // date de parution
-  etat: string | null;          // difficulté : "redressement" | "liquidation"
-  prix: number | null;          // cession : prix stipulé
-  mandataire: string | null;    // difficulté : mandataire judiciaire à contacter
+  date: string | null; // date de parution
+  etat: string | null; // difficulté : "redressement" | "liquidation"
+  prix: number | null; // cession : prix stipulé
+  mandataire: string | null; // difficulté : mandataire judiciaire à contacter
   bodacc_id: string | null;
   url: string | null;
 }
 
 const digits = (s: any) => String(s ?? "").replace(/\D/g, "");
-const parse = (s: any) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
+const parse = (s: any) => {
+  try {
+    return s ? JSON.parse(s) : null;
+  } catch {
+    return null;
+  }
+};
 
 // --- Détecteur « commerce avec fonds cessible » (vs BTP / services / holding / SCI) ---
-const RE_EXCLU = /b[âa]timent|\bbtp\b|ma[çc]onn|gros\s?œuvre|gros oeuvre|second\s?œuvre|second oeuvre|terrassement|plomberie|[ée]lectricit[ée] g[ée]n[ée]rale|holding|participation|\bsci\b|soci[ée]t[ée] civile|marchand de bien|promotion immobili|agence immobili|transaction immobili|transport|messagerie|d[ée]m[ée]nagement|nettoyage|s[ée]curit[ée]|gardiennage|informatique|logiciel|d[ée]veloppement web|conseil|ing[ée]nierie|finance|assurance|comptab|avocat|notaire|location de|holding|n[ée]goce en gros|import[- ]export/i;
-const RE_COMMERCE = /boucher|charcuter|poissonn|fromager|primeur|[ée]picerie|alimentation g[ée]n[ée]rale|superette|supermarch|caviste|cave [àa]|\btabac\b|presse|pharmacie|parapharm|optique|lunett|bijouter|horloger|\bfleur|boulang|p[âa]tiss|viennoiser|chocolat|confiser|salon de th[ée]|glacier|restaur|brasserie|bistrot|\bbar\b|\bcaf[ée]\b|pizz|cr[êe]p|kebab|burger|sandwich|tacos|snack|traiteur|coiffure|barbier|esth[ée]t|ongle|institut de beaut|spa\b|massage|garage|carross|m[ée]caniq|pneu|boutique|magasin|pr[êe]t[- ]?[àa][- ]?porter|habillement|chaussure|maroquin|librairie|papeter|jouet|bazar|quincaill|droguer|animaler|toilettage|d[ée]p[ôo]t[- ]vente|commerce de d[ée]tail|vente au d[ée]tail/i;
+const RE_EXCLU =
+  /b[âa]timent|\bbtp\b|ma[çc]onn|gros\s?œuvre|gros oeuvre|second\s?œuvre|second oeuvre|terrassement|plomberie|[ée]lectricit[ée] g[ée]n[ée]rale|holding|participation|\bsci\b|soci[ée]t[ée] civile|marchand de bien|promotion immobili|agence immobili|transaction immobili|transport|messagerie|d[ée]m[ée]nagement|nettoyage|s[ée]curit[ée]|gardiennage|informatique|logiciel|d[ée]veloppement web|conseil|ing[ée]nierie|finance|assurance|comptab|avocat|notaire|location de|holding|n[ée]goce en gros|import[- ]export/i;
+const RE_COMMERCE =
+  /boucher|charcuter|poissonn|fromager|primeur|[ée]picerie|alimentation g[ée]n[ée]rale|superette|supermarch|caviste|cave [àa]|\btabac\b|presse|pharmacie|parapharm|optique|lunett|bijouter|horloger|\bfleur|boulang|p[âa]tiss|viennoiser|chocolat|confiser|salon de th[ée]|glacier|restaur|brasserie|bistrot|\bbar\b|\bcaf[ée]\b|pizz|cr[êe]p|kebab|burger|sandwich|tacos|snack|traiteur|coiffure|barbier|esth[ée]t|ongle|institut de beaut|spa\b|massage|garage|carross|m[ée]caniq|pneu|boutique|magasin|pr[êe]t[- ]?[àa][- ]?porter|habillement|chaussure|maroquin|librairie|papeter|jouet|bazar|quincaill|droguer|animaler|toilettage|d[ée]p[ôo]t[- ]vente|commerce de d[ée]tail|vente au d[ée]tail/i;
 
 function estCommerce(activite: string | null | undefined): boolean {
   const t = activite ?? "";
@@ -107,7 +136,10 @@ function commun(rec: any): Partial<RadarItem> {
     code_postal: adr?.codePostal ?? rec.cp ?? null,
     ville: adr?.ville ?? rec.ville ?? null,
     departement: rec.numerodepartement ?? null,
-    siren: digits(Array.isArray(rec.registre) ? rec.registre[0] : "") || digits(pers?.numeroImmatriculation?.numeroIdentification) || null,
+    siren:
+      digits(Array.isArray(rec.registre) ? rec.registre[0] : "") ||
+      digits(pers?.numeroImmatriculation?.numeroIdentification) ||
+      null,
     date: rec.dateparution ?? null,
     bodacc_id: rec.id ?? null,
     url: rec.url_complete ?? null,
@@ -185,8 +217,22 @@ export async function radarDuJour(opts?: {
     return true;
   });
 
+  // Écarter les sociétés DÉJÀ RADIÉES parmi les difficultés (décalage BODACC : une vieille
+  // procédure peut concerner une société entre-temps radiée = morte, plus un lead).
+  // On vérifie l'état réel par SIREN ; on retire seulement les états confirmés "C"/"F".
+  const sirensDiff = filtres.filter((i) => i.type === "difficulte").map((i) => i.siren ?? "");
+  let finale = filtres;
+  if (sirensDiff.length) {
+    const etats = await etatsParSiren(sirensDiff);
+    finale = filtres.filter((i) => {
+      if (i.type !== "difficulte") return true;
+      const e = etats.get(i.siren ?? "");
+      return e !== "C" && e !== "F"; // garde actif ("A") ou inconnu (null)
+    });
+  }
+
   // Tri : difficultés d'abord, puis par date décroissante.
   const poids: Record<RadarType, number> = { difficulte: 0, cession: 1, immatriculation: 2 };
-  filtres.sort((a, b) => poids[a.type] - poids[b.type] || String(b.date).localeCompare(String(a.date)));
-  return filtres;
+  finale.sort((a, b) => poids[a.type] - poids[b.type] || String(b.date).localeCompare(String(a.date)));
+  return finale;
 }
