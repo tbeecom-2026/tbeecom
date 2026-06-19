@@ -15,6 +15,7 @@ export interface Contact {
   code_postal: string | null;
   commune: string | null;
   roles: string[] | null;
+  role_autre: string | null;
   notes: string | null;
   user_id: string | null;
   created_at: string | null;
