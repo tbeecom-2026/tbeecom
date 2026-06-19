@@ -251,74 +251,101 @@ export default function UtilisateursAdmin() {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="border border-border rounded-lg overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-secondary/30 text-muted-foreground text-xs">
-                <tr>
-                  <th className="text-left p-2">Nom</th>
-                  <th className="text-left p-2">Email</th>
-                  <th className="text-left p-2">Rôle</th>
-                  <th className="text-left p-2">Statut</th>
-                  <th className="text-left p-2">Créé le</th>
-                  <th className="text-left p-2 w-[340px]">Nouveau mot de passe</th>
-                  <th className="text-left p-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40">
-                {users.length === 0 && !loading && (
-                  <tr><td colSpan={7} className="p-4 text-center text-xs text-muted-foreground">Aucun utilisateur.</td></tr>
-                )}
-                {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-secondary/20 align-middle">
-                    <td className="p-2 font-medium">{u.name ?? "—"}</td>
-                    <td className="p-2 text-muted-foreground">{u.email}</td>
-                    <td className="p-2">
-                      <Badge variant={u.role === "admin" ? "default" : "outline"} className="text-[10px]">
-                        {u.role ?? "user"}
-                      </Badge>
-                    </td>
-                    <td className="p-2">
+          {users.length === 0 && !loading && (
+            <div className="p-6 text-center text-xs text-muted-foreground border border-dashed border-border rounded-lg">
+              Aucun utilisateur.
+            </div>
+          )}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {users.map((u) => {
+              const initials = (u.name ?? u.email ?? "?")
+                .split(/\s+/).map((s) => s[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+              return (
+                <div
+                  key={u.id}
+                  className="rounded-lg border border-border bg-card/40 hover:bg-card/60 transition-colors p-4 flex flex-col gap-3"
+                >
+                  {/* Header : identité + badges */}
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center text-sm font-semibold shrink-0">
+                      {initials}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="font-semibold truncate">{u.name ?? "—"}</div>
+                        <Badge variant={u.role === "admin" ? "default" : "outline"} className="text-[10px]">
+                          {u.role ?? "user"}
+                        </Badge>
+                        {u.banned
+                          ? <Badge variant="destructive" className="text-[10px]">désactivé</Badge>
+                          : <Badge variant="outline" className="text-[10px] border-green-700/50 text-green-400">actif</Badge>}
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate">{u.email}</div>
+                      <div className="text-[11px] text-muted-foreground/70 mt-0.5">
+                        Créé le {fmtDate(u.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reset mot de passe */}
+                  <div className="flex gap-2">
+                    <Input
+                      className="h-9 text-xs"
+                      placeholder="Nouveau mot de passe"
+                      value={pwById[u.id] ?? ""}
+                      onChange={(e) => setPwById((p) => ({ ...p, [u.id]: e.target.value }))}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busyId === u.id}
+                      onClick={() => resetPassword(u)}
+                      className="shrink-0"
+                    >
+                      <KeyRound className="h-3.5 w-3.5 mr-1" /> Réinitialiser
+                    </Button>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap gap-2 pt-1 border-t border-border/50">
+                    <Button size="sm" variant="ghost" className="h-8" onClick={() => openSessions(u)}>
+                      <Monitor className="h-3.5 w-3.5 mr-1" /> Connexions
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8"
+                      disabled={busyId === u.id}
+                      onClick={() => toggleRole(u)}
+                    >
+                      {u.role === "admin"
+                        ? <><ShieldOff className="h-3.5 w-3.5 mr-1" /> Retirer admin</>
+                        : <><ShieldCheck className="h-3.5 w-3.5 mr-1" /> Promouvoir admin</>}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8"
+                      disabled={busyId === u.id}
+                      onClick={() => toggleBan(u)}
+                    >
                       {u.banned
-                        ? <Badge variant="destructive" className="text-[10px]">banni</Badge>
-                        : <Badge variant="outline" className="text-[10px] border-green-700/50 text-green-400">actif</Badge>}
-                    </td>
-                    <td className="p-2 text-xs text-muted-foreground">{fmtDate(u.createdAt)}</td>
-                    <td className="p-2">
-                      <div className="flex gap-1">
-                        <Input
-                          className="h-8 text-xs"
-                          placeholder="nouveau mot de passe"
-                          value={pwById[u.id] ?? ""}
-                          onChange={(e) => setPwById((p) => ({ ...p, [u.id]: e.target.value }))}
-                        />
-                        <Button size="sm" variant="outline" disabled={busyId === u.id} onClick={() => resetPassword(u)}>
-                          <KeyRound className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </td>
-                    <td className="p-2">
-                      <div className="flex gap-1 flex-wrap">
-                        <Button size="sm" variant="ghost" title="Connexions" onClick={() => openSessions(u)}>
-                          <Monitor className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button size="sm" variant="ghost" title={u.role === "admin" ? "Rétrograder" : "Promouvoir admin"}
-                          disabled={busyId === u.id} onClick={() => toggleRole(u)}>
-                          {u.role === "admin" ? <ShieldOff className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}
-                        </Button>
-                        <Button size="sm" variant="ghost" title={u.banned ? "Réactiver" : "Désactiver"}
-                          disabled={busyId === u.id} onClick={() => toggleBan(u)}>
-                          {u.banned ? <CheckCircle2 className="h-3.5 w-3.5 text-green-400" /> : <Ban className="h-3.5 w-3.5 text-destructive" />}
-                        </Button>
-                        <Button size="sm" variant="ghost" title="Déconnecter partout"
-                          disabled={busyId === u.id} onClick={() => revokeSessions(u)}>
-                          <LogOut className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        ? <><CheckCircle2 className="h-3.5 w-3.5 mr-1 text-green-400" /> Réactiver</>
+                        : <><Ban className="h-3.5 w-3.5 mr-1 text-destructive" /> Désactiver</>}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 ml-auto"
+                      disabled={busyId === u.id}
+                      onClick={() => revokeSessions(u)}
+                    >
+                      <LogOut className="h-3.5 w-3.5 mr-1" /> Déconnecter
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
