@@ -273,6 +273,15 @@ export default function Estimation() {
                 <Badge className={fiabBadge[est.fiabilite]}>{est.fiabilite}</Badge>
                 <span className="text-slate-400">· {est.stats.n} comparable(s)</span>
               </div>
+              <div className="text-xs text-slate-400">
+                {est.mode === "proximite"
+                  ? `Comparables dans un rayon de ${est.rayon_km} km de ${est.cible_label}`
+                  : `Zone : ${est.cible_label}`}
+              </div>
+              <p className="text-[11px] text-slate-500 italic max-w-2xl mx-auto pt-1">
+                Comparables locaux datés — la valeur finale dépend de l'emplacement précis,
+                du bail et de la rentabilité, à apprécier à dire d'expert.
+              </p>
             </CardContent>
           </Card>
 
