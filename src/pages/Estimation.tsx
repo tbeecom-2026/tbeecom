@@ -63,6 +63,7 @@ export default function Estimation() {
   const [famille, setFamille] = useState<FamilleMetier>(
     (params.get("famille") as FamilleMetier) || "restauration_assise",
   );
+  const [adresseInput, setAdresseInput] = useState(params.get("adresse") ?? "");
   const [niveau, setNiveau] = useState<"cp" | "dep">(
     params.get("departement") && !params.get("codePostal") ? "dep" : "cp",
   );
@@ -72,39 +73,44 @@ export default function Estimation() {
   const [moisRetour, setMoisRetour] = useState<number>(24);
 
   const enseigne = params.get("enseigne") ?? "";
-  const adresse = params.get("adresse") ?? "";
 
   const [loading, setLoading] = useState(false);
   const [est, setEst] = useState<Estimation | null>(null);
 
-  // Auto-estimer si la page est ouverte avec une zone pré-remplie
+  // Auto-estimer si l'URL contient déjà adresse ou zone
   useEffect(() => {
-    if ((codePostal || departement) && !est) {
+    if ((adresseInput.trim() || codePostal || departement) && !est) {
       void run();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function run() {
-    if (niveau === "cp" && !codePostal.trim()) {
-      toast.error("Renseigne un code postal");
-      return;
-    }
-    if (niveau === "dep" && !departement.trim()) {
-      toast.error("Renseigne un département");
-      return;
+    const adr = adresseInput.trim();
+    if (!adr) {
+      if (niveau === "cp" && !codePostal.trim()) {
+        toast.error("Renseigne une adresse ou un code postal");
+        return;
+      }
+      if (niveau === "dep" && !departement.trim()) {
+        toast.error("Renseigne une adresse ou un département");
+        return;
+      }
     }
     setLoading(true);
     try {
-      const zone: ZoneEstim =
-        niveau === "cp" ? { codePostal: codePostal.trim() } : { departement: departement.trim() };
       const caNum = ca.trim() ? Number(ca.replace(/\s/g, "").replace(",", ".")) : null;
-      const res = await estimationFonds({
-        famille,
-        zone,
-        ca: caNum && caNum > 0 ? caNum : null,
-        moisRetour,
-      });
+      const caFinal = caNum && caNum > 0 ? caNum : null;
+      let res: Estimation;
+      if (adr) {
+        res = await estimationFonds({ famille, adresse: adr, ca: caFinal, moisRetour });
+      } else {
+        const zone: ZoneEstim =
+          niveau === "cp"
+            ? { codePostal: codePostal.trim() }
+            : { departement: departement.trim() };
+        res = await estimationFonds({ famille, zone, ca: caFinal, moisRetour });
+      }
       setEst(res);
     } catch (e: any) {
       console.error(e);
