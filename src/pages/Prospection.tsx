@@ -20,6 +20,7 @@ import {
   toProspectRow,
   type Prospect,
   type EtatDifficulte,
+  type Zone,
 } from "@/lib/prospection";
 
 const FAMILLES: FamilleMetier[] = [
@@ -63,13 +64,16 @@ export default function Prospection() {
 
   // --- Filtres ---
   const [familles, setFamilles] = useState<FamilleMetier[]>([]);
-  const [codePostal, setCodePostal] = useState("");
+  const [niveauZone, setNiveauZone] = useState<"cp" | "commune" | "departement">("cp");
+  const [zoneTexte, setZoneTexte] = useState("");
   const [ageMin, setAgeMin] = useState<string>("");
   const [ancienneteMin, setAncienneteMin] = useState<string>("");
   const [enDifficulteUniquement, setEnDifficulteUniquement] = useState(false);
   const [scoreMin, setScoreMin] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [leads, setLeads] = useState<Prospect[]>([]);
+  const [tronque, setTronque] = useState(false);
+  const [totalCommerces, setTotalCommerces] = useState(0);
 
   // --- Mes leads ---
   const [mesLeads, setMesLeads] = useState<any[]>([]);
@@ -96,9 +100,18 @@ export default function Prospection() {
     setFamilles((prev) => (prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]));
   }
 
+  function buildZone(): Zone | null {
+    const t = zoneTexte.trim();
+    if (!t) return null;
+    if (niveauZone === "cp") return { codePostal: t.replace(/\D/g, "").slice(0, 5) };
+    if (niveauZone === "commune") return { codeCommune: t.replace(/\D/g, "").slice(0, 5) };
+    return { departement: t.replace(/\D/g, "").slice(0, 3) };
+  }
+
   async function lancerRecherche() {
-    if (!codePostal || codePostal.replace(/\D/g, "").length < 4) {
-      toast.error("Code postal requis");
+    const zone = buildZone();
+    if (!zone) {
+      toast.error("Zone géographique requise");
       return;
     }
     if (familles.length === 0) {
@@ -106,18 +119,22 @@ export default function Prospection() {
       return;
     }
     setLoading(true);
+    setTronque(false);
+    setTotalCommerces(0);
     try {
-      const r = await rechercherProspects({
+      const res = await rechercherProspects({
         familles,
-        codePostal,
+        zone,
         ageMin: ageMin ? Number(ageMin) : undefined,
         ancienneteMin: ancienneteMin ? Number(ancienneteMin) : undefined,
         enDifficulteUniquement,
         scoreMin,
       });
-      setLeads(r);
-      if (r.length === 0) toast.info("Aucun lead pour ces critères");
-      else toast.success(`${r.length} lead${r.length > 1 ? "s" : ""} trouvé${r.length > 1 ? "s" : ""}`);
+      setLeads(res.prospects);
+      setTronque(res.tronque);
+      setTotalCommerces(res.total_commerces);
+      if (res.prospects.length === 0) toast.info("Aucun lead pour ces critères");
+      else toast.success(`${res.prospects.length} lead${res.prospects.length > 1 ? "s" : ""} trouvé${res.prospects.length > 1 ? "s" : ""} sur ${res.total_commerces} commerces analysés`);
     } catch (e: any) {
       toast.error("Erreur lors de la recherche", { description: e?.message ?? "API indisponible" });
     } finally {
