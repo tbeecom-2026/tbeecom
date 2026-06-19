@@ -129,7 +129,9 @@ export default function Contacts() {
                   <div className="flex flex-wrap gap-1">
                     {c.roles?.map((r) => {
                       const role = ROLES_CONTACT.find((rc) => rc.value === r);
-                      return <Badge key={r} className={`text-xs ${role?.color ?? "bg-slate-500 text-white"}`}>{role?.label ?? r}</Badge>;
+                      const label = role?.label ?? r;
+                      const suffix = r === "autre" && (c as any).role_autre ? ` — ${(c as any).role_autre}` : "";
+                      return <Badge key={r} className={`text-xs ${role?.color ?? "bg-slate-500 text-white"}`}>{label}{suffix}</Badge>;
                     })}
                   </div>
                 </td>
