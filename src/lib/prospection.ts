@@ -66,7 +66,9 @@ function extraireDirigeant(dirigeants: any[]): { nom: string; annee: number | nu
       /g[ée]rant|pr[ée]sident|exploitant|associ[ée]|directeur g/i.test(d?.qualite ?? ""),
   );
   // à défaut, toute personne physique non-CAC
-  const pool = pp.length ? pp : dirigeants.filter((d) => d?.type_dirigeant === "personne physique" && !/commissaire/i.test(d?.qualite ?? ""));
+  const pool = pp.length
+    ? pp
+    : dirigeants.filter((d) => d?.type_dirigeant === "personne physique" && !/commissaire/i.test(d?.qualite ?? ""));
   if (!pool.length) return null;
   // le plus âgé (le plus pertinent pour un départ retraite)
   pool.sort((a, b) => Number(a?.annee_de_naissance ?? 9999) - Number(b?.annee_de_naissance ?? 9999));
@@ -131,9 +133,14 @@ async function chercherDifficultes(codePostal: string): Promise<Map<string, any>
   const adresseCount: Record<string, number> = {};
 
   for (const rec of data?.results ?? []) {
-    let jug: any = null, pers: any = null;
-    try { jug = rec.jugement ? JSON.parse(rec.jugement) : null; } catch {}
-    try { pers = rec.listepersonnes ? JSON.parse(rec.listepersonnes) : null; } catch {}
+    let jug: any = null,
+      pers: any = null;
+    try {
+      jug = rec.jugement ? JSON.parse(rec.jugement) : null;
+    } catch {}
+    try {
+      pers = rec.listepersonnes ? JSON.parse(rec.listepersonnes) : null;
+    } catch {}
     const famille = jug?.famille ?? "";
     const nature = (jug?.nature ?? "").toLowerCase();
     // on ne garde QUE les procédures vivantes
@@ -143,10 +150,14 @@ async function chercherDifficultes(codePostal: string): Promise<Map<string, any>
     else if (/avis|d[ée]p[oô]t/i.test(famille)) etat = "avis_en_cours";
     if (!etat) continue;
 
-    const siren = digits(Array.isArray(rec.registre) ? rec.registre[0] : "") || digits(pers?.personne?.numeroImmatriculation?.numeroIdentification);
+    const siren =
+      digits(Array.isArray(rec.registre) ? rec.registre[0] : "") ||
+      digits(pers?.personne?.numeroImmatriculation?.numeroIdentification);
     if (!siren) continue;
     const adr = pers?.personne?.adresseSiegeSocial;
-    const adrTxt = adr ? [adr.numeroVoie, adr.typeVoie, adr.nomVoie, adr.codePostal, adr.ville].filter(Boolean).join(" ") : null;
+    const adrTxt = adr
+      ? [adr.numeroVoie, adr.typeVoie, adr.nomVoie, adr.codePostal, adr.ville].filter(Boolean).join(" ")
+      : null;
     if (adrTxt) adresseCount[adrTxt] = (adresseCount[adrTxt] ?? 0) + 1;
 
     if (!map.has(siren)) {
@@ -168,10 +179,10 @@ async function chercherDifficultes(codePostal: string): Promise<Map<string, any>
 
 // ---------- Orchestrateur : recherche de prospects ----------
 export interface FiltresProspection {
-  familles: FamilleMetier[];      // familles métier ciblées
-  codePostal: string;             // zone (commune)
-  ageMin?: number;                // âge dirigeant minimum (filtre côté appli)
-  ancienneteMin?: number;         // ancienneté minimale (années)
+  familles: FamilleMetier[]; // familles métier ciblées
+  codePostal: string; // zone (commune)
+  ageMin?: number; // âge dirigeant minimum (filtre côté appli)
+  ancienneteMin?: number; // ancienneté minimale (années)
   enDifficulteUniquement?: boolean;
   scoreMin?: number;
 }
@@ -199,7 +210,8 @@ export async function rechercherProspects(f: FiltresProspection): Promise<Prospe
     const dir = extraireDirigeant(e?.dirigeants ?? []);
     const age = dir?.annee ? ANNEE - dir.annee : null;
     const naf = e?.activite_principale ?? e?.siege?.activite_principale ?? null;
-    const fam = familleMetier(null, naf) === "non_precise" ? familleMetier(e?.nom_complet, naf) : familleMetier(null, naf);
+    const fam =
+      familleMetier(null, naf) === "non_precise" ? familleMetier(e?.nom_complet, naf) : familleMetier(null, naf);
     const dateCrea = e?.date_creation ?? null;
     const anc = dateCrea ? ANNEE - Number(String(dateCrea).slice(0, 4)) : null;
     const d = siren ? diff.get(siren) : null;
