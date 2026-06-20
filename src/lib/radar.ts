@@ -6,48 +6,14 @@
 // Appel direct depuis le front (BODACC = gratuit, CORS ouvert). Pas de persistance :
 // le Dashboard affiche le flux en direct. Réutilise familleMetier() de metier.ts.
 
-import { familleMetier, METIER_LABEL, type FamilleMetier } from "@/lib/metier";
+import { familleMetier, activiteLisible, type FamilleMetier } from "@/lib/metier";
 
 const API_BODACC =
   "https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/annonces-commerciales/records";
-const API_ENTREPRISES = "https://recherche-entreprises.api.gouv.fr/search";
-
-// État administratif réel par SIREN (A = actif, C/F = cessé/radié), via l'Annuaire.
-// Sert à écarter les sociétés déjà radiées dont une vieille procédure traîne dans BODACC.
-async function etatsParSiren(sirens: string[]): Promise<Map<string, string | null>> {
-  const m = new Map<string, string | null>();
-  const uniques = [...new Set(sirens.filter(Boolean))].slice(0, 16); // plafond bas (anti-blocage)
-  const LIMIT = 4; // recherche-entreprises limite ~7 req/s -> petits lots
-  // fetch avec timeout court : ne jamais rester bloqué si l'API ne répond pas
-  const fetchT = async (url: string, ms = 3500) => {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), ms);
-    try {
-      return await fetch(url, { signal: ctrl.signal });
-    } finally {
-      clearTimeout(t);
-    }
-  };
-  for (let i = 0; i < uniques.length; i += LIMIT) {
-    await Promise.all(
-      uniques.slice(i, i + LIMIT).map(async (s) => {
-        try {
-          const r = await fetchT(`${API_ENTREPRISES}?q=${s}&per_page=1&minimal=true`);
-          if (!r.ok) {
-            m.set(s, null);
-            return;
-          } // 429/erreur -> on garde le lead par défaut
-          const d = await r.json();
-          const res = (d?.results ?? []).find((x: any) => x?.siren === s) ?? (d?.results ?? [])[0];
-          m.set(s, res?.etat_administratif ?? null);
-        } catch {
-          m.set(s, null);
-        }
-      }),
-    );
-  }
-  return m;
-}
+// NB : le contrôle "société déjà radiée" via recherche-entreprises a été RETIRÉ.
+// Il lançait 1 appel/SIREN et saturait l'API (429 puis blocage IP), pour un bénéfice
+// marginal (une procédure récente = société quasi toujours encore active).
+// Le radar ne dépend désormais QUE de BODACC (robuste, sans limite de débit).
 
 export const DEPARTEMENTS_IDF = ["75", "77", "78", "91", "92", "93", "94", "95"];
 
@@ -153,7 +119,7 @@ function commun(rec: any): Partial<RadarItem> {
     denomination: pers?.denomination ?? rec.commercant ?? null,
     activite,
     famille: fam,
-    famille_label: METIER_LABEL[fam],
+    famille_label: activiteLisible(fam, null, activite),
     adresse: adresseTxt(adr) ?? null,
     code_postal: adr?.codePostal ?? rec.cp ?? null,
     ville: adr?.ville ?? rec.ville ?? null,
@@ -250,25 +216,8 @@ export async function radarDuJour(opts?: {
   // Écarter les sociétés DÉJÀ RADIÉES parmi les difficultés (décalage BODACC : une vieille
   // procédure peut concerner une société entre-temps radiée = morte, plus un lead).
   // On vérifie l'état réel par SIREN ; on retire seulement les états confirmés "C"/"F".
-  const sirensDiff = filtres.filter((i) => i.type === "difficulte").map((i) => i.siren ?? "");
-  let finale = filtres;
-  if (sirensDiff.length) {
-    try {
-      // Best-effort : si recherche-entreprises est lent/indispo, on n'attend pas plus de 6 s
-      // et on garde tous les leads plutôt que de bloquer tout le radar.
-      const etats = await Promise.race([
-        etatsParSiren(sirensDiff),
-        new Promise<Map<string, string | null>>((_, rej) => setTimeout(() => rej(new Error("timeout")), 6000)),
-      ]);
-      finale = filtres.filter((i) => {
-        if (i.type !== "difficulte") return true;
-        const e = etats.get(i.siren ?? "");
-        return e !== "C" && e !== "F"; // garde actif ("A") ou inconnu (null)
-      });
-    } catch {
-      finale = filtres; // API d'état indispo -> on n'exclut pas les radiées cette fois
-    }
-  }
+  // Plus d'appel à recherche-entreprises ici (cf. note plus haut) : le radar reste 100 % BODACC.
+  const finale = filtres;
 
   // Tri : difficultés d'abord, puis par date décroissante.
   const poids: Record<RadarType, number> = { difficulte: 0, cession: 1, immatriculation: 2 };
