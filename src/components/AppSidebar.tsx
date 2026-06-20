@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, Contact, Activity, LogOut, Building2, Settings, Store, Radar, Calculator } from "lucide-react";
+import { LayoutDashboard, FileText, Contact, Activity, LogOut, Building2, Settings, Store, Radar, Calculator, BarChart3 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +23,7 @@ const navItems = [
   { title: "Contacts", url: "/contacts", icon: Contact },
   { title: "Prospection", url: "/prospection", icon: Radar },
   { title: "Estimation", url: "/estimation", icon: Calculator },
+  { title: "Analyses", url: "/analyses", icon: BarChart3 },
   { title: "Activités", url: "/activites", icon: Activity },
 ];
 const adminItems = [{ title: "Paramètres", url: "/parametres", icon: Settings }];

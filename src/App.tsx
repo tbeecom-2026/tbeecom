@@ -18,6 +18,7 @@ import ContactDetail from "@/pages/ContactDetail";
 import Activites from "@/pages/Activites";
 import Prospection from "@/pages/Prospection";
 import Estimation from "@/pages/Estimation";
+import Analyses from "@/pages/Analyses";
 import Parametres from "@/pages/Parametres";
 import NotFound from "@/pages/NotFound";
 import PublicLayout from "@/components/public/PublicLayout";
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="contacts/:id" element={<ContactDetail />} />
               <Route path="prospection" element={<Prospection />} />
               <Route path="estimation" element={<Estimation />} />
+              <Route path="analyses" element={<Analyses />} />
               <Route path="activites" element={<Activites />} />
               <Route path="parametres" element={<Parametres />} />
             </Route>
