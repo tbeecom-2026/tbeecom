@@ -236,6 +236,8 @@ export default function Analyses() {
                     border: "1px solid hsl(217,20%,27%)",
                     color: "#fff",
                   }}
+                  itemStyle={{ color: "#fff" }}
+                  labelStyle={{ color: "#fff" }}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Line
@@ -350,6 +352,8 @@ export default function Analyses() {
                       border: "1px solid hsl(217,20%,27%)",
                       color: "#fff",
                     }}
+                    itemStyle={{ color: "#fff" }}
+                    labelStyle={{ color: "#fff" }}
                   />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
                 </PieChart>
@@ -392,6 +396,8 @@ export default function Analyses() {
                       border: "1px solid hsl(217,20%,27%)",
                       color: "#fff",
                     }}
+                    itemStyle={{ color: "#fff" }}
+                    labelStyle={{ color: "#fff" }}
                   />
                   <Bar dataKey="nb" fill="#D2963C" radius={[0, 4, 4, 0]}>
                     <LabelList dataKey="nb" position="right" fill="hsl(215,20%,75%)" fontSize={11} />
