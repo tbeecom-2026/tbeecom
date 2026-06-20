@@ -7,7 +7,7 @@
 // Appelable directement depuis le front (les 2 API sont gratuites, sans clé, CORS ouvert).
 // Voir PROSPECTION_SPEC.md. Réutilise familleMetier() de metier.ts.
 
-import { familleMetier, METIER_LABEL, type FamilleMetier } from "@/lib/metier";
+import { familleMetier, activiteLisible, type FamilleMetier } from "@/lib/metier";
 
 const API_ENTREPRISES = "https://recherche-entreprises.api.gouv.fr/search";
 const API_BODACC =
@@ -270,7 +270,7 @@ export async function rechercherProspects(f: FiltresProspection): Promise<Result
       denomination: e?.nom_raison_sociale ?? e?.nom_complet ?? null,
       naf,
       famille_metier: fam,
-      famille_label: METIER_LABEL[fam],
+      famille_label: activiteLisible(fam, naf, null),
       adresse: etab?.adresse ?? e?.siege?.adresse ?? null,
       code_postal: etab?.code_postal ?? null,
       commune: etab?.libelle_commune ?? null,
