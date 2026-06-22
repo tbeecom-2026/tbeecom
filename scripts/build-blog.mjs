@@ -17,17 +17,17 @@ const NAV = `
   <nav class="nav">
     <a href="/landingpage">Accueil</a>
     <a href="/landingpage/biens">Nos biens</a>
-    <a href="/landingpage/vendre">Vendre</a>
-    <a href="/landingpage/acheter">Acheter</a>
-    <a href="/blog/">Blog</a>
+    <a href="/landingpage/vendre">Vendre / Estimation</a>
+    <a href="/landingpage/acheter">Acheter / Alerte</a>
+    <a href="/landingpage/agence">L'agence</a>
+    <a href="/blog/" class="active">Blog</a>
     <a href="/landingpage/contact">Contact</a>
   </nav>`;
 
-const HEADER = `<header class="site"><div class="wrap">
+const HEADER = `<header class="site"><div class="hwrap">
   <a class="brand" href="/landingpage"><img class="logoimg" src="/LOGO_TBC_Sans.png" alt="TBEECOM" /></a>
-  <div class="hright">${NAV}
-    <a class="estim" href="/landingpage/vendre">Estimer mon commerce</a>
-  </div>
+  ${NAV}
+  <a class="estim" href="/landingpage/vendre">Estimer mon commerce</a>
 </div></header>`;
 
 const FOOTER = `<footer class="site"><div class="wrap">
@@ -69,6 +69,9 @@ function articlePage(a) {
 <meta property="og:url" content="${url}" />
 <link rel="icon" type="image/png" href="/favicon.png?v=3" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/blog/blog.css?v=${CSSVER}" />
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Article","headline":"${a.title.replace(/"/g, "'")}","description":"${a.description.replace(/"/g, "'")}","inLanguage":"fr-FR","author":{"@type":"Organization","name":"TBEECOM"},"publisher":{"@type":"Organization","name":"TBEECOM"},"mainEntityOfPage":"${url}"}
@@ -128,6 +131,9 @@ ${cards}
 <meta property="og:url" content="${SITE}/blog/" />
 <link rel="icon" type="image/png" href="/favicon.png?v=3" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/blog/blog.css?v=${CSSVER}" />
 </head>
 <body>
