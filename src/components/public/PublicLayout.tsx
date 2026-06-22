@@ -3,13 +3,13 @@ import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const NAV = [
+const NAV: { to: string; label: string; end?: boolean; external?: boolean }[] = [
   { to: "/landingpage", label: "Accueil", end: true },
   { to: "/landingpage/biens", label: "Nos biens" },
   { to: "/landingpage/vendre", label: "Vendre / Estimation" },
   { to: "/landingpage/acheter", label: "Acheter / Alerte" },
   { to: "/landingpage/agence", label: "L'agence" },
-  { to: "/landingpage/blog", label: "Blog" },
+  { to: "/blog/", label: "Blog", external: true },
   { to: "/landingpage/contact", label: "Contact" },
 ];
 
@@ -28,6 +28,9 @@ export default function PublicLayout() {
           </Link>
           <nav className="hidden lg:flex items-center gap-1">
             {NAV.map(n => (
+              n.external ? (
+                <a key={n.to} href={n.to} className="px-3 py-2 rounded-md text-sm font-medium transition-colors text-foreground/80 hover:text-primary">{n.label}</a>
+              ) : (
               <NavLink
                 key={n.to} to={n.to} end={n.end}
                 className={({ isActive }) =>
@@ -36,6 +39,7 @@ export default function PublicLayout() {
                   }`
                 }
               >{n.label}</NavLink>
+              )
             ))}
           </nav>
           <div className="flex items-center gap-2">
@@ -55,12 +59,16 @@ export default function PublicLayout() {
           <div className="lg:hidden border-t border-border bg-background">
             <div className="px-4 py-3 flex flex-col gap-1">
               {NAV.map(n => (
+                n.external ? (
+                  <a key={n.to} href={n.to} className="px-3 py-3 rounded-md text-base text-foreground/85">{n.label}</a>
+                ) : (
                 <NavLink
                   key={n.to} to={n.to} end={n.end}
                   className={({ isActive }) =>
                     `px-3 py-3 rounded-md text-base ${isActive ? "bg-muted text-accent" : "text-foreground/85"}`
                   }
                 >{n.label}</NavLink>
+                )
               ))}
             </div>
           </div>
@@ -87,7 +95,9 @@ export default function PublicLayout() {
             <ul className="space-y-2 text-sm">
               {NAV.map(n => (
                 <li key={n.to}>
-                  <Link to={n.to} className="hover:text-accent">{n.label}</Link>
+                  {n.external
+                    ? <a href={n.to} className="hover:text-accent">{n.label}</a>
+                    : <Link to={n.to} className="hover:text-accent">{n.label}</Link>}
                 </li>
               ))}
             </ul>

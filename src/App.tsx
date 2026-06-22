@@ -30,7 +30,6 @@ import Acheter from "@/pages/public/Acheter";
 import Agence from "@/pages/public/Agence";
 import ContactPublic from "@/pages/public/Contact";
 import Mentions from "@/pages/public/Mentions";
-import Blog from "@/pages/public/Blog";
 const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -50,7 +49,6 @@ const App = () => (
               <Route path="vendre" element={<Vendre />} />
               <Route path="acheter" element={<Acheter />} />
               <Route path="agence" element={<Agence />} />
-              <Route path="blog" element={<Blog />} />
               <Route path="contact" element={<ContactPublic />} />
               <Route path="mentions" element={<Mentions />} />
             </Route>
