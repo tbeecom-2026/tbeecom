@@ -2,6 +2,7 @@
 // Lit content/blog/manifest.mjs + content/blog/bodies/<slug>.html
 // Produit public/blog/<slug>.html, public/blog/index.html et public/sitemap.xml
 import { readFileSync, writeFileSync, readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { PILLARS, ARTICLES } from "../content/blog/manifest.mjs";
@@ -10,6 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const OUT = join(ROOT, "public", "blog");
 const SITE = "https://www.tbeecom.com";
+const CSSVER = createHash("md5").update(readFileSync(join(OUT, "blog.css"))).digest("hex").slice(0, 8);
 
 const NAV = `
   <nav class="nav">
@@ -67,7 +69,7 @@ function articlePage(a) {
 <meta property="og:url" content="${url}" />
 <link rel="icon" type="image/png" href="/favicon.png" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-<link rel="stylesheet" href="/blog/blog.css" />
+<link rel="stylesheet" href="/blog/blog.css?v=${CSSVER}" />
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Article","headline":"${a.title.replace(/"/g, "'")}","description":"${a.description.replace(/"/g, "'")}","inLanguage":"fr-FR","author":{"@type":"Organization","name":"TBEECOM"},"publisher":{"@type":"Organization","name":"TBEECOM"},"mainEntityOfPage":"${url}"}
 </script>
@@ -126,7 +128,7 @@ ${cards}
 <meta property="og:url" content="${SITE}/blog/" />
 <link rel="icon" type="image/png" href="/favicon.png" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-<link rel="stylesheet" href="/blog/blog.css" />
+<link rel="stylesheet" href="/blog/blog.css?v=${CSSVER}" />
 </head>
 <body>
 ${HEADER}
