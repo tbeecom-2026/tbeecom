@@ -128,9 +128,13 @@ ${HEADER}
   <h1>Acheter et vendre un fonds de commerce, partout en France</h1>
   <p>Fonds de commerce, droit au bail, murs commerciaux, législation, chiffres clés pour bien acheter : les guides de TBEECOM.COM accompagnent cédants et repreneurs, à Paris comme en région, dans toutes les villes de France.</p>
 </div></div>
-<div class="tabbar"><div class="wrap tabs">
+<div class="tabbar"><div class="wrap tabnav">
+<button class="tabarrow" data-dir="-1" aria-label="Précédent">‹</button>
+<div class="tabs" id="tabs">
 <button class="tab active" data-f="all">Tous</button>
 ${PILLARS.filter((p)=>ARTICLES.some((a)=>a.pillar===p.id)).map((p)=>`<button class="tab" data-f="${p.id}">${p.label}</button>`).join("\n")}
+</div>
+<button class="tabarrow" data-dir="1" aria-label="Suivant">›</button>
 </div></div>
 <section class="pillars"><div class="wrap">
 ${sections}
@@ -145,6 +149,11 @@ ${sections}
     window.scrollTo({top:0,behavior:'smooth'});
   }
   tabs.forEach(function(t){ t.addEventListener('click', function(){ show(t.getAttribute('data-f')); }); });
+  var box=document.getElementById('tabs');
+  var arrows=document.querySelectorAll('.tabarrow');
+  arrows.forEach(function(a){ a.addEventListener('click', function(){ box.scrollBy({left:parseInt(a.getAttribute('data-dir'),10)*220,behavior:'smooth'}); }); });
+  function upd(){ var max=box.scrollWidth-box.clientWidth-1; arrows[0].style.visibility=box.scrollLeft>2?'visible':'hidden'; arrows[1].style.visibility=box.scrollLeft<max?'visible':'hidden'; }
+  box.addEventListener('scroll',upd); window.addEventListener('resize',upd); setTimeout(upd,0);
 })();
 </script>
 ${CTA}

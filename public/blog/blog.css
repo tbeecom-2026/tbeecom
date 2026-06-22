@@ -46,7 +46,8 @@ section.pillars{padding:48px 0}
 footer.site{background:hsl(var(--primary));color:hsl(var(--primary-fg));padding:32px 0;margin-top:24px;font-size:14px}
 footer.site a{color:hsl(var(--accent));text-decoration:none}
 .tabbar{position:sticky;top:64px;z-index:30;background:hsl(var(--card));border-bottom:1px solid hsl(var(--border))}
-.tabs{display:flex;gap:30px;overflow-x:auto;padding:0;scrollbar-width:none;-ms-overflow-style:none}
+.tabnav{display:flex;align-items:center;gap:10px}
+.tabs{flex:1;min-width:0;display:flex;gap:30px;overflow-x:auto;padding:0;scrollbar-width:none;-ms-overflow-style:none}
 .tabs::-webkit-scrollbar{display:none}
 .tab{cursor:pointer;border:0;background:transparent;color:hsl(var(--muted-fg));padding:15px 0;font-size:13.5px;font-weight:500;letter-spacing:.02em;white-space:nowrap;border-bottom:2px solid transparent;transition:color .15s ease,border-color .15s ease}
 .tab:hover{color:hsl(var(--primary))}
@@ -56,3 +57,5 @@ footer.site a{color:hsl(var(--accent));text-decoration:none}
 footer.site .fnav{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:14px}
 footer.site .fnav a{font-weight:500}
 footer.site .fcopy{margin:0;color:hsl(var(--primary-fg)/.7)}
+.tabarrow{flex:none;width:30px;height:30px;border-radius:999px;border:1px solid hsl(var(--border));background:hsl(var(--card));color:hsl(var(--primary));cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;padding:0}
+.tabarrow:hover{border-color:hsl(var(--accent));color:hsl(var(--accent))}
