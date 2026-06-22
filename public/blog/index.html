@@ -28,8 +28,19 @@
   <h1>Acheter et vendre un fonds de commerce, partout en France</h1>
   <p>Fonds de commerce, droit au bail, murs commerciaux, législation, chiffres clés pour bien acheter : les guides de TBEECOM.COM accompagnent cédants et repreneurs, à Paris comme en région, dans toutes les villes de France.</p>
 </div></div>
+<div class="tabbar"><div class="wrap tabs">
+<button class="tab active" data-f="all">Tous</button>
+<button class="tab" data-f="fonds">Le fonds de commerce</button>
+<button class="tab" data-f="bail">Le droit au bail</button>
+<button class="tab" data-f="murs">Les murs commerciaux</button>
+<button class="tab" data-f="legislation">Législation & juridique</button>
+<button class="tab" data-f="chiffres">Les chiffres pour bien acheter</button>
+<button class="tab" data-f="vendre">Vendre son commerce</button>
+<button class="tab" data-f="metier">Par type de commerce</button>
+<button class="tab" data-f="france">Partout en France</button>
+</div></div>
 <section class="pillars"><div class="wrap">
-  <div class="pillar">
+  <div class="pillar" data-pillar="fonds">
     <h2>Le fonds de commerce</h2>
     <p class="intro">Comprendre ce qu'est réellement un fonds de commerce : composition, valeur et transmission.</p>
     <div class="cards">
@@ -38,7 +49,7 @@
     </div>
   </div>
 
-  <div class="pillar">
+  <div class="pillar" data-pillar="bail">
     <h2>Le droit au bail</h2>
     <p class="intro">Le bail commercial conditionne souvent la valeur d'un commerce : loyer, durée, renouvellement, cession.</p>
     <div class="cards">
@@ -47,7 +58,7 @@
     </div>
   </div>
 
-  <div class="pillar">
+  <div class="pillar" data-pillar="murs">
     <h2>Les murs commerciaux</h2>
     <p class="intro">Acheter les murs ou seulement le fonds ? Comprendre la différence et les enjeux.</p>
     <div class="cards">
@@ -55,7 +66,7 @@
     </div>
   </div>
 
-  <div class="pillar">
+  <div class="pillar" data-pillar="legislation">
     <h2>Législation & juridique</h2>
     <p class="intro">Le cadre légal de la cession d'un fonds de commerce en France.</p>
     <div class="cards">
@@ -64,7 +75,7 @@
     </div>
   </div>
 
-  <div class="pillar">
+  <div class="pillar" data-pillar="chiffres">
     <h2>Les chiffres pour bien acheter</h2>
     <p class="intro">Chiffre d'affaires, EBE, rentabilité, ratios : les indicateurs avant d'acheter.</p>
     <div class="cards">
@@ -72,7 +83,7 @@
     </div>
   </div>
 
-  <div class="pillar">
+  <div class="pillar" data-pillar="vendre">
     <h2>Vendre son commerce</h2>
     <p class="intro">Préparer, estimer et réussir la cession de son commerce, partout en France.</p>
     <div class="cards">
@@ -80,7 +91,7 @@
     </div>
   </div>
 
-  <div class="pillar">
+  <div class="pillar" data-pillar="metier">
     <h2>Par type de commerce</h2>
     <p class="intro">Chaque activité a ses codes de valorisation : restauration, boulangerie, bar-tabac…</p>
     <div class="cards">
@@ -89,7 +100,7 @@
     </div>
   </div>
 
-  <div class="pillar">
+  <div class="pillar" data-pillar="france">
     <h2>Partout en France</h2>
     <p class="intro">Acheter ou vendre un commerce ne se limite pas à Paris : repères marché par région.</p>
     <div class="cards">
@@ -97,6 +108,18 @@
     </div>
   </div>
 </div></section>
+<script>
+(function(){
+  var tabs=document.querySelectorAll('.tab');
+  var secs=document.querySelectorAll('.pillar');
+  function show(f){
+    secs.forEach(function(s){ s.style.display=(f==='all'||s.getAttribute('data-pillar')===f)?'':'none'; });
+    tabs.forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-f')===f); });
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  tabs.forEach(function(t){ t.addEventListener('click', function(){ show(t.getAttribute('data-f')); }); });
+})();
+</script>
 <div class="cta"><div class="wrap">
   <h2>Un projet d'achat ou de vente ?</h2>
   <p>TBEECOM.COM estime votre commerce et vous accompagne partout en France.</p>

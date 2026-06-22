@@ -91,7 +91,7 @@ function indexPage() {
           `      <a class="card live" href="/blog/${a.slug}.html"><span class="tag">Article</span><br>${a.title}</a>`
       )
       .join("\n");
-    return `  <div class="pillar">
+    return `  <div class="pillar" data-pillar="${p.id}">
     <h2>${p.label}</h2>
     <p class="intro">${p.intro}</p>
     <div class="cards">
@@ -120,9 +120,25 @@ ${HEADER}
   <h1>Acheter et vendre un fonds de commerce, partout en France</h1>
   <p>Fonds de commerce, droit au bail, murs commerciaux, législation, chiffres clés pour bien acheter : les guides de TBEECOM.COM accompagnent cédants et repreneurs, à Paris comme en région, dans toutes les villes de France.</p>
 </div></div>
+<div class="tabbar"><div class="wrap tabs">
+<button class="tab active" data-f="all">Tous</button>
+${PILLARS.filter((p)=>ARTICLES.some((a)=>a.pillar===p.id)).map((p)=>`<button class="tab" data-f="${p.id}">${p.label}</button>`).join("\n")}
+</div></div>
 <section class="pillars"><div class="wrap">
 ${sections}
 </div></section>
+<script>
+(function(){
+  var tabs=document.querySelectorAll('.tab');
+  var secs=document.querySelectorAll('.pillar');
+  function show(f){
+    secs.forEach(function(s){ s.style.display=(f==='all'||s.getAttribute('data-pillar')===f)?'':'none'; });
+    tabs.forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-f')===f); });
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  tabs.forEach(function(t){ t.addEventListener('click', function(){ show(t.getAttribute('data-f')); }); });
+})();
+</script>
 ${CTA}
 ${FOOTER}
 </body>

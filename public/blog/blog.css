@@ -45,3 +45,8 @@ section.pillars{padding:48px 0}
 .related a{color:hsl(var(--accent));text-decoration:none}
 footer.site{background:hsl(var(--primary));color:hsl(var(--primary-fg));padding:32px 0;margin-top:24px;font-size:14px}
 footer.site a{color:hsl(var(--accent));text-decoration:none}
+.tabbar{position:sticky;top:64px;z-index:30;background:hsl(var(--bg)/.95);backdrop-filter:blur(6px);border-bottom:1px solid hsl(var(--border))}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;padding:12px 0}
+.tab{cursor:pointer;border:1px solid hsl(var(--border));background:hsl(var(--card));color:hsl(var(--fg));border-radius:999px;padding:8px 14px;font-size:13px;font-weight:500;line-height:1}
+.tab:hover{border-color:hsl(var(--accent))}
+.tab.active{background:hsl(var(--primary));color:hsl(var(--primary-fg));border-color:hsl(var(--primary))}
