@@ -62,10 +62,11 @@ footer.site .fcopy{margin:0;color:hsl(var(--primary-fg)/.7)}
 .tabarrow:hover{border-color:hsl(var(--accent));color:hsl(var(--accent))}
 .brand .logoimg{height:48px;width:auto;display:block}
 .hright{display:flex;align-items:center;gap:10px}
-.estim{background:hsl(var(--accent));color:hsl(var(--accent-foreground,var(--primary-fg)));padding:8px 14px;border-radius:6px;font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap}
+.estim{display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 12px;border-radius:10px;font-size:14px;font-weight:500;line-height:1;background:hsl(var(--accent));color:hsl(var(--accent-foreground,var(--primary-fg)));text-decoration:none;white-space:nowrap}
 .estim:hover{filter:brightness(1.06)}
 
-.hwrap{max-width:1280px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.hwrap{max-width:1280px;margin:0 auto;padding:0 16px;height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+@media (min-width:640px){.hwrap{padding:0 24px}}
 .nav a{padding:8px 12px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;color:hsl(var(--fg)/.8);white-space:nowrap}
 .nav a:hover{color:hsl(var(--primary))}
 .nav a.active{color:hsl(var(--accent))}
