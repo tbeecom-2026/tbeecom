@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Search, MapPinned } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useSearchParams, Link } from "react-router-dom";
+import { Search, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import BienCard from "@/components/public/BienCard";
 import { distinctValues, listPublicBiens, type PublicBien } from "@/lib/publicBiens";
+import { departementLabel } from "@/lib/departements";
 
 const PAGE_SIZE = 12;
 
@@ -15,13 +16,13 @@ export default function NosBiens() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
-  const [communes, setCommunes] = useState<string[]>([]);
+  const [departements, setDepartements] = useState<string[]>([]);
   const [types, setTypes] = useState<string[]>([]);
 
   const q = params.get("q") ?? "";
   const categorie = params.get("categorie") ?? "all";
   const type = params.get("type") ?? "all";
-  const commune = params.get("commune") ?? "all";
+  const departement = params.get("departement") ?? "all";
   const prixMax = params.get("prixMax") ?? "";
   const surfaceMin = params.get("surfaceMin") ?? "";
   const page = Number(params.get("page") ?? "0");
@@ -37,10 +38,10 @@ export default function NosBiens() {
   };
 
   useEffect(() => {
-    Promise.all([distinctValues("categorie"), distinctValues("commune"), distinctValues("type_commerce")]).then(
-      ([c, co, t]) => {
+    Promise.all([distinctValues("categorie"), distinctValues("departement"), distinctValues("type_commerce")]).then(
+      ([c, d, t]) => {
         setCategories(c);
-        setCommunes(co);
+        setDepartements(d);
         setTypes(t);
       },
     );
@@ -52,7 +53,7 @@ export default function NosBiens() {
       search: q || undefined,
       categorie,
       type,
-      commune,
+      departement,
       prixMax: prixMax ? Number(prixMax) : undefined,
       surfaceMin: surfaceMin ? Number(surfaceMin) : undefined,
       page,
@@ -67,10 +68,9 @@ export default function NosBiens() {
         setTotal(0);
       })
       .finally(() => setLoading(false));
-  }, [q, categorie, type, commune, prixMax, surfaceMin, page]);
+  }, [q, categorie, type, departement, prixMax, surfaceMin, page]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const pinned = useMemo(() => items.filter((i) => i.commune), [items]);
 
   return (
     <>
@@ -131,15 +131,15 @@ export default function NosBiens() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={commune} onValueChange={(v) => update({ commune: v })}>
+            <Select value={departement} onValueChange={(v) => update({ departement: v })}>
               <SelectTrigger className="h-11 bg-background text-foreground">
-                <SelectValue placeholder="Ville" />
+                <SelectValue placeholder="Département" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes villes</SelectItem>
-                {communes.map((c) => (
+                <SelectItem value="all">Tous départements</SelectItem>
+                {departements.map((c) => (
                   <SelectItem key={c} value={c}>
-                    {c}
+                    {departementLabel(c)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -220,21 +220,17 @@ export default function NosBiens() {
             <div className="sticky top-24 rounded-xl border border-border bg-card overflow-hidden">
               <div className="aspect-[4/5] bg-gradient-to-br from-secondary/30 via-muted to-accent/10 relative">
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
-                  <MapPinned className="h-10 w-10 text-accent" />
-                  <h3 className="mt-3 font-display text-xl text-primary">Carte interactive</h3>
+                  <BellRing className="h-10 w-10 text-accent" />
+                  <h3 className="mt-3 font-display text-xl text-primary">Créez une alerte acquéreur</h3>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Visualisez nos biens disponibles sur la carte. Bientôt disponible.
+                    Recevez en avant-première les commerces à céder correspondant à vos critères, en toute discrétion.
                   </p>
-                  {pinned.length > 0 && (
-                    <ul className="mt-4 w-full max-h-48 overflow-auto text-left text-xs space-y-1">
-                      {pinned.slice(0, 8).map((b) => (
-                        <li key={b.id} className="px-3 py-1.5 rounded bg-background/60 truncate">
-                          📍 {b.commune}
-                          {b.code_postal ? ` · ${b.code_postal}` : ""}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <Link
+                    to="/landingpage/acheter"
+                    className="mt-4 inline-flex items-center justify-center rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground hover:bg-accent/90"
+                  >
+                    Être alerté
+                  </Link>
                 </div>
               </div>
             </div>

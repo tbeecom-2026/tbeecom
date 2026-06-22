@@ -4,6 +4,7 @@
 // des colonnes sûres, sans adresse exacte, enseigne masquée si confidentiel.
 // La vraie barrière est côté Neon (RLS) : voir securite_rls_neon.sql.
 import { supabase } from "./supabaseClient";
+import { departementLabel } from "./departements";
 
 // Colonnes exposées par la vue biens_publics (PAS d'adresse, PAS d'attributs).
 export const PUBLIC_FIELDS = [
@@ -15,9 +16,7 @@ export const PUBLIC_FIELDS = [
   "nature_activite",
   "titre",
   "description",
-  "commune",
-  "code_postal",
-  "secteur",
+  "departement",
   "surface_commerciale",
   "surface_totale",
   "surface_reserves",
@@ -46,9 +45,7 @@ export interface PublicBien {
   nature_activite: string | null;
   titre: string | null;
   description: string | null;
-  commune: string | null;
-  code_postal: string | null;
-  secteur: string | null;
+  departement: string | null;
   surface_commerciale: number | null;
   surface_totale: number | null;
   surface_reserves: number | null;
@@ -78,24 +75,24 @@ export async function listPublicBiens(opts: {
   search?: string;
   categorie?: string;
   type?: string;
-  commune?: string;
+  departement?: string;
   prixMax?: number;
   surfaceMin?: number;
   page?: number;
   pageSize?: number;
 }) {
-  const { search, categorie, type, commune, prixMax, surfaceMin, page = 0, pageSize = 12 } = opts;
+  const { search, categorie, type, departement, prixMax, surfaceMin, page = 0, pageSize = 12 } = opts;
   let q = supabase.from("biens_publics").select(PUBLIC_FIELDS, { count: "exact" });
   if (categorie && categorie !== "all") q = q.eq("categorie", categorie);
   if (type && type !== "all") q = q.eq("type_commerce", type);
-  if (commune && commune !== "all") q = q.eq("commune", commune);
+  if (departement && departement !== "all") q = q.eq("departement", departement);
   if (prixMax) q = q.lte("prix_demande", prixMax);
   if (surfaceMin) q = q.gte("surface_commerciale", surfaceMin);
   if (search) {
     const t = search.trim().replace(/[,()*]/g, " ");
     // NB : dans .or(), le joker PostgREST/Neon est '*' (pas '%').
     q = q.or(
-      `titre.ilike.*${t}*,commune.ilike.*${t}*,type_commerce.ilike.*${t}*,nature_activite.ilike.*${t}*,description.ilike.*${t}*`,
+      `titre.ilike.*${t}*,type_commerce.ilike.*${t}*,nature_activite.ilike.*${t}*,description.ilike.*${t}*`,
     );
   }
   const { data, count, error } = await q
@@ -115,7 +112,7 @@ export async function getPublicBien(reference: string) {
   return data ? sanitize(data as unknown as PublicBien) : null;
 }
 
-export async function distinctValues(field: "categorie" | "commune" | "type_commerce") {
+export async function distinctValues(field: "categorie" | "departement" | "type_commerce") {
   const { data } = await supabase.from("biens_publics").select(field).not(field, "is", null).limit(2000);
   const set = new Set<string>();
   (data ?? []).forEach((r: any) => r[field] && set.add(r[field]));
@@ -123,11 +120,10 @@ export async function distinctValues(field: "categorie" | "commune" | "type_comm
 }
 
 export function localisationLabel(b: PublicBien) {
-  if (b.confidentiel) return b.commune ? `${b.commune} (secteur)` : "Localisation confidentielle";
-  return [b.commune, b.code_postal].filter(Boolean).join(" · ");
+  return departementLabel(b.departement);
 }
 
 export function titreLabel(b: PublicBien) {
   if (b.titre) return b.titre;
-  return [b.nature_activite || b.type_commerce || b.categorie, b.commune].filter(Boolean).join(" — ");
+  return [b.nature_activite || b.type_commerce || b.categorie, departementLabel(b.departement)].filter(Boolean).join(" — ");
 }
