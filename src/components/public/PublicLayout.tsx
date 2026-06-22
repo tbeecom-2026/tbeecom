@@ -22,9 +22,8 @@ export default function PublicLayout() {
     <div className="tbee min-h-screen flex flex-col">
       <header className="sticky top-0 z-40 bg-background/85 backdrop-blur border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <Link to="/landingpage" className="flex items-center gap-2">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary text-accent font-display text-lg font-bold">T</span>
-            <span className="font-display text-xl font-semibold text-primary">TBEECOM</span>
+          <Link to="/landingpage" className="flex items-center">
+            <img src="/logo-tbeecom.svg" alt="TBEECOM" className="h-10 w-auto" />
           </Link>
           <nav className="hidden lg:flex items-center gap-1">
             {NAV.map(n => (
@@ -43,7 +42,7 @@ export default function PublicLayout() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <Button asChild size="sm" className="hidden sm:inline-flex bg-accent text-accent-foreground hover:bg-accent/90">
+            <Button asChild size="sm" className="inline-flex bg-accent text-accent-foreground hover:bg-accent/90">
               <Link to="/landingpage/vendre">Estimer mon commerce</Link>
             </Button>
             <button

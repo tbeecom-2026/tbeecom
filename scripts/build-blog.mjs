@@ -22,7 +22,10 @@ const NAV = `
   </nav>`;
 
 const HEADER = `<header class="site"><div class="wrap">
-  <a class="brand" href="/landingpage"><span class="logo">T</span><span class="name">TBEECOM</span></a>${NAV}
+  <a class="brand" href="/landingpage"><img class="logoimg" src="/logo-tbeecom.svg" alt="TBEECOM" /></a>
+  <div class="hright">${NAV}
+    <a class="estim" href="/landingpage/vendre">Estimer mon commerce</a>
+  </div>
 </div></header>`;
 
 const FOOTER = `<footer class="site"><div class="wrap">

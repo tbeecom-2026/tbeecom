@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="TBEECOM">
+  <g fill="none" stroke-width="9" stroke-linecap="square">
+    <path d="M14 42 V14 H44" stroke="#C9A227"/>
+    <path d="M76 14 H106 V42" stroke="#3F5468"/>
+    <path d="M14 78 V106 H44" stroke="#3F5468"/>
+    <path d="M76 106 H106 V78" stroke="#3F5468"/>
+  </g>
+  <text x="60" y="57" text-anchor="middle" font-family="'Arial Black',Arial,sans-serif" font-weight="900" font-size="29" letter-spacing="1.5" fill="#C9A227">TBE</text>
+  <text x="60" y="92" text-anchor="middle" font-family="'Arial Black',Arial,sans-serif" font-weight="900" font-size="29" letter-spacing="1.5" fill="#3F5468">COM</text>
+</svg>
