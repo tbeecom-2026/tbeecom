@@ -49,4 +49,7 @@ export const ARTICLES = [
   { slug: "acheter-commerce-en-region", pillar: "france",
     title: "Acheter un commerce en région : les opportunités",
     description: "Au-delà de Paris : pourquoi et comment acheter un commerce en région, dans les villes moyennes et zones touristiques." },
+  { slug: "clientele-achalandage-valeur", pillar: "fonds",
+    title: "Clientèle et achalandage : le cœur de la valeur d'un fonds",
+    description: "Clientèle et achalandage : comprendre la différence, pourquoi la clientèle est l'élément essentiel du fonds de commerce et comment elle détermine la valeur d'un commerce." },
 ];
