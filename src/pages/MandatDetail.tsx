@@ -4,10 +4,11 @@ import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, Calculator, AlertTriangle } from "lucide-react";
 import { formatDate, formatEuros, getStatutBadge } from "@/lib/formatters";
 import { getMandatDateState, getVenduClass } from "@/lib/mandatStatus";
 import type { Mandat } from "@/types/database";
+import { familleMetier } from "@/lib/metier";
 // -- Helpers ---------------------------------------------------------------
 const hasVal = (v: any) => v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0);
 const fmtSurface = (v: number | null | undefined) =>
@@ -138,6 +139,13 @@ export default function MandatDetail() {
   const etatMandat = getMandatDateState(m.mandat_date_fin);
   const issueMandat = (m.attributs as any)?.issue_mandat as string | undefined;
   const isCommerce = !!m.categorie && /fonds de commerce|entreprise/i.test(m.categorie);
+  const estimParams = new URLSearchParams();
+  estimParams.set("famille", familleMetier(m.nature_activite, m.type_commerce));
+  if (hasVal(m.adresse)) estimParams.set("adresse", String(m.adresse));
+  if (hasVal(m.code_postal)) estimParams.set("codePostal", String(m.code_postal));
+  if (hasVal(m.ca_annuel)) estimParams.set("ca", String(m.ca_annuel));
+  if (hasVal(m.enseigne)) estimParams.set("enseigne", String(m.enseigne));
+  const estimUrl = `/estimation?${estimParams.toString()}`;
   return (
     <div className="space-y-4 max-w-6xl">
       {/* Retour */}
@@ -195,6 +203,31 @@ export default function MandatDetail() {
           </div>
         </CardContent>
       </Card>
+      {/* Estimation du bien (réutilise l'outil de l'onglet Estimation) */}
+      {isCommerce && (
+        <Card>
+          <CardContent className="pt-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Estimation</div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Estimez ce bien avec l'outil d'avis de valeur (comparables BODACC + multiple du CA), indépendamment du prix affiché.
+                </p>
+              </div>
+              <Button onClick={() => navigate(estimUrl)} className="shrink-0">
+                <Calculator className="mr-2 h-4 w-4" /> Estimer ce bien
+              </Button>
+            </div>
+            {!hasVal(m.ca_annuel) && (
+              <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>Le <b>CA annuel</b> n'est pas renseigné pour ce bien. En l'ajoutant, l'estimation sera plus précise (le multiple du chiffre d'affaires pourra être pris en compte).</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Alerte échéance du mandat (rouge = dépassé, orange = fin proche) */}
       {(etatMandat.level === "expired" || etatMandat.level === "soon") && (
         <div
