@@ -22,7 +22,7 @@ const NAV = `
   </nav>`;
 
 const HEADER = `<header class="site"><div class="wrap">
-  <a class="brand" href="/landingpage"><img class="logoimg" src="/logo-tbeecom.svg" alt="TBEECOM" /></a>
+  <a class="brand" href="/landingpage"><img class="logoimg" src="/LOGO_TBC.jpg" alt="TBEECOM" /></a>
   <div class="hright">${NAV}
     <a class="estim" href="/landingpage/vendre">Estimer mon commerce</a>
   </div>
@@ -65,6 +65,8 @@ function articlePage(a) {
 <meta property="og:title" content="${a.title}" />
 <meta property="og:description" content="${a.description}" />
 <meta property="og:url" content="${url}" />
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="stylesheet" href="/blog/blog.css" />
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Article","headline":"${a.title.replace(/"/g, "'")}","description":"${a.description.replace(/"/g, "'")}","inLanguage":"fr-FR","author":{"@type":"Organization","name":"TBEECOM"},"publisher":{"@type":"Organization","name":"TBEECOM"},"mainEntityOfPage":"${url}"}
@@ -122,6 +124,8 @@ ${cards}
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Le Guide TBEECOM — Acheter et vendre un commerce en France" />
 <meta property="og:url" content="${SITE}/blog/" />
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="stylesheet" href="/blog/blog.css" />
 </head>
 <body>
