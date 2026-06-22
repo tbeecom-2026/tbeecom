@@ -26,7 +26,15 @@ const HEADER = `<header class="site"><div class="wrap">
 </div></header>`;
 
 const FOOTER = `<footer class="site"><div class="wrap">
-  © <span id="y"></span> TBEECOM — Transmission de fonds de commerce · <a href="/landingpage">Retour au site</a>
+  <nav class="fnav">
+    <a href="/landingpage">Accueil</a>
+    <a href="/landingpage/biens">Nos biens</a>
+    <a href="/landingpage/vendre">Vendre</a>
+    <a href="/landingpage/acheter">Acheter</a>
+    <a href="/blog/">Blog</a>
+    <a href="/landingpage/contact">Contact</a>
+  </nav>
+  <p class="fcopy">© <span id="y"></span> TBEECOM — Transmission de fonds de commerce</p>
   <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
 </div></footer>`;
 
