@@ -1,3 +1,4 @@
+html{scrollbar-gutter:stable}
 :root{--bg:40 18% 96%;--fg:215 30% 17%;--card:0 0% 100%;--primary:213 24% 34%;--primary-fg:40 18% 96%;--muted:40 14% 92%;--muted-fg:215 12% 40%;--accent:34 62% 53%;--border:215 12% 86%}
 *{box-sizing:border-box}
 body{margin:0;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:hsl(var(--bg));color:hsl(var(--fg));line-height:1.65}
