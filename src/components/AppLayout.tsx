@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAcces } from "@/hooks/useAcces";
+import { usePresence } from "@/hooks/usePresence";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ export default function AppLayout() {
   const { user, loading, signOut } = useAuth();
   const location = useLocation();
   const { authorized, loading: accesLoading } = useAcces();
+  usePresence();
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Chargement...</div>;

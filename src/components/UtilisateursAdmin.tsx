@@ -32,12 +32,10 @@ interface AdminUser {
 
 interface AdminSession {
   id?: string;
-  token?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  expiresAt?: string;
-  ipAddress?: string;
-  userAgent?: string;
+  started_at?: string;
+  last_seen?: string;
+  ip?: string;
+  user_agent?: string;
 }
 
 function fmtDate(d?: string) {
@@ -199,9 +197,14 @@ export default function UtilisateursAdmin() {
     setSessions([]);
     setLoadingSessions(true);
     try {
-      const res = await auth.admin.listUserSessions({ userId: u.id });
-      const list: AdminSession[] = res?.data?.sessions ?? res?.sessions ?? res?.data ?? [];
-      setSessions(Array.isArray(list) ? list : []);
+      const { data, error } = await supabase
+        .from("presence_sessions")
+        .select("id, started_at, last_seen, ip, user_agent")
+        .eq("user_id", u.id)
+        .order("started_at", { ascending: false })
+        .limit(200);
+      if (error) throw new Error(error.message);
+      setSessions(Array.isArray(data) ? (data as AdminSession[]) : []);
     } catch (e: any) {
       toast({ title: "Erreur", description: e?.message, variant: "destructive" });
     } finally {
@@ -361,18 +364,18 @@ export default function UtilisateursAdmin() {
       </Card>
 
       <Dialog open={!!sessionsUser} onOpenChange={(o) => !o && setSessionsUser(null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Connexions — {sessionsUser?.email}</DialogTitle>
           </DialogHeader>
           {loadingSessions ? (
             <div className="p-6 text-center text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin inline mr-1" /> Chargement…</div>
           ) : sessions.length === 0 ? (
-            <div className="p-6 text-center text-sm text-muted-foreground">Aucune session active.</div>
+            <div className="p-6 text-center text-sm text-muted-foreground">Aucune connexion enregistrée.</div>
           ) : (
-            <div className="border border-border rounded-lg overflow-hidden">
+            <div className="border border-border rounded-lg overflow-y-auto max-h-[60vh]">
               <table className="w-full text-xs">
-                <thead className="bg-secondary/30 text-muted-foreground">
+                <thead className="sticky top-0 z-10 bg-secondary text-muted-foreground">
                   <tr>
                     <th className="text-left p-2">Connexion</th>
                     <th className="text-left p-2">Dernière activité</th>
@@ -383,12 +386,12 @@ export default function UtilisateursAdmin() {
                 </thead>
                 <tbody className="divide-y divide-border/40">
                   {sessions.map((s, i) => (
-                    <tr key={s.id ?? s.token ?? i}>
-                      <td className="p-2">{fmtDate(s.createdAt)}</td>
-                      <td className="p-2">{fmtDate(s.updatedAt)}</td>
-                      <td className="p-2">{fmtDuree(s.createdAt, s.updatedAt)}</td>
-                      <td className="p-2 font-mono">{s.ipAddress ?? "—"}</td>
-                      <td className="p-2 text-muted-foreground">{parseUA(s.userAgent)}</td>
+                    <tr key={s.id ?? i}>
+                      <td className="p-2">{fmtDate(s.started_at)}</td>
+                      <td className="p-2">{fmtDate(s.last_seen)}</td>
+                      <td className="p-2">{fmtDuree(s.started_at, s.last_seen)}</td>
+                      <td className="p-2 font-mono">{s.ip ?? "—"}</td>
+                      <td className="p-2 text-muted-foreground">{parseUA(s.user_agent)}</td>
                     </tr>
                   ))}
                 </tbody>
