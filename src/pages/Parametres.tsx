@@ -16,7 +16,6 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import UtilisateursAdmin from "@/components/UtilisateursAdmin";
 
 interface AccesAutorise {
-  id: string;
   email: string;
   nom: string | null;
   created_at?: string;
@@ -68,8 +67,8 @@ export default function Parametres() {
     loadAcces();
   }
 
-  async function removeAcces(id: string) {
-    const { error } = await supabase.from("acces_autorises").delete().eq("id", id);
+  async function removeAcces(email: string) {
+    const { error } = await supabase.from("acces_autorises").delete().eq("email", email);
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
       return;
@@ -195,11 +194,11 @@ export default function Parametres() {
                       <tr><td colSpan={3} className="p-4 text-center text-muted-foreground text-xs">Aucun utilisateur autorisé. Ajoutez-en un ci-dessus.</td></tr>
                     )}
                     {acces.map((a) => (
-                      <tr key={a.id} className="hover:bg-secondary/20">
+                      <tr key={a.email} className="hover:bg-secondary/20">
                         <td className="p-2 font-medium">{a.email}</td>
                         <td className="p-2 text-muted-foreground">{a.nom ?? "—"}</td>
                         <td className="p-2 text-right">
-                          <Button variant="ghost" size="icon" onClick={() => removeAcces(a.id)} className="h-7 w-7 text-destructive">
+                          <Button variant="ghost" size="icon" onClick={() => removeAcces(a.email)} className="h-7 w-7 text-destructive">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </td>
