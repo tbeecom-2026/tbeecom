@@ -28,6 +28,16 @@ const HEADER = `<header class="site"><div class="hwrap">
   <a class="brand" href="/landingpage"><img class="logoimg" src="/LOGO_TBC_Sans.png" alt="TBEECOM" /></a>
   ${NAV}
   <a class="estim" href="/landingpage/vendre">Estimer mon commerce</a>
+  <button class="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+</div>
+<div class="mmenu" id="mmenu">
+  <a href="/landingpage">Accueil</a>
+  <a href="/landingpage/biens">Nos biens</a>
+  <a href="/landingpage/vendre">Vendre / Estimation</a>
+  <a href="/landingpage/acheter">Acheter / Alerte</a>
+  <a href="/landingpage/agence">L'agence</a>
+  <a href="/blog/" class="active">Blog</a>
+  <a href="/landingpage/contact">Contact</a>
 </div></header>`;
 
 const FOOTER = `<footer class="site"><div class="wrap">
@@ -40,7 +50,7 @@ const FOOTER = `<footer class="site"><div class="wrap">
     <a href="/landingpage/contact">Contact</a>
   </nav>
   <p class="fcopy">© <span id="y"></span> TBEECOM — Transmission de fonds de commerce</p>
-  <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+  <script>document.getElementById('y').textContent=new Date().getFullYear();(function(){var b=document.querySelector('.burger'),m=document.getElementById('mmenu');if(b&&m){b.addEventListener('click',function(){var o=m.classList.toggle('open');b.setAttribute('aria-expanded',o);});}})();</script>
 </div></footer>`;
 
 const CTA = `<div class="cta"><div class="wrap">

@@ -70,3 +70,12 @@ footer.site .fcopy{margin:0;color:hsl(var(--primary-fg)/.7)}
 .nav a.active{color:hsl(var(--accent))}
 .hero h1,.pillar h2,article h2,article h3{font-family:'Playfair Display',Georgia,serif}
 @media (max-width:900px){header.site .nav{display:none}}
+
+.burger{display:none;flex-direction:column;justify-content:center;gap:5px;width:42px;height:42px;border:0;background:transparent;cursor:pointer;padding:9px}
+.burger span{display:block;height:2px;background:hsl(var(--primary));border-radius:2px}
+.mmenu{display:none;border-top:1px solid hsl(var(--border));background:hsl(var(--card))}
+.mmenu a{display:block;padding:13px 24px;text-decoration:none;color:hsl(var(--fg)/.85);font-size:15px;border-bottom:1px solid hsl(var(--border)/.5)}
+.mmenu a.active{color:hsl(var(--accent))}
+.mmenu.open{display:block}
+@media (max-width:900px){.burger{display:flex}}
+@media (min-width:901px){.mmenu{display:none!important}}
