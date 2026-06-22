@@ -9,6 +9,7 @@ const NAV = [
   { to: "/landingpage/vendre", label: "Vendre / Estimation" },
   { to: "/landingpage/acheter", label: "Acheter / Alerte" },
   { to: "/landingpage/agence", label: "L'agence" },
+  { to: "/landingpage/blog", label: "Blog" },
   { to: "/landingpage/contact", label: "Contact" },
 ];
 
