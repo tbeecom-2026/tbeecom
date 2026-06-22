@@ -23,7 +23,7 @@ export default function PublicLayout() {
       <header className="sticky top-0 z-40 bg-background/85 backdrop-blur border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <Link to="/landingpage" className="flex items-center">
-            <img src="/logo-tbeecom.png" alt="TBEECOM" className="h-12 w-auto" />
+            <img src="/LOGO_TBC_Sans.png" alt="TBEECOM" className="h-12 w-auto" />
           </Link>
           <nav className="hidden lg:flex items-center gap-1">
             {NAV.map(n => (
