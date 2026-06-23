@@ -217,7 +217,7 @@ export default function NosBiens() {
             )}
           </div>
 
-          <aside>
+          <aside className="order-first lg:order-none">
             <div className="lg:sticky lg:top-24 space-y-2">
               <div>
                 <h3 className="font-display text-lg text-primary">Baromètre des cessions</h3>
