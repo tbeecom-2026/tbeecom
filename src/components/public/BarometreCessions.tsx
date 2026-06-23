@@ -207,10 +207,10 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
 
       {/* Panneau détail (département sélectionné) */}
       {selected && (
-        <div className="absolute inset-2 z-[500] flex flex-col rounded-lg bg-primary p-3 shadow-lg">
+        <div className="absolute inset-2 z-[500] flex flex-col rounded-lg bg-primary p-3 shadow-lg text-right">
           <button
             onClick={backToFrance}
-            className="mb-2 inline-flex w-fit items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-sm font-semibold text-accent-foreground hover:bg-accent/90"
+            className="mb-2 inline-flex self-end items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-sm font-semibold text-accent-foreground hover:bg-accent/90"
           >
             ← Voir toute la France
           </button>
