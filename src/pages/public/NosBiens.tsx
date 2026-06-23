@@ -217,8 +217,8 @@ export default function NosBiens() {
             )}
           </div>
 
-          <aside className="hidden lg:block">
-            <div className="sticky top-24 space-y-2">
+          <aside>
+            <div className="lg:sticky lg:top-24 space-y-2">
               <div>
                 <h3 className="font-display text-lg text-primary">Baromètre des cessions</h3>
                 <p className="text-xs text-muted-foreground">
