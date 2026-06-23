@@ -207,22 +207,22 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
 
       {/* Panneau détail (département sélectionné) */}
       {selected && (
-        <div className="absolute inset-2 z-[500] flex flex-col rounded-lg bg-background/97 p-3 shadow-lg">
+        <div className="absolute inset-2 z-[500] flex flex-col rounded-lg bg-primary p-3 shadow-lg">
           <button
             onClick={backToFrance}
             className="mb-2 inline-flex w-fit items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-sm font-semibold text-accent-foreground hover:bg-accent/90"
           >
             ← Voir toute la France
           </button>
-          <h4 className="font-display text-lg text-primary leading-tight">
+          <h4 className="font-display text-lg text-primary-foreground leading-tight">
             {selected.nom} ({selected.code})
           </h4>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-primary-foreground/80">
             {countsRef.current[selected.code] ?? 0} cession{(countsRef.current[selected.code] ?? 0) > 1 ? "s" : ""} sur 12 mois
           </p>
           <div className="mt-2 flex-1 space-y-1 overflow-auto">
             {loadingDetail ? (
-              <p className="text-xs text-muted-foreground">Chargement…</p>
+              <p className="text-xs text-primary-foreground/80">Chargement…</p>
             ) : cessions && cessions.length > 0 ? (
               cessions.map((c, i) => (
                 <div key={i} className="rounded border border-border bg-card px-2 py-1.5 text-xs">
@@ -233,10 +233,10 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
                 </div>
               ))
             ) : (
-              <p className="text-xs text-muted-foreground">Aucune cession récente trouvée.</p>
+              <p className="text-xs text-primary-foreground/80">Aucune cession récente trouvée.</p>
             )}
           </div>
-          <p className="mt-1 text-[10px] text-muted-foreground">Source : BODACC (annonces de cessions).</p>
+          <p className="mt-1 text-[10px] text-primary-foreground/60">Source : BODACC (annonces de cessions).</p>
         </div>
       )}
 
