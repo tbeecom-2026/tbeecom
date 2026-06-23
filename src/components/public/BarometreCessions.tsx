@@ -123,9 +123,9 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
   function baseStyle(feature: any) {
     return {
       fillColor: colorFor(feature?.properties?.code),
-      weight: 1,
+      weight: 0.7,
       color: "#ffffff",
-      fillOpacity: 0.85,
+      fillOpacity: 0.8,
     };
   }
 
@@ -142,8 +142,9 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
 
         const map = L.map(ref.current, { scrollWheelZoom: false, zoomControl: true, attributionControl: true }).setView([46.6, 2.4], 5);
         mapRef.current = map;
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "&copy; OpenStreetMap — cessions : BODACC",
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png", {
+          subdomains: "abcd",
+          attribution: "&copy; OpenStreetMap &copy; CARTO — cessions : BODACC",
           maxZoom: 12,
         }).addTo(map);
 
@@ -155,7 +156,10 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
             const nb = countsRef.current[code];
             lyr.bindTooltip(`${nom} (${code}) — ${nb ?? 0} cession${(nb ?? 0) > 1 ? "s" : ""} / 12 mois`, { sticky: true });
             lyr.on({
-              mouseover: () => lyr.setStyle({ weight: 2, color: "#334155" }),
+              mouseover: () => {
+                lyr.setStyle({ weight: 2, color: "#1e293b" });
+                lyr.bringToFront();
+              },
               mouseout: () => geoRef.current && geoRef.current.resetStyle(lyr),
               click: () => {
                 map.fitBounds(lyr.getBounds(), { padding: [20, 20], maxZoom: 9 });
@@ -185,6 +189,15 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
     <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
       <div ref={ref} style={{ height, width: "100%" }} />
 
+      {selected && (
+        <button
+          onClick={backToFrance}
+          className="absolute left-4 top-4 z-[500] inline-flex items-center gap-1 rounded-full bg-background/95 px-4 py-2 text-sm font-semibold text-primary shadow-lg ring-1 ring-border hover:bg-background"
+        >
+          ← Voir toute la France
+        </button>
+      )}
+
       {/* Légende (vue France) */}
       {!selected && status === "ready" && (
         <div className="absolute bottom-4 left-4 z-[500] rounded-lg bg-background/95 px-3 py-2 text-xs shadow">
@@ -202,12 +215,6 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
       {/* Panneau détail (département sélectionné) */}
       {selected && (
         <div className="absolute right-4 top-4 z-[500] w-72 max-w-[80%] rounded-lg bg-background/97 p-4 shadow-lg">
-          <button
-            onClick={backToFrance}
-            className="mb-2 text-sm font-medium text-accent hover:underline"
-          >
-            ← Retour à la France
-          </button>
           <h4 className="font-display text-lg text-primary">
             {selected.nom} ({selected.code})
           </h4>
