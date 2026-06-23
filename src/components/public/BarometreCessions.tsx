@@ -116,7 +116,7 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
   function backToFrance() {
     setSelected(null);
     setCessions(null);
-    if (mapRef.current) mapRef.current.setView([46.6, 2.4], 5);
+    if (mapRef.current) mapRef.current.flyTo([46.6, 2.4], 5, { duration: 0.8 });
     if (geoRef.current) geoRef.current.setStyle((f: any) => baseStyle(f));
   }
 
@@ -163,14 +163,16 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
               },
               mouseout: () => geoRef.current && geoRef.current.resetStyle(lyr),
               click: () => {
-                map.fitBounds(lyr.getBounds(), { padding: [20, 20], maxZoom: 9 });
-                setSelected({ code, nom });
                 setLoadingDetail(true);
                 setCessions(null);
                 fetchCessions(code)
                   .then((cs) => !cancelled && setCessions(cs))
                   .catch(() => !cancelled && setCessions([]))
                   .finally(() => !cancelled && setLoadingDetail(false));
+                map.flyToBounds(lyr.getBounds(), { padding: [20, 20], maxZoom: 9, duration: 0.8 });
+                window.setTimeout(() => {
+                  if (!cancelled) setSelected({ code, nom });
+                }, 850);
               },
             });
           },
