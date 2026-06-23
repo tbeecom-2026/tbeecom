@@ -52,4 +52,7 @@ export const ARTICLES = [
   { slug: "clientele-achalandage-valeur", pillar: "fonds",
     title: "Clientèle et achalandage : le cœur de la valeur d'un fonds",
     description: "Clientèle et achalandage : comprendre la différence, pourquoi la clientèle est l'élément essentiel du fonds de commerce et comment elle détermine la valeur d'un commerce." },
+  { slug: "ceder-droit-au-bail", pillar: "bail",
+    title: "Céder son droit au bail : procédure et points de vigilance",
+    description: "Céder son droit au bail seul : différence avec la vente du fonds, clauses du bail (agrément, garantie solidaire), rôle du bailleur et de la commune, droits d'enregistrement et points de vigilance." },
 ];
