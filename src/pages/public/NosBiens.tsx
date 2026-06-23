@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
-import { Search, BellRing } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import BienCard from "@/components/public/BienCard";
 import { distinctValues, listPublicBiens, type PublicBien } from "@/lib/publicBiens";
 import { departementLabel } from "@/lib/departements";
+import BarometreCessions from "@/components/public/BarometreCessions";
 
 const PAGE_SIZE = 12;
 
@@ -165,7 +166,7 @@ export default function NosBiens() {
       </section>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div className="grid gap-6 lg:grid-cols-[1fr,360px]">
+        <div className="grid gap-6 lg:grid-cols-[1fr,420px]">
           <div>
             <div className="mb-4 flex items-baseline justify-between">
               <p className="text-sm text-muted-foreground">
@@ -217,22 +218,14 @@ export default function NosBiens() {
           </div>
 
           <aside className="hidden lg:block">
-            <div className="sticky top-24 rounded-xl border border-border bg-card overflow-hidden">
-              <div className="aspect-[4/5] bg-gradient-to-br from-secondary/30 via-muted to-accent/10 relative">
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
-                  <BellRing className="h-10 w-10 text-accent" />
-                  <h3 className="mt-3 font-display text-xl text-primary">Créez une alerte acquéreur</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Recevez en avant-première les commerces à céder correspondant à vos critères, en toute discrétion.
-                  </p>
-                  <Link
-                    to="/landingpage/acheter"
-                    className="mt-4 inline-flex items-center justify-center rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground hover:bg-accent/90"
-                  >
-                    Être alerté
-                  </Link>
-                </div>
+            <div className="sticky top-24 space-y-2">
+              <div>
+                <h3 className="font-display text-lg text-primary">Baromètre des cessions</h3>
+                <p className="text-xs text-muted-foreground">
+                  Où se vendent les commerces en France — 12 derniers mois. Cliquez sur un département. (Source : BODACC)
+                </p>
               </div>
+              <BarometreCessions height={460} />
             </div>
           </aside>
         </div>
