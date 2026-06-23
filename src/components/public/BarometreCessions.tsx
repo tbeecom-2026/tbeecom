@@ -142,6 +142,7 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
 
         const map = L.map(ref.current, { scrollWheelZoom: false, zoomControl: true, attributionControl: true }).setView([46.6, 2.4], 5);
         mapRef.current = map;
+        map.attributionControl.setPrefix(false); // retire le lien Leaflet + drapeau
         L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png", {
           subdomains: "abcd",
           attribution: "&copy; OpenStreetMap &copy; CARTO — cessions : BODACC",
