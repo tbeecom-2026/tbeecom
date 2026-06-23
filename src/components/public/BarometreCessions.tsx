@@ -140,14 +140,14 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
         const q = (p: number) => (vals.length ? vals[Math.min(vals.length - 1, Math.floor(vals.length * p))] : 0);
         quantsRef.current = [q(0.2), q(0.4), q(0.6), q(0.8)];
 
-        const map = L.map(ref.current, { scrollWheelZoom: false, zoomControl: true, attributionControl: true }).setView([46.6, 2.4], 5);
+        const map = L.map(ref.current, { scrollWheelZoom: false, zoomControl: true, attributionControl: false }).setView([46.6, 2.4], 5);
         mapRef.current = map;
-        map.attributionControl.setPrefix(false); // retire le lien Leaflet + drapeau
         L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png", {
           subdomains: "abcd",
           attribution: "&copy; OpenStreetMap &copy; CARTO — cessions : BODACC",
           maxZoom: 12,
         }).addTo(map);
+        L.control.attribution({ prefix: false }).addTo(map);
 
         const layer = L.geoJSON(geo, {
           style: baseStyle,
@@ -190,14 +190,6 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
     <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
       <div ref={ref} style={{ height, width: "100%" }} />
 
-      {selected && (
-        <button
-          onClick={backToFrance}
-          className="absolute left-4 top-4 z-[500] inline-flex items-center gap-1 rounded-full bg-background/95 px-4 py-2 text-sm font-semibold text-primary shadow-lg ring-1 ring-border hover:bg-background"
-        >
-          ← Voir toute la France
-        </button>
-      )}
 
       {/* Légende (vue France) */}
       {!selected && status === "ready" && (
@@ -215,14 +207,20 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
 
       {/* Panneau détail (département sélectionné) */}
       {selected && (
-        <div className="absolute right-4 top-4 z-[500] w-72 max-w-[80%] rounded-lg bg-background/97 p-4 shadow-lg">
-          <h4 className="font-display text-lg text-primary">
+        <div className="absolute inset-2 z-[500] flex flex-col rounded-lg bg-background/97 p-3 shadow-lg">
+          <button
+            onClick={backToFrance}
+            className="mb-2 inline-flex w-fit items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-sm font-semibold text-accent-foreground hover:bg-accent/90"
+          >
+            ← Voir toute la France
+          </button>
+          <h4 className="font-display text-lg text-primary leading-tight">
             {selected.nom} ({selected.code})
           </h4>
           <p className="text-xs text-muted-foreground">
             {countsRef.current[selected.code] ?? 0} cession{(countsRef.current[selected.code] ?? 0) > 1 ? "s" : ""} sur 12 mois
           </p>
-          <div className="mt-3 max-h-64 space-y-1 overflow-auto">
+          <div className="mt-2 flex-1 space-y-1 overflow-auto">
             {loadingDetail ? (
               <p className="text-xs text-muted-foreground">Chargement…</p>
             ) : cessions && cessions.length > 0 ? (
@@ -238,7 +236,7 @@ export default function BarometreCessions({ height = 520 }: { height?: number })
               <p className="text-xs text-muted-foreground">Aucune cession récente trouvée.</p>
             )}
           </div>
-          <p className="mt-2 text-[10px] text-muted-foreground">Source : BODACC (annonces de cessions).</p>
+          <p className="mt-1 text-[10px] text-muted-foreground">Source : BODACC (annonces de cessions).</p>
         </div>
       )}
 
