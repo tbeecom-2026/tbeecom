@@ -112,18 +112,29 @@
         "titre": "Bail & murs",
         "champs": [
           { "key": "loyer_annuel", "label": "Loyer annuel", "type": "number", "unite": "EUR", "stockage": "attributs" },
+          { "key": "loyer_tva_regime", "label": "Régime TVA du loyer", "type": "select", "stockage": "attributs", "options": ["HT (hors taxes)", "TTC (toutes taxes comprises)", "Sans TVA (non assujetti)"], "aide": "Précise si le loyer saisi est HT, TTC ou sans TVA." },
+          { "key": "charges_annuelles", "label": "Charges annuelles", "type": "number", "unite": "EUR", "stockage": "attributs", "aide": "Montant annuel des charges locatives." },
+          { "key": "charges_details", "label": "Détail des charges", "type": "textarea", "stockage": "attributs", "aide": "Ex: eau, électricité, chauffage, charges de copropriété, ordures ménagères..." },
+          { "key": "taxe_fonciere_montant", "label": "Taxe foncière (annuelle)", "type": "number", "unite": "EUR", "stockage": "attributs" },
+          { "key": "taxe_fonciere_charge", "label": "Taxe foncière à charge de", "type": "select", "stockage": "attributs", "options": ["Bailleur", "Locataire", "Partagée"] },
           { "key": "bail_annees_restantes", "label": "Annees restantes du bail", "type": "number", "unite": "annees", "stockage": "attributs" },
           { "key": "bail_destination", "label": "Destination du bail", "type": "text", "stockage": "attributs", "aide": "Activites autorisees par le bail." },
           { "key": "depot_garantie", "label": "Depot de garantie", "type": "number", "unite": "EUR", "stockage": "attributs" },
           { "key": "murs_a_vendre", "label": "Murs a vendre", "type": "boolean", "colonne": "murs_a_vendre" },
           { "key": "prix_murs", "label": "Prix des murs", "type": "number", "unite": "EUR", "colonne": "prix_murs", "affiche_si": "murs_a_vendre = true" },
-          { "key": "logement_attache", "label": "Logement de fonction attache", "type": "boolean", "stockage": "attributs" }
+          { "key": "murs_meme_proprietaire", "label": "Le propriétaire du fonds est-il propriétaire des murs ?", "type": "select", "stockage": "attributs", "options": ["Oui", "Non", "Indivision / partiel"] },
+          { "key": "logement_attache", "label": "Logement de fonction attaché", "type": "boolean", "stockage": "attributs" },
+          { "key": "logement_type", "label": "Type de logement", "type": "select", "stockage": "attributs", "options": ["Appartement", "Maison"], "affiche_si": "logement_attache = true" },
+          { "key": "logement_typologie", "label": "Typologie du logement", "type": "select", "stockage": "attributs", "options": ["Studio / T1", "T2", "T3", "T4", "T5 et +"], "affiche_si": "logement_attache = true" },
+          { "key": "logement_etat", "label": "État du logement", "type": "select", "stockage": "attributs", "options": ["Neuf / récent", "Bon état", "À rafraîchir", "À rénover"], "affiche_si": "logement_attache = true" }
         ]
       },
       {
         "titre": "Exploitation",
         "champs": [
           { "key": "horaires_ouverture", "label": "Horaires / jours d'ouverture", "type": "textarea", "colonne": "horaires_ouverture" },
+          { "key": "conges_annuels", "label": "Congés annuels / fermeture annuelle", "type": "text", "stockage": "attributs", "aide": "Ex: 3 semaines en août + 1 semaine à Noël." },
+          { "key": "accessibilite_pmr", "label": "Accessibilité handicapés (normes PMR / ERP)", "type": "select", "stockage": "attributs", "options": ["Conforme", "Non conforme", "Dérogation obtenue", "À vérifier"] },
           { "key": "type_mandat", "label": "Type de mandat", "type": "select", "colonne": "type_mandat", "options": ["Simple", "Exclusif", "Semi-exclusif", "Delegation"] },
           { "key": "statut", "label": "Statut commercial", "type": "select", "colonne": "statut", "options": ["Prospection", "Sur le marche", "Sous compromis", "Vendu", "Retire", "Archive"] }
         ]
