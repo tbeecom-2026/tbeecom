@@ -8,7 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Calculator, Loader2, FileText, AlertTriangle, Search, CheckCircle2, Building2, X, UserPlus, Save } from "lucide-react";
+import { Calculator, Loader2, FileText, AlertTriangle, Search, CheckCircle2, Building2, X, UserPlus, Save, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAgence } from "@/lib/agence";
@@ -41,6 +42,18 @@ const NOTES = [
   { v: 2, l: "Très favorable" }, { v: 1, l: "Favorable" }, { v: 0, l: "Neutre" },
   { v: -1, l: "Défavorable" }, { v: -2, l: "Très défavorable" },
 ];
+const CRITERE_AIDE: Record<string, string> = {
+  emplacement: "Qualité de l'emplacement et du passage (flux piéton, visibilité, accès, stationnement).\n• Très favorable : emplacement n°1, rue très passante, grande visibilité.\n• Neutre : rue commerçante correcte, passage moyen.\n• Défavorable : emplacement secondaire, peu de passage, accès/parking difficiles.",
+  evolution_ca: "Tendance du chiffre d'affaires sur les 3 dernières années.\n• Très favorable : croissance nette et régulière (> +5 %/an).\n• Neutre : CA stable.\n• Défavorable : baisse marquée ou en dents de scie.",
+  rentabilite: "Marge d'EBE retraité rapportée au CA, comparée à la norme du métier (souvent 10–20 % du CA).\n• Très favorable : nettement au-dessus de la moyenne du secteur.\n• Neutre : dans la moyenne.\n• Défavorable : rentabilité faible ou nulle.",
+  qualite_bail: "Solidité et souplesse du bail : durée restante, destination, clauses, niveau de loyer.\n• Très favorable : bail récent, longue durée devant soi, destination « tous commerces », pas de clause pénalisante.\n• Neutre : bail classique sans particularité.\n• Défavorable : bail proche du terme, destination étroite, clauses contraignantes, risque de non-renouvellement.",
+  taux_effort: "Poids du loyer (loyer + charges + taxe foncière) sur le CA.\n• Très favorable : bien en dessous du seuil du métier, le local « respire ».\n• Neutre : dans la norme (≈ 8–12 %).\n• Défavorable : au-dessus du seuil (> 12–15 %), le loyer pèse trop.",
+  dependance_exploitant: "L'affaire tourne-t-elle sans le patron ? (clientèle liée à l'enseigne ou à la personne).\n• Très favorable : clientèle fidèle au lieu/à l'enseigne, tout est transmissible sans perte.\n• Neutre : dépendance modérée au dirigeant.\n• Défavorable : tout repose sur le savoir-faire ou la personnalité du dirigeant (la clientèle risque de partir à la vente).",
+  etat_materiel: "État et âge du matériel et du local, travaux et mises aux normes à prévoir.\n• Très favorable : matériel récent, local aux normes, rien à refaire.\n• Neutre : entretien correct, quelques postes à surveiller.\n• Défavorable : matériel vétuste, local à rénover, mises aux normes coûteuses.",
+  concurrence: "Intensité de la concurrence et barrières à l'entrée (licence IV, agrément, exclusivité, emplacement rare).\n• Très favorable : peu de concurrence + barrières protectrices (licence, agrément, savoir-faire rare).\n• Neutre : concurrence normale.\n• Défavorable : forte concurrence, aucune barrière, facilement copiable à côté.",
+  main_oeuvre: "Une équipe formée qui reste facilite la reprise.\n• Très favorable : personnel compétent, ancien, qui reste après la vente.\n• Neutre : petite équipe, situation stable.\n• Défavorable : mono-exploitant sans salarié, ou fort turn-over, savoir-faire non transmis.",
+  notoriete: "Réputation (avis, bouche-à-oreille) et revenus récurrents (contrats B2B, abonnements, livraisons régulières).\n• Très favorable : excellente réputation + contrats récurrents qui sécurisent le CA.\n• Neutre : réputation correcte, peu de récurrent.\n• Défavorable : peu connu, aucun revenu récurrent, CA volatil.",
+};
 const ZONES = Object.keys(COEF_ZONE) as ZoneGeo[];
 const fiabColor: Record<ResultatEstimation["fiabilite"], string> = {
   faible: "bg-red-700 text-white", moyenne: "bg-amber-600 text-white", bonne: "bg-emerald-700 text-white",
@@ -402,15 +415,25 @@ export default function Estimation() {
       <Card className="bg-slate-800 border-slate-700">
         <CardHeader><CardTitle className="text-base">Grille d'appréciation (place la valeur dans le barème)</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <TooltipProvider delayDuration={100}>
           {CRITERES_SCORE.map((c) => (
             <div key={c.key} className="flex items-center justify-between gap-3">
-              <Label className="text-xs flex-1">{c.label}</Label>
+              <Label className="text-xs flex-1 flex items-center gap-1">
+                {c.label}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button type="button" className="text-slate-500 hover:text-slate-200"><Info className="h-3.5 w-3.5" /></button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs whitespace-pre-line leading-relaxed">{CRITERE_AIDE[c.key]}</TooltipContent>
+                </Tooltip>
+              </Label>
               <Select value={String(scores[c.key])} onValueChange={(v) => setScore(c.key, Number(v))}>
                 <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
                 <SelectContent>{NOTES.map((n) => <SelectItem key={n.v} value={String(n.v)}>{n.l}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           ))}
+          </TooltipProvider>
         </CardContent>
       </Card>
 
