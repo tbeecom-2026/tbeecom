@@ -151,6 +151,18 @@ export default function AcquereurDetail() {
           </Card>
 
           <Card>
+            <CardHeader><CardTitle>Descriptif du bien recherché</CardTitle></CardHeader>
+            <CardContent>
+              <Textarea
+                value={recherche.observations ?? ""}
+                onChange={(e) => updateRecherche("observations", e.target.value)}
+                rows={4}
+                placeholder="Nature et caractéristiques du bien recherché : type de commerce, activité, emplacement souhaité, surface, budget, particularités…"
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
             <CardHeader><CardTitle>Zone géographique</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Field label="Villes (séparées par des virgules)"><Input value={recherche.villes?.join(", ") ?? ""} onChange={(e) => updateRecherche("villes", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} /></Field>
