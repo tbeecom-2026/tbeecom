@@ -92,12 +92,12 @@ export default function Estimation() {
   const [autresRetraitements, setAutresRetraitements] = useState("");
   // Bail
   const [loyer, setLoyer] = useState("");
-  const [loyerTVA, setLoyerTVA] = useState<"HT" | "TTC">("HT");
+  const [loyerTVA, setLoyerTVA] = useState<"HT" | "TTC" | "Sans">("HT");
   const [charges, setCharges] = useState("");
   const [taxeFonciere, setTaxeFonciere] = useState("");
   const [dureeBail, setDureeBail] = useState("");
   const [vlm, setVlm] = useState("");
-  const [vlmTVA, setVlmTVA] = useState<"HT" | "TTC">("HT");
+  const [vlmTVA, setVlmTVA] = useState<"HT" | "TTC" | "Sans">("HT");
   const [materiel, setMateriel] = useState("");
 
   const [scores, setScores] = useState<Record<CritereKey, number>>(
@@ -216,7 +216,7 @@ export default function Estimation() {
         ebeComptable: num(ebe), reintegrationRemunerationDirigeant: num(remuReintegree),
         salaireDirigeantNormatif: num(salaireNormatif), proprietaireMurs, loyerMarcheSiProprietaire: num(loyerMarcheMurs),
         autresRetraitements: num(autresRetraitements), loyerAnnuel: num(loyer), chargesAnnuelles: num(charges),
-        taxeFonciere: num(taxeFonciere), dureeRestanteAnnees: num(dureeBail), valeurLocativeMarcheAnnuelle: num(vlm),
+        taxeFonciere: num(taxeFonciere), dureeRestanteAnnees: num(dureeBail) != null ? Number((num(dureeBail)! / 12).toFixed(2)) : null, valeurLocativeMarcheAnnuelle: num(vlm),
         valeurMaterielAjoutee: num(materiel), comparableMedian, zone, scores,
       };
       setEntree(ent); setRes(estimer(ent));
@@ -381,17 +381,17 @@ export default function Estimation() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1"><Label className="text-xs">Loyer annuel</Label>
               <div className="flex gap-2"><Input value={loyer} onChange={(e) => setLoyer(e.target.value)} inputMode="numeric" placeholder="30000" />
-                <Select value={loyerTVA} onValueChange={(v) => setLoyerTVA(v as any)}><SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="HT">HT</SelectItem><SelectItem value="TTC">TTC</SelectItem></SelectContent></Select></div></div>
+                <Select value={loyerTVA} onValueChange={(v) => setLoyerTVA(v as any)}><SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="HT">HT</SelectItem><SelectItem value="TTC">TTC</SelectItem><SelectItem value="Sans">Pas de TVA</SelectItem></SelectContent></Select></div></div>
             {N("Charges annuelles", charges, setCharges)}
             {N("Taxe foncière annuelle", taxeFonciere, setTaxeFonciere)}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {N("Durée restante du bail (années)", dureeBail, setDureeBail, "6")}
+            {N("Durée restante du bail (mois)", dureeBail, setDureeBail, "72")}
             <div className="space-y-1"><Label className="text-xs">Valeur locative de marché (loyer annuel)</Label>
               <div className="flex gap-2"><Input value={vlm} onChange={(e) => setVlm(e.target.value)} inputMode="numeric" placeholder="32000" />
-                <Select value={vlmTVA} onValueChange={(v) => setVlmTVA(v as any)}><SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="HT">HT</SelectItem><SelectItem value="TTC">TTC</SelectItem></SelectContent></Select></div></div>
+                <Select value={vlmTVA} onValueChange={(v) => setVlmTVA(v as any)}><SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="HT">HT</SelectItem><SelectItem value="TTC">TTC</SelectItem><SelectItem value="Sans">Pas de TVA</SelectItem></SelectContent></Select></div></div>
             {N("Valeur du matériel à ajouter (optionnel)", materiel, setMateriel)}
           </div>
           <p className="text-[11px] text-slate-500">Loyer et valeur locative comparés sur la même base (HT conseillé). Un loyer sous le marché crée un droit au bail ; un bail proche du terme fait courir un risque de déplafonnement.</p>
