@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Check, Calculator, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Check, Calculator, AlertTriangle, ExternalLink } from "lucide-react";
 import { formatDate, formatEuros, getStatutBadge } from "@/lib/formatters";
 import { getMandatDateState, getVenduClass } from "@/lib/mandatStatus";
 import type { Mandat } from "@/types/database";
@@ -126,6 +126,7 @@ export default function MandatDetail() {
   const [mandat, setMandat] = useState<Mandat | null>(null);
   const [loading, setLoading] = useState(true);
   const [acquereurs, setAcquereurs] = useState<any[]>([]);
+  const [mandantContact, setMandantContact] = useState<any>(null);
   useEffect(() => {
     if (!id) return;
     (async () => {
@@ -137,6 +138,22 @@ export default function MandatDetail() {
         .select("*, recherche:recherches(*, contact:contacts(*))")
         .eq("mandat_id", id);
       setAcquereurs((rapps as any[]) ?? []);
+      // Contact du mandant / propriétaire : via mandat_vendeurs, sinon repli par email
+      let mc: any = null;
+      const { data: mv } = await supabase
+        .from("mandat_vendeurs")
+        .select("*, contact:contacts(*)")
+        .eq("mandat_id", id);
+      if (mv && mv.length) mc = (mv[0] as any).contact ?? null;
+      if (!mc && (data as any)?.proprietaire_email) {
+        const { data: byEmail } = await supabase
+          .from("contacts")
+          .select("*")
+          .eq("email", (data as any).proprietaire_email)
+          .limit(1);
+        if (byEmail && byEmail.length) mc = byEmail[0];
+      }
+      setMandantContact(mc);
       setLoading(false);
     })();
   }, [id]);
@@ -340,7 +357,25 @@ export default function MandatDetail() {
       </InfoCard>
       {/* 9. PROPRIÉTAIRE / VENDEUR */}
       <InfoCard title="Propriétaire / Vendeur">
-        <Row label="Nom" value={m.proprietaire_nom} />
+        <Row
+          label="Nom"
+          value={
+            mandantContact ? (
+              <button
+                type="button"
+                onClick={() => navigate(`/contacts/${mandantContact.id}`)}
+                className="text-primary hover:underline inline-flex items-center gap-1 text-left"
+              >
+                {m.proprietaire_nom ||
+                  `${mandantContact.nom ?? ""} ${mandantContact.prenom ?? ""}`.trim() ||
+                  "Voir la fiche"}
+                <ExternalLink className="h-3 w-3 shrink-0" />
+              </button>
+            ) : (
+              m.proprietaire_nom
+            )
+          }
+        />
         <Row label="Société" value={m.proprietaire_societe} />
         <Row
           label="Email"
