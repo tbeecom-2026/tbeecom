@@ -1,0 +1,6815 @@
+{
+ "_meta": {
+  "titre": "Barème statistique d'évaluation des fonds de commerce (% du CA HT)",
+  "source": "www.evaluation-fonds-de-commerce.fr — Traité d'évaluation des fonds de commerce (Le Moniteur)",
+  "date_maj_source": "2026-07-02",
+  "note": "ratio_moyen/q1/q3 exprimés en % du CA HT. Q1-Q3 = fourchette où se situent 50% des mutations (dispersion statistique nationale, à resserrer par le scoring). refs = nombre de références de la statistique.",
+  "usage": "Base de la méthode A (% du CA) du moteur d'estimation. L'utilisateur choisit l'activité précise ; 'famille' sert au pré-remplissage depuis la fiche du bien."
+ },
+ "activites": [
+  {
+   "activite": "Accessoires automobiles",
+   "naf": [
+    "4532Z",
+    "4792G",
+    "4782Y"
+   ],
+   "ratio_moyen_pct_ca": 30.0,
+   "q1_pct_ca": 13.07,
+   "q3_pct_ca": 41.06,
+   "refs": 107,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Activités de plein air",
+   "naf": [
+    "9329Z",
+    "9329Y",
+    "8425Y",
+    "9311Y",
+    "9312Y",
+    "9319Y",
+    "9699H"
+   ],
+   "ratio_moyen_pct_ca": 75.9,
+   "q1_pct_ca": 26.04,
+   "q3_pct_ca": 93.04,
+   "refs": 104,
+   "famille": "autre"
+  },
+  {
+   "activite": "Agence de publicité",
+   "naf": [
+    "7311Z",
+    "7311Y"
+   ],
+   "ratio_moyen_pct_ca": 48.3,
+   "q1_pct_ca": 11.22,
+   "q3_pct_ca": 44.03,
+   "refs": 92,
+   "famille": "autre"
+  },
+  {
+   "activite": "Agence de voyages",
+   "naf": [
+    "7911Z",
+    "5232Y",
+    "5540Y",
+    "7751Y",
+    "7911Y"
+   ],
+   "ratio_moyen_pct_ca": 47.8,
+   "q1_pct_ca": 15.98,
+   "q3_pct_ca": 64.12,
+   "refs": 87,
+   "famille": "autre"
+  },
+  {
+   "activite": "Agence immobilière",
+   "naf": [
+    "6831Z",
+    "6831Y",
+    "6832H"
+   ],
+   "ratio_moyen_pct_ca": 40.8,
+   "q1_pct_ca": 13.98,
+   "q3_pct_ca": 49.42,
+   "refs": 828,
+   "famille": "autre"
+  },
+  {
+   "activite": "Agences de rencontres",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Agent immobilier",
+   "naf": [
+    "6831Z",
+    "6831Y",
+    "6832H"
+   ],
+   "ratio_moyen_pct_ca": 40.8,
+   "q1_pct_ca": 13.98,
+   "q3_pct_ca": 49.42,
+   "refs": 828,
+   "famille": "autre"
+  },
+  {
+   "activite": "Aide à domicile",
+   "naf": [
+    "8810A",
+    "8810G"
+   ],
+   "ratio_moyen_pct_ca": 28.0,
+   "q1_pct_ca": 14.11,
+   "q3_pct_ca": 35.36,
+   "refs": 32,
+   "famille": "autre"
+  },
+  {
+   "activite": "Alarmes (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Alimentation générale",
+   "naf": [
+    "4711B",
+    "4791Y",
+    "4711G"
+   ],
+   "ratio_moyen_pct_ca": 39.9,
+   "q1_pct_ca": 19.67,
+   "q3_pct_ca": 44.41,
+   "refs": 636,
+   "famille": "autre"
+  },
+  {
+   "activite": "Alimentation générale (< 120m²)",
+   "naf": [
+    "4711B",
+    "4791Y",
+    "4711G"
+   ],
+   "ratio_moyen_pct_ca": 39.9,
+   "q1_pct_ca": 19.67,
+   "q3_pct_ca": 44.41,
+   "refs": 636,
+   "famille": "autre"
+  },
+  {
+   "activite": "Aliments pour animaux (commerce de détail)",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Ambulances (réparation)",
+   "naf": [
+    "4520B",
+    "9540Y",
+    "9531H"
+   ],
+   "ratio_moyen_pct_ca": 24.4,
+   "q1_pct_ca": 8.52,
+   "q3_pct_ca": 34.0,
+   "refs": 26,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Ambulances (transport)",
+   "naf": [
+    "8690A",
+    "8692Y"
+   ],
+   "ratio_moyen_pct_ca": 50.3,
+   "q1_pct_ca": 20.31,
+   "q3_pct_ca": 67.91,
+   "refs": 181,
+   "famille": "autre"
+  },
+  {
+   "activite": "Ambulances (vente de)",
+   "naf": [
+    "4511Z",
+    "4618Y",
+    "4671G",
+    "4781Y",
+    "4792G"
+   ],
+   "ratio_moyen_pct_ca": 32.3,
+   "q1_pct_ca": 10.37,
+   "q3_pct_ca": 35.36,
+   "refs": 391,
+   "famille": "autre"
+  },
+  {
+   "activite": "American Bar",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Ameublement",
+   "naf": [
+    "4759A",
+    "4792J",
+    "4755G"
+   ],
+   "ratio_moyen_pct_ca": 26.4,
+   "q1_pct_ca": 11.51,
+   "q3_pct_ca": 30.87,
+   "refs": 190,
+   "famille": "autre"
+  },
+  {
+   "activite": "Aménagement paysager",
+   "naf": [
+    "8130Z",
+    "8130Y"
+   ],
+   "ratio_moyen_pct_ca": 38.7,
+   "q1_pct_ca": 10.28,
+   "q3_pct_ca": 43.71,
+   "refs": 127,
+   "famille": "autre"
+  },
+  {
+   "activite": "Andouillettes, préparation artisanale",
+   "naf": [
+    "1013B",
+    "1013H"
+   ],
+   "ratio_moyen_pct_ca": 34.6,
+   "q1_pct_ca": 17.13,
+   "q3_pct_ca": 45.3,
+   "refs": 85,
+   "famille": "autre"
+  },
+  {
+   "activite": "Animalerie- Aquariophilie-Oisellerie",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Animaux de compagnie (commerce de détail)",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Animaux de compagnie : soins et dressage",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Antillais (restaurant)",
+   "naf": [
+    "5610A",
+    "5611G"
+   ],
+   "ratio_moyen_pct_ca": 76.1,
+   "q1_pct_ca": 45.0,
+   "q3_pct_ca": 95.11,
+   "refs": 4716,
+   "famille": "restauration_assise"
+  },
+  {
+   "activite": "Antiquités",
+   "naf": [
+    "4779Z",
+    "4791Y",
+    "4792J",
+    "4779G",
+    "4779H"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 13.89,
+   "q3_pct_ca": 41.77,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Appareils médicaux",
+   "naf": [
+    "4774Z",
+    "4792J",
+    "4774H"
+   ],
+   "ratio_moyen_pct_ca": 51.3,
+   "q1_pct_ca": 21.49,
+   "q3_pct_ca": 58.4,
+   "refs": 100,
+   "famille": "autre"
+  },
+  {
+   "activite": "Applications logicielles",
+   "naf": [
+    "6201Z",
+    "6210Y"
+   ],
+   "ratio_moyen_pct_ca": 53.4,
+   "q1_pct_ca": 13.85,
+   "q3_pct_ca": 54.87,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Arbres (commerce de détail)",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Arbustes (commerce de détail)",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Argent (achat)",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Armes",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Armurier",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Articles de bureau",
+   "naf": [
+    "4762Z",
+    "4792J",
+    "4792H",
+    "4762Y"
+   ],
+   "ratio_moyen_pct_ca": 73.8,
+   "q1_pct_ca": 36.84,
+   "q3_pct_ca": 103.53,
+   "refs": 214,
+   "famille": "autre"
+  },
+  {
+   "activite": "Articles de pêche",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Articles de sport",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Articles de voyage (commerce de détail)",
+   "naf": [
+    "4772B",
+    "4792J",
+    "4772H"
+   ],
+   "ratio_moyen_pct_ca": 52.6,
+   "q1_pct_ca": 17.03,
+   "q3_pct_ca": 64.37,
+   "refs": 52,
+   "famille": "autre"
+  },
+  {
+   "activite": "Articles en cuir (commerce de détail)",
+   "naf": [
+    "4772B",
+    "4792J",
+    "4772H"
+   ],
+   "ratio_moyen_pct_ca": 52.6,
+   "q1_pct_ca": 17.03,
+   "q3_pct_ca": 64.37,
+   "refs": 52,
+   "famille": "autre"
+  },
+  {
+   "activite": "Articles médicaux (commerce de détail)",
+   "naf": [
+    "4774Z",
+    "4792J",
+    "4774H"
+   ],
+   "ratio_moyen_pct_ca": 51.3,
+   "q1_pct_ca": 21.49,
+   "q3_pct_ca": 58.4,
+   "refs": 100,
+   "famille": "autre"
+  },
+  {
+   "activite": "Articles orthopédiques (commerce de détail)",
+   "naf": [
+    "4774Z",
+    "4792J",
+    "4774H"
+   ],
+   "ratio_moyen_pct_ca": 51.3,
+   "q1_pct_ca": 21.49,
+   "q3_pct_ca": 58.4,
+   "refs": 100,
+   "famille": "autre"
+  },
+  {
+   "activite": "Articles religieux",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Arts de la table- cadeaux-listes de mariage",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Astrologues, activités",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Audition, prothèses (commerce de détail)",
+   "naf": [
+    "4774Z",
+    "4792J",
+    "4774H"
+   ],
+   "ratio_moyen_pct_ca": 51.3,
+   "q1_pct_ca": 21.49,
+   "q3_pct_ca": 58.4,
+   "refs": 100,
+   "famille": "autre"
+  },
+  {
+   "activite": "Auto-école",
+   "naf": [
+    "8553Z",
+    "8553Y"
+   ],
+   "ratio_moyen_pct_ca": 28.8,
+   "q1_pct_ca": 12.37,
+   "q3_pct_ca": 38.18,
+   "refs": 185,
+   "famille": "autre"
+  },
+  {
+   "activite": "Automobilles (réparation)",
+   "naf": [
+    "4520A",
+    "9531G",
+    "9540Y"
+   ],
+   "ratio_moyen_pct_ca": 48.8,
+   "q1_pct_ca": 17.72,
+   "q3_pct_ca": 49.56,
+   "refs": 994,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Babyfoot, exploitation de jeux",
+   "naf": [
+    "9329Z",
+    "9329Y",
+    "8425Y",
+    "9311Y",
+    "9312Y",
+    "9319Y",
+    "9699H"
+   ],
+   "ratio_moyen_pct_ca": 75.9,
+   "q1_pct_ca": 26.04,
+   "q3_pct_ca": 93.04,
+   "refs": 104,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bagages, réparation",
+   "naf": [
+    "9523Z",
+    "9523Y"
+   ],
+   "ratio_moyen_pct_ca": 72.9,
+   "q1_pct_ca": 33.34,
+   "q3_pct_ca": 100.69,
+   "refs": 41,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bains de vapeur",
+   "naf": [
+    "9604Z",
+    "9623Y"
+   ],
+   "ratio_moyen_pct_ca": 63.9,
+   "q1_pct_ca": 28.22,
+   "q3_pct_ca": 83.09,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bains turcs",
+   "naf": [
+    "9604Z",
+    "9623Y"
+   ],
+   "ratio_moyen_pct_ca": 63.9,
+   "q1_pct_ca": 28.22,
+   "q3_pct_ca": 83.09,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bar (débit de boissons)",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Bar de nuit",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Bar à bières",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Bar à champagne",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Bar à Hôtesses",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Bar à vins",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Barbe, rasage et taille",
+   "naf": [
+    "9602A",
+    "9621G",
+    "9621H"
+   ],
+   "ratio_moyen_pct_ca": 55.0,
+   "q1_pct_ca": 32.56,
+   "q3_pct_ca": 72.69,
+   "refs": 1318,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Barber shop",
+   "naf": [
+    "9602A",
+    "9621G",
+    "9621H"
+   ],
+   "ratio_moyen_pct_ca": 55.0,
+   "q1_pct_ca": 32.56,
+   "q3_pct_ca": 72.69,
+   "refs": 1318,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Barbier",
+   "naf": [
+    "9602A",
+    "9621G",
+    "9621H"
+   ],
+   "ratio_moyen_pct_ca": 55.0,
+   "q1_pct_ca": 32.56,
+   "q3_pct_ca": 72.69,
+   "refs": 1318,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Bases de données, conception",
+   "naf": [
+    "6201Z",
+    "6210Y"
+   ],
+   "ratio_moyen_pct_ca": 53.4,
+   "q1_pct_ca": 13.85,
+   "q3_pct_ca": 54.87,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Baskets (commerce de détail)",
+   "naf": [
+    "4772A",
+    "4792J",
+    "4772G"
+   ],
+   "ratio_moyen_pct_ca": 38.7,
+   "q1_pct_ca": 12.32,
+   "q3_pct_ca": 47.25,
+   "refs": 146,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bateaux (commerce de détail)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bateaux (location)",
+   "naf": [
+    "7721Z",
+    "7721Y"
+   ],
+   "ratio_moyen_pct_ca": 73.4,
+   "q1_pct_ca": 21.62,
+   "q3_pct_ca": 115.46,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bateaux, matériel de (commerce de détail)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Batteries (commerce de détail)",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bazar",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Beauté, conseils",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Bicyclettes (commerce de détail)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Biens d'occasion (commerce de détail)",
+   "naf": [
+    "4779Z",
+    "4791Y",
+    "4792J",
+    "4779G",
+    "4779H"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 13.89,
+   "q3_pct_ca": 41.77,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bijouterie - Horlogerie",
+   "naf": [
+    "4777Z",
+    "4792J",
+    "4777Y"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 15.74,
+   "q3_pct_ca": 54.62,
+   "refs": 125,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bijouterie fantaisie",
+   "naf": [
+    "4777Z",
+    "4792J",
+    "4777Y"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 15.74,
+   "q3_pct_ca": 54.62,
+   "refs": 125,
+   "famille": "autre"
+  },
+  {
+   "activite": "Billards, exploitation de jeux",
+   "naf": [
+    "9329Z",
+    "9329Y",
+    "8425Y",
+    "9311Y",
+    "9312Y",
+    "9319Y",
+    "9699H"
+   ],
+   "ratio_moyen_pct_ca": 75.9,
+   "q1_pct_ca": 26.04,
+   "q3_pct_ca": 93.04,
+   "refs": 104,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bio (magasin)",
+   "naf": [
+    "4729Z",
+    "4792J",
+    "4727G",
+    "4727H"
+   ],
+   "ratio_moyen_pct_ca": 53.9,
+   "q1_pct_ca": 22.83,
+   "q3_pct_ca": 66.68,
+   "refs": 248,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bières (bar à)",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Blanchisserie de détail",
+   "naf": [
+    "9601B",
+    "5320H",
+    "9691Y",
+    "9610H"
+   ],
+   "ratio_moyen_pct_ca": 76.2,
+   "q1_pct_ca": 34.38,
+   "q3_pct_ca": 103.49,
+   "refs": 307,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bois (commerce de détail)",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bois pour usage domestique (commerce de détail)",
+   "naf": [
+    "4778B",
+    "4792J",
+    "4778G"
+   ],
+   "ratio_moyen_pct_ca": 17.0,
+   "q1_pct_ca": 8.31,
+   "q3_pct_ca": 23.72,
+   "refs": 33,
+   "famille": "autre"
+  },
+  {
+   "activite": "Boissons alcoolisées à emporter (détail)",
+   "naf": [
+    "4725Z",
+    "4792J",
+    "4725Y"
+   ],
+   "ratio_moyen_pct_ca": 44.3,
+   "q1_pct_ca": 17.74,
+   "q3_pct_ca": 55.0,
+   "refs": 157,
+   "famille": "autre"
+  },
+  {
+   "activite": "Boissons non alcoolisées à emporter (détail)",
+   "naf": [
+    "4725Z",
+    "4792J",
+    "4725Y"
+   ],
+   "ratio_moyen_pct_ca": 44.3,
+   "q1_pct_ca": 17.74,
+   "q3_pct_ca": 55.0,
+   "refs": 157,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bonbon (commerce de détail)",
+   "naf": [
+    "4724Z",
+    "4724Y",
+    "4792J"
+   ],
+   "ratio_moyen_pct_ca": 60.6,
+   "q1_pct_ca": 28.73,
+   "q3_pct_ca": 77.41,
+   "refs": 113,
+   "famille": "boulangerie_patisserie"
+  },
+  {
+   "activite": "Bonneterie, lingerie, mercerie",
+   "naf": [
+    "4751Z",
+    "4792J",
+    "4751Y"
+   ],
+   "ratio_moyen_pct_ca": 39.6,
+   "q1_pct_ca": 15.29,
+   "q3_pct_ca": 43.59,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Boucherie",
+   "naf": [
+    "4722Z",
+    "4792J",
+    "4722Y"
+   ],
+   "ratio_moyen_pct_ca": 32.7,
+   "q1_pct_ca": 16.38,
+   "q3_pct_ca": 41.44,
+   "refs": 561,
+   "famille": "autre"
+  },
+  {
+   "activite": "Boudins, préparation artisanale",
+   "naf": [
+    "1013B",
+    "1013H"
+   ],
+   "ratio_moyen_pct_ca": 34.6,
+   "q1_pct_ca": 17.13,
+   "q3_pct_ca": 45.3,
+   "refs": 85,
+   "famille": "autre"
+  },
+  {
+   "activite": "Boulangerie-Pâtisserie (auto-produite)",
+   "naf": [
+    "1071C",
+    "1071H"
+   ],
+   "ratio_moyen_pct_ca": 65.9,
+   "q1_pct_ca": 41.15,
+   "q3_pct_ca": 89.17,
+   "refs": 1680,
+   "famille": "boulangerie_patisserie"
+  },
+  {
+   "activite": "Boîtes aux lettres (location de)",
+   "naf": [
+    "8219Z",
+    "1812Y",
+    "8210Y"
+   ],
+   "ratio_moyen_pct_ca": 60.8,
+   "q1_pct_ca": 25.32,
+   "q3_pct_ca": 79.83,
+   "refs": 34,
+   "famille": "autre"
+  },
+  {
+   "activite": "Brasserie (bar)",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Bretelles (commerce de détail)",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bretelles (commerce de gros)",
+   "naf": [
+    "4642Z",
+    "4642Y"
+   ],
+   "ratio_moyen_pct_ca": 53.1,
+   "q1_pct_ca": 13.52,
+   "q3_pct_ca": 73.37,
+   "refs": 26,
+   "famille": "autre"
+  },
+  {
+   "activite": "Bricolage",
+   "naf": [
+    "4752B",
+    "4792J",
+    "4752H"
+   ],
+   "ratio_moyen_pct_ca": 18.8,
+   "q1_pct_ca": 7.85,
+   "q3_pct_ca": 25.71,
+   "refs": 32,
+   "famille": "autre"
+  },
+  {
+   "activite": "Briques (commerce de détail)",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Brocante",
+   "naf": [
+    "4779Z",
+    "4791Y",
+    "4792J",
+    "4779G",
+    "4779H"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 13.89,
+   "q3_pct_ca": 41.77,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Cabinet comptable",
+   "naf": [
+    "6920Z",
+    "6920Y"
+   ],
+   "ratio_moyen_pct_ca": 42.0,
+   "q1_pct_ca": 15.68,
+   "q3_pct_ca": 61.79,
+   "refs": 83,
+   "famille": "autre"
+  },
+  {
+   "activite": "Café (débit)",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Café (vente de)",
+   "naf": [
+    "4729Z",
+    "4792J",
+    "4727G",
+    "4727H"
+   ],
+   "ratio_moyen_pct_ca": 53.9,
+   "q1_pct_ca": 22.83,
+   "q3_pct_ca": 66.68,
+   "refs": 248,
+   "famille": "autre"
+  },
+  {
+   "activite": "Campagnes publicitaires, réalisation",
+   "naf": [
+    "7311Z",
+    "7311Y"
+   ],
+   "ratio_moyen_pct_ca": 48.3,
+   "q1_pct_ca": 11.22,
+   "q3_pct_ca": 44.03,
+   "refs": 92,
+   "famille": "autre"
+  },
+  {
+   "activite": "Camping",
+   "naf": [
+    "5530Z",
+    "5530Y"
+   ],
+   "ratio_moyen_pct_ca": 163.0,
+   "q1_pct_ca": 84.71,
+   "q3_pct_ca": 220.09,
+   "refs": 181,
+   "famille": "autre"
+  },
+  {
+   "activite": "Camping, matériel de (commerce de détail)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Carburants (commerce de détail)",
+   "naf": [
+    "4730Z",
+    "4792J",
+    "4730Y"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 8.52,
+   "q3_pct_ca": 31.94,
+   "refs": 51,
+   "famille": "autre"
+  },
+  {
+   "activite": "Carrelage",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Carrosserie automobile",
+   "naf": [
+    "4520A",
+    "9531G",
+    "9540Y"
+   ],
+   "ratio_moyen_pct_ca": 48.8,
+   "q1_pct_ca": 17.72,
+   "q3_pct_ca": 49.56,
+   "refs": 994,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Carterie-gadgets",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Cartouches d'encre (commerce de détail)",
+   "naf": [
+    "4741Z",
+    "4792J",
+    "4740Y"
+   ],
+   "ratio_moyen_pct_ca": 47.5,
+   "q1_pct_ca": 10.71,
+   "q3_pct_ca": 37.37,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Cave à vins",
+   "naf": [
+    "4725Z",
+    "4792J",
+    "4725Y"
+   ],
+   "ratio_moyen_pct_ca": 44.3,
+   "q1_pct_ca": 17.74,
+   "q3_pct_ca": 55.0,
+   "refs": 157,
+   "famille": "autre"
+  },
+  {
+   "activite": "Centre de remise en forme",
+   "naf": [
+    "9604Z",
+    "9623Y"
+   ],
+   "ratio_moyen_pct_ca": 63.9,
+   "q1_pct_ca": 28.22,
+   "q3_pct_ca": 83.09,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Centres de gestion agréés",
+   "naf": [
+    "6920Z",
+    "6920Y"
+   ],
+   "ratio_moyen_pct_ca": 42.0,
+   "q1_pct_ca": 15.68,
+   "q3_pct_ca": 61.79,
+   "refs": 83,
+   "famille": "autre"
+  },
+  {
+   "activite": "Chaises longues (location)",
+   "naf": [
+    "7721Z",
+    "7721Y"
+   ],
+   "ratio_moyen_pct_ca": 73.4,
+   "q1_pct_ca": 21.62,
+   "q3_pct_ca": 115.46,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Chapellerie",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Charbon (commerce de détail)",
+   "naf": [
+    "4778B",
+    "4792J",
+    "4778G"
+   ],
+   "ratio_moyen_pct_ca": 17.0,
+   "q1_pct_ca": 8.31,
+   "q3_pct_ca": 23.72,
+   "refs": 33,
+   "famille": "autre"
+  },
+  {
+   "activite": "Charcuterie (vente de)",
+   "naf": [
+    "4722Z",
+    "4792J",
+    "4722Y"
+   ],
+   "ratio_moyen_pct_ca": 32.7,
+   "q1_pct_ca": 16.38,
+   "q3_pct_ca": 41.44,
+   "refs": 561,
+   "famille": "autre"
+  },
+  {
+   "activite": "Chaussures (commerce de gros)",
+   "naf": [
+    "4642Z",
+    "4642Y"
+   ],
+   "ratio_moyen_pct_ca": 53.1,
+   "q1_pct_ca": 13.52,
+   "q3_pct_ca": 73.37,
+   "refs": 26,
+   "famille": "autre"
+  },
+  {
+   "activite": "Chaussures (détail)",
+   "naf": [
+    "4772A",
+    "4792J",
+    "4772G"
+   ],
+   "ratio_moyen_pct_ca": 38.7,
+   "q1_pct_ca": 12.32,
+   "q3_pct_ca": 47.25,
+   "refs": 146,
+   "famille": "autre"
+  },
+  {
+   "activite": "Chaussures de ski (commerce de détail)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Chaussures sportives (commerce de détail)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Chaussures, réparation",
+   "naf": [
+    "9523Z",
+    "9523Y"
+   ],
+   "ratio_moyen_pct_ca": 72.9,
+   "q1_pct_ca": 33.34,
+   "q3_pct_ca": 100.69,
+   "refs": 41,
+   "famille": "autre"
+  },
+  {
+   "activite": "Chemiserie",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Chenils, hébergement pour animaux de compagnie",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Cheveux, lavage, coupe, teinture, coloration, etc.",
+   "naf": [
+    "9602A",
+    "9621G",
+    "9621H"
+   ],
+   "ratio_moyen_pct_ca": 55.0,
+   "q1_pct_ca": 32.56,
+   "q3_pct_ca": 72.69,
+   "refs": 1318,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Chinois (restaurant)",
+   "naf": [
+    "5610A",
+    "5611G"
+   ],
+   "ratio_moyen_pct_ca": 76.1,
+   "q1_pct_ca": 45.0,
+   "q3_pct_ca": 95.11,
+   "refs": 4716,
+   "famille": "restauration_assise"
+  },
+  {
+   "activite": "Chocolaterie (commerce de détail)",
+   "naf": [
+    "4724Z",
+    "4724Y",
+    "4792J"
+   ],
+   "ratio_moyen_pct_ca": 60.6,
+   "q1_pct_ca": 28.73,
+   "q3_pct_ca": 77.41,
+   "refs": 113,
+   "famille": "boulangerie_patisserie"
+  },
+  {
+   "activite": "Cigares (commerce de détail)",
+   "naf": [
+    "4726Z",
+    "4726Y",
+    "4792H"
+   ],
+   "ratio_moyen_pct_ca": 107.1,
+   "q1_pct_ca": 73.99,
+   "q3_pct_ca": 136.47,
+   "refs": 101,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Cigarette électronique (vente de)",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Cireur",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Club libertin",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Club privé",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Club échangiste",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Coffres-forts (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Coiffeur",
+   "naf": [
+    "9602A",
+    "9621G",
+    "9621H"
+   ],
+   "ratio_moyen_pct_ca": 55.0,
+   "q1_pct_ca": 32.56,
+   "q3_pct_ca": 72.69,
+   "refs": 1318,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Compositions florales (commerce de détail)",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Comptables (cabinet)",
+   "naf": [
+    "6920Z",
+    "6920Y"
+   ],
+   "ratio_moyen_pct_ca": 42.0,
+   "q1_pct_ca": 15.68,
+   "q3_pct_ca": 61.79,
+   "refs": 83,
+   "famille": "autre"
+  },
+  {
+   "activite": "Concept store (autres)",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Concept store (meubles/déco)",
+   "naf": [
+    "4759A",
+    "4792J",
+    "4755G"
+   ],
+   "ratio_moyen_pct_ca": 26.4,
+   "q1_pct_ca": 11.51,
+   "q3_pct_ca": 30.87,
+   "refs": 190,
+   "famille": "autre"
+  },
+  {
+   "activite": "Concept store (vêtements)",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Concept store (équipements du foyer)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Confection pour enfant",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Confiserie",
+   "naf": [
+    "4724Z",
+    "4724Y",
+    "4792J"
+   ],
+   "ratio_moyen_pct_ca": 60.6,
+   "q1_pct_ca": 28.73,
+   "q3_pct_ca": 77.41,
+   "refs": 113,
+   "famille": "boulangerie_patisserie"
+  },
+  {
+   "activite": "Conseils en beauté",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Consoles de jeux vidéo (commerce de détail)",
+   "naf": [
+    "4741Z",
+    "4792J",
+    "4740Y"
+   ],
+   "ratio_moyen_pct_ca": 47.5,
+   "q1_pct_ca": 10.71,
+   "q3_pct_ca": 37.37,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Contrôle technique automobile",
+   "naf": [
+    "7120A",
+    "7120G"
+   ],
+   "ratio_moyen_pct_ca": 70.1,
+   "q1_pct_ca": 32.28,
+   "q3_pct_ca": 100.86,
+   "refs": 257,
+   "famille": "autre"
+  },
+  {
+   "activite": "Coquillages (commerce de détail)",
+   "naf": [
+    "4723Z",
+    "4792J",
+    "4723Y"
+   ],
+   "ratio_moyen_pct_ca": 34.9,
+   "q1_pct_ca": 12.59,
+   "q3_pct_ca": 52.63,
+   "refs": 55,
+   "famille": "autre"
+  },
+  {
+   "activite": "Cordonnerie",
+   "naf": [
+    "9523Z",
+    "9523Y"
+   ],
+   "ratio_moyen_pct_ca": 72.9,
+   "q1_pct_ca": 33.34,
+   "q3_pct_ca": 100.69,
+   "refs": 41,
+   "famille": "autre"
+  },
+  {
+   "activite": "Costumes (commerce de détail)",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Cotillons (commerce de détail)",
+   "naf": [
+    "4765Z",
+    "4792J",
+    "4764Y"
+   ],
+   "ratio_moyen_pct_ca": 34.3,
+   "q1_pct_ca": 17.19,
+   "q3_pct_ca": 44.58,
+   "refs": 43,
+   "famille": "autre"
+  },
+  {
+   "activite": "Couscous (restaurant)",
+   "naf": [
+    "5610A",
+    "5611G"
+   ],
+   "ratio_moyen_pct_ca": 76.1,
+   "q1_pct_ca": 45.0,
+   "q3_pct_ca": 95.11,
+   "refs": 4716,
+   "famille": "restauration_assise"
+  },
+  {
+   "activite": "Coutellerie (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Cravates (commerce de détail)",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Cravates (commerce de gros)",
+   "naf": [
+    "4642Z",
+    "4642Y"
+   ],
+   "ratio_moyen_pct_ca": 53.1,
+   "q1_pct_ca": 13.52,
+   "q3_pct_ca": 73.37,
+   "refs": 26,
+   "famille": "autre"
+  },
+  {
+   "activite": "Cristal (commerce de détail)",
+   "naf": [
+    "4777Z",
+    "4792J",
+    "4777Y"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 15.74,
+   "q3_pct_ca": 54.62,
+   "refs": 125,
+   "famille": "autre"
+  },
+  {
+   "activite": "Croissanterie- briocherie",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Crustacés (commerce de détail)",
+   "naf": [
+    "4723Z",
+    "4792J",
+    "4723Y"
+   ],
+   "ratio_moyen_pct_ca": 34.9,
+   "q1_pct_ca": 12.59,
+   "q3_pct_ca": 52.63,
+   "refs": 55,
+   "famille": "autre"
+  },
+  {
+   "activite": "Crème glacée (chariots)",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Crèmerie",
+   "naf": [
+    "4729Z",
+    "4792J",
+    "4727G",
+    "4727H"
+   ],
+   "ratio_moyen_pct_ca": 53.9,
+   "q1_pct_ca": 22.83,
+   "q3_pct_ca": 66.68,
+   "refs": 248,
+   "famille": "autre"
+  },
+  {
+   "activite": "Crêperie",
+   "naf": [
+    "5610A",
+    "5611G"
+   ],
+   "ratio_moyen_pct_ca": 76.1,
+   "q1_pct_ca": 45.0,
+   "q3_pct_ca": 95.11,
+   "refs": 4716,
+   "famille": "restauration_assise"
+  },
+  {
+   "activite": "Cuir, article en (commerce de détail)",
+   "naf": [
+    "4772B",
+    "4792J",
+    "4772H"
+   ],
+   "ratio_moyen_pct_ca": 52.6,
+   "q1_pct_ca": 17.03,
+   "q3_pct_ca": 64.37,
+   "refs": 52,
+   "famille": "autre"
+  },
+  {
+   "activite": "Cuirs-Fourrures",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Cuisines (vente et installation)",
+   "naf": [
+    "4759A",
+    "4792J",
+    "4755G"
+   ],
+   "ratio_moyen_pct_ca": 26.4,
+   "q1_pct_ca": 11.51,
+   "q3_pct_ca": 30.87,
+   "refs": 190,
+   "famille": "autre"
+  },
+  {
+   "activite": "Culture physique (club)",
+   "naf": [
+    "9313Z",
+    "9313Y"
+   ],
+   "ratio_moyen_pct_ca": 67.2,
+   "q1_pct_ca": 37.59,
+   "q3_pct_ca": 84.66,
+   "refs": 70,
+   "famille": "autre"
+  },
+  {
+   "activite": "Cycles (location)",
+   "naf": [
+    "7721Z",
+    "7721Y"
+   ],
+   "ratio_moyen_pct_ca": 73.4,
+   "q1_pct_ca": 21.62,
+   "q3_pct_ca": 115.46,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Cycles et motos",
+   "naf": [
+    "4540Z",
+    "4618Y",
+    "4792G",
+    "9540Y",
+    "4673Y",
+    "4783Y",
+    "9532Y"
+   ],
+   "ratio_moyen_pct_ca": 19.0,
+   "q1_pct_ca": 8.28,
+   "q3_pct_ca": 24.16,
+   "refs": 90,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Discothèque",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Discothèques",
+   "naf": [
+    "9329Z",
+    "9329Y",
+    "8425Y",
+    "9311Y",
+    "9312Y",
+    "9319Y",
+    "9699H"
+   ],
+   "ratio_moyen_pct_ca": 75.9,
+   "q1_pct_ca": 26.04,
+   "q3_pct_ca": 93.04,
+   "refs": 104,
+   "famille": "autre"
+  },
+  {
+   "activite": "Discount (commerce de détail)",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Disques durs (commerce de détail)",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Distributeur automatique",
+   "naf": [
+    "4799B",
+    "4724Y",
+    "4792G",
+    "4791Y",
+    "4712H",
+    "4721Y",
+    "4792J",
+    "4722Y",
+    "4723Y",
+    "4725Y",
+    "4726Y",
+    "4792H",
+    "4727G",
+    "4727H",
+    "4740Y",
+    "4751Y",
+    "4752H",
+    "4753Y",
+    "4754Y",
+    "4755G",
+    "4755H",
+    "4769Y",
+    "4761Y",
+    "4762Y",
+    "4763Y",
+    "4764Y",
+    "4771Y",
+    "4772G",
+    "4772H",
+    "4774H",
+    "4775Y",
+    "4776Y",
+    "4777Y",
+    "4774G",
+    "4778G",
+    "4778H",
+    "4779G",
+    "4779H",
+    "4711L"
+   ],
+   "ratio_moyen_pct_ca": 60.2,
+   "q1_pct_ca": 24.15,
+   "q3_pct_ca": 75.86,
+   "refs": 69,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Diététique-produits naturels",
+   "naf": [
+    "4775Z",
+    "4792J",
+    "4775Y"
+   ],
+   "ratio_moyen_pct_ca": 45.6,
+   "q1_pct_ca": 23.8,
+   "q3_pct_ca": 58.73,
+   "refs": 96,
+   "famille": "autre"
+  },
+  {
+   "activite": "Domaines skiables (activités de loisirs)",
+   "naf": [
+    "9329Z",
+    "9329Y",
+    "8425Y",
+    "9311Y",
+    "9312Y",
+    "9319Y",
+    "9699H"
+   ],
+   "ratio_moyen_pct_ca": 75.9,
+   "q1_pct_ca": 26.04,
+   "q3_pct_ca": 93.04,
+   "refs": 104,
+   "famille": "autre"
+  },
+  {
+   "activite": "Dressage des animaux de compagnie",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Droguerie",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Duplication",
+   "naf": [
+    "8219Z",
+    "1812Y",
+    "8210Y"
+   ],
+   "ratio_moyen_pct_ca": 60.8,
+   "q1_pct_ca": 25.32,
+   "q3_pct_ca": 79.83,
+   "refs": 34,
+   "famille": "autre"
+  },
+  {
+   "activite": "Déguisements (commerce de détail)",
+   "naf": [
+    "4765Z",
+    "4792J",
+    "4764Y"
+   ],
+   "ratio_moyen_pct_ca": 34.3,
+   "q1_pct_ca": 17.19,
+   "q3_pct_ca": 44.58,
+   "refs": 43,
+   "famille": "autre"
+  },
+  {
+   "activite": "Déménagement",
+   "naf": [
+    "4942Z",
+    "4942Y"
+   ],
+   "ratio_moyen_pct_ca": 26.0,
+   "q1_pct_ca": 10.87,
+   "q3_pct_ca": 32.09,
+   "refs": 36,
+   "famille": "autre"
+  },
+  {
+   "activite": "Dépôt de pains",
+   "naf": [
+    "4724Z",
+    "4724Y",
+    "4792J"
+   ],
+   "ratio_moyen_pct_ca": 60.6,
+   "q1_pct_ca": 28.73,
+   "q3_pct_ca": 77.41,
+   "refs": 113,
+   "famille": "boulangerie_patisserie"
+  },
+  {
+   "activite": "Dépôt vente",
+   "naf": [
+    "4779Z",
+    "4791Y",
+    "4792J",
+    "4779G",
+    "4779H"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 13.89,
+   "q3_pct_ca": 41.77,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Echangiste (club)",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Eclairage (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Electricité automobile",
+   "naf": [
+    "4520A",
+    "9531G",
+    "9540Y"
+   ],
+   "ratio_moyen_pct_ca": 48.8,
+   "q1_pct_ca": 17.72,
+   "q3_pct_ca": 49.56,
+   "refs": 994,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Embaumement, préparation des corps",
+   "naf": [
+    "9603Z",
+    "9630Y"
+   ],
+   "ratio_moyen_pct_ca": 52.4,
+   "q1_pct_ca": 20.0,
+   "q3_pct_ca": 64.05,
+   "refs": 77,
+   "famille": "autre"
+  },
+  {
+   "activite": "Enchères (commerce de détail)",
+   "naf": [
+    "4779Z",
+    "4791Y",
+    "4792J",
+    "4779G",
+    "4779H"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 13.89,
+   "q3_pct_ca": 41.77,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Engrais (commerce de détail)",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Epilation",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Escape game",
+   "naf": [
+    "9329Z",
+    "9329Y",
+    "8425Y",
+    "9311Y",
+    "9312Y",
+    "9319Y",
+    "9699H"
+   ],
+   "ratio_moyen_pct_ca": 75.9,
+   "q1_pct_ca": 26.04,
+   "q3_pct_ca": 93.04,
+   "refs": 104,
+   "famille": "autre"
+  },
+  {
+   "activite": "Escort-club (bar)",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Esthétique (salon)",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Experts immobiliers",
+   "naf": [
+    "6831Z",
+    "6831Y",
+    "6832H"
+   ],
+   "ratio_moyen_pct_ca": 40.8,
+   "q1_pct_ca": 13.98,
+   "q3_pct_ca": 49.42,
+   "refs": 828,
+   "famille": "autre"
+  },
+  {
+   "activite": "Farces et attrapes (commerce de détail)",
+   "naf": [
+    "4765Z",
+    "4792J",
+    "4764Y"
+   ],
+   "ratio_moyen_pct_ca": 34.3,
+   "q1_pct_ca": 17.19,
+   "q3_pct_ca": 44.58,
+   "refs": 43,
+   "famille": "autre"
+  },
+  {
+   "activite": "Faux-plafonds, montage de",
+   "naf": [
+    "4332B",
+    "4324Y",
+    "4332H"
+   ],
+   "ratio_moyen_pct_ca": 25.3,
+   "q1_pct_ca": 9.2,
+   "q3_pct_ca": 27.95,
+   "refs": 66,
+   "famille": "autre"
+  },
+  {
+   "activite": "Fils à tricoter (commerce de détail)",
+   "naf": [
+    "4751Z",
+    "4792J",
+    "4751Y"
+   ],
+   "ratio_moyen_pct_ca": 39.6,
+   "q1_pct_ca": 15.29,
+   "q3_pct_ca": 43.59,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Fitness (salle de)",
+   "naf": [
+    "9313Z",
+    "9313Y"
+   ],
+   "ratio_moyen_pct_ca": 67.2,
+   "q1_pct_ca": 37.59,
+   "q3_pct_ca": 84.66,
+   "refs": 70,
+   "famille": "autre"
+  },
+  {
+   "activite": "Fleuriste",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Fleuriste en libre- service",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Fleuriste traditionnel",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Fleurs (commerce de détail)",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Flipper, exploitation de jeux",
+   "naf": [
+    "9329Z",
+    "9329Y",
+    "8425Y",
+    "9311Y",
+    "9312Y",
+    "9319Y",
+    "9699H"
+   ],
+   "ratio_moyen_pct_ca": 75.9,
+   "q1_pct_ca": 26.04,
+   "q3_pct_ca": 93.04,
+   "refs": 104,
+   "famille": "autre"
+  },
+  {
+   "activite": "Food truck",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Food truck (restauration rapide)",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Fourrure (commerce de détail)",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Fourrure, articles (commerce de gros)",
+   "naf": [
+    "4642Z",
+    "4642Y"
+   ],
+   "ratio_moyen_pct_ca": 53.1,
+   "q1_pct_ca": 13.52,
+   "q3_pct_ca": 73.37,
+   "refs": 26,
+   "famille": "autre"
+  },
+  {
+   "activite": "Friperie (objets)",
+   "naf": [
+    "4779Z",
+    "4791Y",
+    "4792J",
+    "4779G",
+    "4779H"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 13.89,
+   "q3_pct_ca": 41.77,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Friperie (vêtements)",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Fripes (commerce de détail)",
+   "naf": [
+    "4779Z",
+    "4791Y",
+    "4792J",
+    "4779G",
+    "4779H"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 13.89,
+   "q3_pct_ca": 41.77,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Friterie (restauration rapide)",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Fromageries- spécialités",
+   "naf": [
+    "4729Z",
+    "4792J",
+    "4727G",
+    "4727H"
+   ],
+   "ratio_moyen_pct_ca": 53.9,
+   "q1_pct_ca": 22.83,
+   "q3_pct_ca": 66.68,
+   "refs": 248,
+   "famille": "autre"
+  },
+  {
+   "activite": "Fruits et légumes",
+   "naf": [
+    "4721Z",
+    "4721Y",
+    "4792J"
+   ],
+   "ratio_moyen_pct_ca": 40.4,
+   "q1_pct_ca": 20.8,
+   "q3_pct_ca": 52.57,
+   "refs": 166,
+   "famille": "autre"
+  },
+  {
+   "activite": "Fuel domestique",
+   "naf": [
+    "4778B",
+    "4792J",
+    "4778G"
+   ],
+   "ratio_moyen_pct_ca": 17.0,
+   "q1_pct_ca": 8.31,
+   "q3_pct_ca": 23.72,
+   "refs": 33,
+   "famille": "autre"
+  },
+  {
+   "activite": "Funérariums, location de locaux",
+   "naf": [
+    "9603Z",
+    "9630Y"
+   ],
+   "ratio_moyen_pct_ca": 52.4,
+   "q1_pct_ca": 20.0,
+   "q3_pct_ca": 64.05,
+   "refs": 77,
+   "famille": "autre"
+  },
+  {
+   "activite": "Galerie d'art",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Gants (commerce de détail)",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Gants (commerce de gros)",
+   "naf": [
+    "4642Z",
+    "4642Y"
+   ],
+   "ratio_moyen_pct_ca": 53.1,
+   "q1_pct_ca": 13.52,
+   "q3_pct_ca": 73.37,
+   "refs": 26,
+   "famille": "autre"
+  },
+  {
+   "activite": "Garage - station- service carburant",
+   "naf": [
+    "4730Z",
+    "4792J",
+    "4730Y"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 8.52,
+   "q3_pct_ca": 31.94,
+   "refs": 51,
+   "famille": "autre"
+  },
+  {
+   "activite": "Garage - station- service lavage- lubrifiants-pneus",
+   "naf": [
+    "4520A",
+    "9531G",
+    "9540Y"
+   ],
+   "ratio_moyen_pct_ca": 48.8,
+   "q1_pct_ca": 17.72,
+   "q3_pct_ca": 49.56,
+   "refs": 994,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Garage-atelier réparations",
+   "naf": [
+    "4520A",
+    "9531G",
+    "9540Y"
+   ],
+   "ratio_moyen_pct_ca": 48.8,
+   "q1_pct_ca": 17.72,
+   "q3_pct_ca": 49.56,
+   "refs": 994,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Gaufres (commerce de détail)",
+   "naf": [
+    "1071C",
+    "1071H"
+   ],
+   "ratio_moyen_pct_ca": 65.9,
+   "q1_pct_ca": 41.15,
+   "q3_pct_ca": 89.17,
+   "refs": 1680,
+   "famille": "boulangerie_patisserie"
+  },
+  {
+   "activite": "Gaz en bonbonnes (commerce de détail)",
+   "naf": [
+    "4778B",
+    "4792J",
+    "4778G"
+   ],
+   "ratio_moyen_pct_ca": 17.0,
+   "q1_pct_ca": 8.31,
+   "q3_pct_ca": 23.72,
+   "refs": 33,
+   "famille": "autre"
+  },
+  {
+   "activite": "Glaces (vente de)",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Graines (commerce de détail)",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Guitare (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Généalogie (recherche)",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Habillement (commerce de détail)",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Habillement, articles (commerce de gros)",
+   "naf": [
+    "4642Z",
+    "4642Y"
+   ],
+   "ratio_moyen_pct_ca": 53.1,
+   "q1_pct_ca": 13.52,
+   "q3_pct_ca": 73.37,
+   "refs": 26,
+   "famille": "autre"
+  },
+  {
+   "activite": "Herboriste",
+   "naf": [
+    "4773Z",
+    "4792J",
+    "4773Y"
+   ],
+   "ratio_moyen_pct_ca": 76.9,
+   "q1_pct_ca": 64.51,
+   "q3_pct_ca": 90.75,
+   "refs": 1084,
+   "famille": "autre"
+  },
+  {
+   "activite": "Horlogerie (commerce de détail)",
+   "naf": [
+    "4777Z",
+    "4792J",
+    "4777Y"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 15.74,
+   "q3_pct_ca": 54.62,
+   "refs": 125,
+   "famille": "autre"
+  },
+  {
+   "activite": "Hébergement pour animaux de compagnie (chenils)",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Hôtel de tourisme",
+   "naf": [
+    "5510Z",
+    "5510Y"
+   ],
+   "ratio_moyen_pct_ca": 110.3,
+   "q1_pct_ca": 46.09,
+   "q3_pct_ca": 142.11,
+   "refs": 1008,
+   "famille": "autre"
+  },
+  {
+   "activite": "Hôtesses (club)",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Immobilier (agent)",
+   "naf": [
+    "6831Z",
+    "6831Y",
+    "6832H"
+   ],
+   "ratio_moyen_pct_ca": 40.8,
+   "q1_pct_ca": 13.98,
+   "q3_pct_ca": 49.42,
+   "refs": 828,
+   "famille": "autre"
+  },
+  {
+   "activite": "Impression numérique de documents",
+   "naf": [
+    "8219Z",
+    "1812Y",
+    "8210Y"
+   ],
+   "ratio_moyen_pct_ca": 60.8,
+   "q1_pct_ca": 25.32,
+   "q3_pct_ca": 79.83,
+   "refs": 34,
+   "famille": "autre"
+  },
+  {
+   "activite": "Impression offset",
+   "naf": [
+    "8219Z",
+    "1812Y",
+    "8210Y"
+   ],
+   "ratio_moyen_pct_ca": 60.8,
+   "q1_pct_ca": 25.32,
+   "q3_pct_ca": 79.83,
+   "refs": 34,
+   "famille": "autre"
+  },
+  {
+   "activite": "Impression-minute",
+   "naf": [
+    "8219Z",
+    "1812Y",
+    "8210Y"
+   ],
+   "ratio_moyen_pct_ca": 60.8,
+   "q1_pct_ca": 25.32,
+   "q3_pct_ca": 79.83,
+   "refs": 34,
+   "famille": "autre"
+  },
+  {
+   "activite": "Imprimantes (commerce de détail)",
+   "naf": [
+    "4741Z",
+    "4792J",
+    "4740Y"
+   ],
+   "ratio_moyen_pct_ca": 47.5,
+   "q1_pct_ca": 10.71,
+   "q3_pct_ca": 37.37,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Imprimantes, consommables",
+   "naf": [
+    "4741Z",
+    "4792J",
+    "4740Y"
+   ],
+   "ratio_moyen_pct_ca": 47.5,
+   "q1_pct_ca": 10.71,
+   "q3_pct_ca": 37.37,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Indien (restaurant)",
+   "naf": [
+    "5610A",
+    "5611G"
+   ],
+   "ratio_moyen_pct_ca": 76.1,
+   "q1_pct_ca": 45.0,
+   "q3_pct_ca": 95.11,
+   "refs": 4716,
+   "famille": "restauration_assise"
+  },
+  {
+   "activite": "Informatique (bureautique-micro)",
+   "naf": [
+    "4741Z",
+    "4792J",
+    "4740Y"
+   ],
+   "ratio_moyen_pct_ca": 47.5,
+   "q1_pct_ca": 10.71,
+   "q3_pct_ca": 37.37,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Informatique (vente de matériel bureau-micro : 10/30 %)",
+   "naf": [
+    "4741Z",
+    "4792J",
+    "4740Y"
+   ],
+   "ratio_moyen_pct_ca": 47.5,
+   "q1_pct_ca": 10.71,
+   "q3_pct_ca": 37.37,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Informatique, consommables",
+   "naf": [
+    "4741Z",
+    "4792J",
+    "4740Y"
+   ],
+   "ratio_moyen_pct_ca": 47.5,
+   "q1_pct_ca": 10.71,
+   "q3_pct_ca": 37.37,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Informatique, programmation",
+   "naf": [
+    "6201Z",
+    "6210Y"
+   ],
+   "ratio_moyen_pct_ca": 53.4,
+   "q1_pct_ca": 13.85,
+   "q3_pct_ca": 54.87,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Inhumation et incinération des corps animaux",
+   "naf": [
+    "9603Z",
+    "9630Y"
+   ],
+   "ratio_moyen_pct_ca": 52.4,
+   "q1_pct_ca": 20.0,
+   "q3_pct_ca": 64.05,
+   "refs": 77,
+   "famille": "autre"
+  },
+  {
+   "activite": "Inhumation et incinération des corps humains",
+   "naf": [
+    "9603Z",
+    "9630Y"
+   ],
+   "ratio_moyen_pct_ca": 52.4,
+   "q1_pct_ca": 20.0,
+   "q3_pct_ca": 64.05,
+   "refs": 77,
+   "famille": "autre"
+  },
+  {
+   "activite": "Instituts d'amaigrissement et d'amincissement",
+   "naf": [
+    "9604Z",
+    "9623Y"
+   ],
+   "ratio_moyen_pct_ca": 63.9,
+   "q1_pct_ca": 28.22,
+   "q3_pct_ca": 83.09,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Instituts de massage",
+   "naf": [
+    "9604Z",
+    "9623Y"
+   ],
+   "ratio_moyen_pct_ca": 63.9,
+   "q1_pct_ca": 28.22,
+   "q3_pct_ca": 83.09,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Instruments de musique (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Instruments de musique (vente d')",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Jambons cuits, préparation artisanale",
+   "naf": [
+    "1013B",
+    "1013H"
+   ],
+   "ratio_moyen_pct_ca": 34.6,
+   "q1_pct_ca": 17.13,
+   "q3_pct_ca": 45.3,
+   "refs": 85,
+   "famille": "autre"
+  },
+  {
+   "activite": "Jardinerie (commerce de détail)",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Jet-ski (location)",
+   "naf": [
+    "7721Z",
+    "7721Y"
+   ],
+   "ratio_moyen_pct_ca": 73.4,
+   "q1_pct_ca": 21.62,
+   "q3_pct_ca": 115.46,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Jeux vidéos",
+   "naf": [
+    "4741Z",
+    "4792J",
+    "4740Y"
+   ],
+   "ratio_moyen_pct_ca": 47.5,
+   "q1_pct_ca": 10.71,
+   "q3_pct_ca": 37.37,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Jeux électroniques, exploitation de jeux",
+   "naf": [
+    "9329Z",
+    "9329Y",
+    "8425Y",
+    "9311Y",
+    "9312Y",
+    "9319Y",
+    "9699H"
+   ],
+   "ratio_moyen_pct_ca": 75.9,
+   "q1_pct_ca": 26.04,
+   "q3_pct_ca": 93.04,
+   "refs": 104,
+   "famille": "autre"
+  },
+  {
+   "activite": "Jeux-jouets",
+   "naf": [
+    "4765Z",
+    "4792J",
+    "4764Y"
+   ],
+   "ratio_moyen_pct_ca": 34.3,
+   "q1_pct_ca": 17.19,
+   "q3_pct_ca": 44.58,
+   "refs": 43,
+   "famille": "autre"
+  },
+  {
+   "activite": "Journaux et périodiques",
+   "naf": [
+    "4762Z",
+    "4792J",
+    "4792H",
+    "4762Y"
+   ],
+   "ratio_moyen_pct_ca": 73.8,
+   "q1_pct_ca": 36.84,
+   "q3_pct_ca": 103.53,
+   "refs": 214,
+   "famille": "autre"
+  },
+  {
+   "activite": "Jukebox, exploitation de jeux",
+   "naf": [
+    "9329Z",
+    "9329Y",
+    "8425Y",
+    "9311Y",
+    "9312Y",
+    "9319Y",
+    "9699H"
+   ],
+   "ratio_moyen_pct_ca": 75.9,
+   "q1_pct_ca": 26.04,
+   "q3_pct_ca": 93.04,
+   "refs": 104,
+   "famille": "autre"
+  },
+  {
+   "activite": "Jus de fruit (vente de)",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Kebab (restauration)",
+   "naf": [
+    "5610A",
+    "5611G"
+   ],
+   "ratio_moyen_pct_ca": 76.1,
+   "q1_pct_ca": 45.0,
+   "q3_pct_ca": 95.11,
+   "refs": 4716,
+   "famille": "restauration_assise"
+  },
+  {
+   "activite": "Laboratoires de développement (photo)",
+   "naf": [
+    "7420Z",
+    "1812Y",
+    "7420Y"
+   ],
+   "ratio_moyen_pct_ca": 34.7,
+   "q1_pct_ca": 14.06,
+   "q3_pct_ca": 45.66,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Lap Dance (club)",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Lavage automobiles",
+   "naf": [
+    "4520A",
+    "9531G",
+    "9540Y"
+   ],
+   "ratio_moyen_pct_ca": 48.8,
+   "q1_pct_ca": 17.72,
+   "q3_pct_ca": 49.56,
+   "refs": 994,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Laveries automatiques en libre service",
+   "naf": [
+    "9601B",
+    "5320H",
+    "9691Y",
+    "9610H"
+   ],
+   "ratio_moyen_pct_ca": 76.2,
+   "q1_pct_ca": 34.38,
+   "q3_pct_ca": 103.49,
+   "refs": 307,
+   "famille": "autre"
+  },
+  {
+   "activite": "Libertin (club)",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Librairie papeterie",
+   "naf": [
+    "4762Z",
+    "4792J",
+    "4792H",
+    "4762Y"
+   ],
+   "ratio_moyen_pct_ca": 73.8,
+   "q1_pct_ca": 36.84,
+   "q3_pct_ca": 103.53,
+   "refs": 214,
+   "famille": "autre"
+  },
+  {
+   "activite": "Librairie-édition",
+   "naf": [
+    "4761Z",
+    "4792J",
+    "4761Y"
+   ],
+   "ratio_moyen_pct_ca": 42.0,
+   "q1_pct_ca": 19.05,
+   "q3_pct_ca": 47.81,
+   "refs": 79,
+   "famille": "autre"
+  },
+  {
+   "activite": "Lingerie-bonneterie",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Literie (commerce de détail)",
+   "naf": [
+    "4759A",
+    "4792J",
+    "4755G"
+   ],
+   "ratio_moyen_pct_ca": 26.4,
+   "q1_pct_ca": 11.51,
+   "q3_pct_ca": 30.87,
+   "refs": 190,
+   "famille": "autre"
+  },
+  {
+   "activite": "Livres",
+   "naf": [
+    "4761Z",
+    "4792J",
+    "4761Y"
+   ],
+   "ratio_moyen_pct_ca": 42.0,
+   "q1_pct_ca": 19.05,
+   "q3_pct_ca": 47.81,
+   "refs": 79,
+   "famille": "autre"
+  },
+  {
+   "activite": "Livres d'occasion",
+   "naf": [
+    "4779Z",
+    "4791Y",
+    "4792J",
+    "4779G",
+    "4779H"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 13.89,
+   "q3_pct_ca": 41.77,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Location de véhicules",
+   "naf": [
+    "7711A",
+    "7711Y"
+   ],
+   "ratio_moyen_pct_ca": 38.4,
+   "q1_pct_ca": 13.22,
+   "q3_pct_ca": 54.99,
+   "refs": 60,
+   "famille": "autre"
+  },
+  {
+   "activite": "Logiciel, développement",
+   "naf": [
+    "6201Z",
+    "6210Y"
+   ],
+   "ratio_moyen_pct_ca": 53.4,
+   "q1_pct_ca": 13.85,
+   "q3_pct_ca": 54.87,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Logiciels non personnalisés (commerce de détail)",
+   "naf": [
+    "4741Z",
+    "4792J",
+    "4740Y"
+   ],
+   "ratio_moyen_pct_ca": 47.5,
+   "q1_pct_ca": 10.71,
+   "q3_pct_ca": 37.37,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Lubrifiants automobiles (commerce de détail)",
+   "naf": [
+    "4730Z",
+    "4792J",
+    "4730Y"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 8.52,
+   "q3_pct_ca": 31.94,
+   "refs": 51,
+   "famille": "autre"
+  },
+  {
+   "activite": "Luminaires (vente de)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Magasin bio",
+   "naf": [
+    "4729Z",
+    "4792J",
+    "4727G",
+    "4727H"
+   ],
+   "ratio_moyen_pct_ca": 53.9,
+   "q1_pct_ca": 22.83,
+   "q3_pct_ca": 66.68,
+   "refs": 248,
+   "famille": "autre"
+  },
+  {
+   "activite": "Make up (maquillage), commerce de détail",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Manucure",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Maquillage",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Marbrerie et articles funéraires",
+   "naf": [
+    "9603Z",
+    "9630Y"
+   ],
+   "ratio_moyen_pct_ca": 52.4,
+   "q1_pct_ca": 20.0,
+   "q3_pct_ca": 64.05,
+   "refs": 77,
+   "famille": "autre"
+  },
+  {
+   "activite": "Marché (autres / objets)",
+   "naf": [
+    "4789Z",
+    "4712H",
+    "4740Y",
+    "4752H",
+    "4753Y",
+    "4754Y",
+    "4755G",
+    "4755H",
+    "4769Y",
+    "4761Y",
+    "4762Y",
+    "4763Y",
+    "4764Y",
+    "4774H",
+    "4775Y",
+    "4776Y",
+    "4777Y",
+    "4774G",
+    "4778G",
+    "4778H",
+    "4779G",
+    "4779H"
+   ],
+   "ratio_moyen_pct_ca": 73.5,
+   "q1_pct_ca": 12.06,
+   "q3_pct_ca": 72.62,
+   "refs": 28,
+   "famille": "autre"
+  },
+  {
+   "activite": "Marché alimentaires",
+   "naf": [
+    "4781Z",
+    "4724Y",
+    "4721Y",
+    "4722Y",
+    "4723Y",
+    "4725Y",
+    "4726Y",
+    "4727G",
+    "4727H",
+    "4711L"
+   ],
+   "ratio_moyen_pct_ca": 34.9,
+   "q1_pct_ca": 14.62,
+   "q3_pct_ca": 48.17,
+   "refs": 120,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Mariée, robes (commerce de détail)",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Marketing, compagnes de",
+   "naf": [
+    "7311Z",
+    "7311Y"
+   ],
+   "ratio_moyen_pct_ca": 48.3,
+   "q1_pct_ca": 11.22,
+   "q3_pct_ca": 44.03,
+   "refs": 92,
+   "famille": "autre"
+  },
+  {
+   "activite": "Marketing, conseil en",
+   "naf": [
+    "7311Z",
+    "7311Y"
+   ],
+   "ratio_moyen_pct_ca": 48.3,
+   "q1_pct_ca": 11.22,
+   "q3_pct_ca": 44.03,
+   "refs": 92,
+   "famille": "autre"
+  },
+  {
+   "activite": "Maroquinerie",
+   "naf": [
+    "4772B",
+    "4792J",
+    "4772H"
+   ],
+   "ratio_moyen_pct_ca": 52.6,
+   "q1_pct_ca": 17.03,
+   "q3_pct_ca": 64.37,
+   "refs": 52,
+   "famille": "autre"
+  },
+  {
+   "activite": "Massage (instituts)",
+   "naf": [
+    "9604Z",
+    "9623Y"
+   ],
+   "ratio_moyen_pct_ca": 63.9,
+   "q1_pct_ca": 28.22,
+   "q3_pct_ca": 83.09,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Massages faciaux (esthétique)",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Matelas (commerce de détail)",
+   "naf": [
+    "4759A",
+    "4792J",
+    "4755G"
+   ],
+   "ratio_moyen_pct_ca": 26.4,
+   "q1_pct_ca": 11.51,
+   "q3_pct_ca": 30.87,
+   "refs": 190,
+   "famille": "autre"
+  },
+  {
+   "activite": "Matériaux de construction (commerce de détail)",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Matériel de précision",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Matériel médical (vente)",
+   "naf": [
+    "4774Z",
+    "4792J",
+    "4774H"
+   ],
+   "ratio_moyen_pct_ca": 51.3,
+   "q1_pct_ca": 21.49,
+   "q3_pct_ca": 58.4,
+   "refs": 100,
+   "famille": "autre"
+  },
+  {
+   "activite": "Matériel photographique",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Mazout (commerce de détail)",
+   "naf": [
+    "4778B",
+    "4792J",
+    "4778G"
+   ],
+   "ratio_moyen_pct_ca": 17.0,
+   "q1_pct_ca": 8.31,
+   "q3_pct_ca": 23.72,
+   "refs": 33,
+   "famille": "autre"
+  },
+  {
+   "activite": "Maçonnerie-couverture",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Menuiseries bois et plastiques, montage",
+   "naf": [
+    "4332A",
+    "4332G"
+   ],
+   "ratio_moyen_pct_ca": 29.7,
+   "q1_pct_ca": 10.42,
+   "q3_pct_ca": 31.21,
+   "refs": 94,
+   "famille": "autre"
+  },
+  {
+   "activite": "Mer, produits de (commerce de détail)",
+   "naf": [
+    "4723Z",
+    "4792J",
+    "4723Y"
+   ],
+   "ratio_moyen_pct_ca": 34.9,
+   "q1_pct_ca": 12.59,
+   "q3_pct_ca": 52.63,
+   "refs": 55,
+   "famille": "autre"
+  },
+  {
+   "activite": "Mercerie",
+   "naf": [
+    "4751Z",
+    "4792J",
+    "4751Y"
+   ],
+   "ratio_moyen_pct_ca": 39.6,
+   "q1_pct_ca": 15.29,
+   "q3_pct_ca": 43.59,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Meubles (vente de)",
+   "naf": [
+    "4759A",
+    "4792J",
+    "4755G"
+   ],
+   "ratio_moyen_pct_ca": 26.4,
+   "q1_pct_ca": 11.51,
+   "q3_pct_ca": 30.87,
+   "refs": 190,
+   "famille": "autre"
+  },
+  {
+   "activite": "Miroirs encadrés (commerce de détail)",
+   "naf": [
+    "4759A",
+    "4792J",
+    "4755G"
+   ],
+   "ratio_moyen_pct_ca": 26.4,
+   "q1_pct_ca": 11.51,
+   "q3_pct_ca": 30.87,
+   "refs": 190,
+   "famille": "autre"
+  },
+  {
+   "activite": "Mobilier de bureau (commerce de détail)",
+   "naf": [
+    "4759A",
+    "4792J",
+    "4755G"
+   ],
+   "ratio_moyen_pct_ca": 26.4,
+   "q1_pct_ca": 11.51,
+   "q3_pct_ca": 30.87,
+   "refs": 190,
+   "famille": "autre"
+  },
+  {
+   "activite": "Mobilier domestique (commerce de détail)",
+   "naf": [
+    "4759A",
+    "4792J",
+    "4755G"
+   ],
+   "ratio_moyen_pct_ca": 26.4,
+   "q1_pct_ca": 11.51,
+   "q3_pct_ca": 30.87,
+   "refs": 190,
+   "famille": "autre"
+  },
+  {
+   "activite": "Moto-taxis",
+   "naf": [
+    "4932Z",
+    "4933G",
+    "4933H",
+    "5232Y"
+   ],
+   "ratio_moyen_pct_ca": 64.2,
+   "q1_pct_ca": 30.66,
+   "q3_pct_ca": 76.92,
+   "refs": 145,
+   "famille": "autre"
+  },
+  {
+   "activite": "Motocycles (entretien - réparation)",
+   "naf": [
+    "4540Z",
+    "4618Y",
+    "4792G",
+    "9540Y",
+    "4673Y",
+    "4783Y",
+    "9532Y"
+   ],
+   "ratio_moyen_pct_ca": 19.0,
+   "q1_pct_ca": 8.28,
+   "q3_pct_ca": 24.16,
+   "refs": 90,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Motos (commerce de détail et de gros)",
+   "naf": [
+    "4540Z",
+    "4618Y",
+    "4792G",
+    "9540Y",
+    "4673Y",
+    "4783Y",
+    "9532Y"
+   ],
+   "ratio_moyen_pct_ca": 19.0,
+   "q1_pct_ca": 8.28,
+   "q3_pct_ca": 24.16,
+   "refs": 90,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Munitions",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Musculation (club)",
+   "naf": [
+    "9313Z",
+    "9313Y"
+   ],
+   "ratio_moyen_pct_ca": 67.2,
+   "q1_pct_ca": 37.59,
+   "q3_pct_ca": 84.66,
+   "refs": 70,
+   "famille": "autre"
+  },
+  {
+   "activite": "Musique (instruments) (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Médical, matériel (vente)",
+   "naf": [
+    "4774Z",
+    "4792J",
+    "4774H"
+   ],
+   "ratio_moyen_pct_ca": 51.3,
+   "q1_pct_ca": 21.49,
+   "q3_pct_ca": 58.4,
+   "refs": 100,
+   "famille": "autre"
+  },
+  {
+   "activite": "Médicaux, articles (commerce de détail)",
+   "naf": [
+    "4774Z",
+    "4792J",
+    "4774H"
+   ],
+   "ratio_moyen_pct_ca": 51.3,
+   "q1_pct_ca": 21.49,
+   "q3_pct_ca": 58.4,
+   "refs": 100,
+   "famille": "autre"
+  },
+  {
+   "activite": "Nettoyage à sec, de détail",
+   "naf": [
+    "9601B",
+    "5320H",
+    "9691Y",
+    "9610H"
+   ],
+   "ratio_moyen_pct_ca": 76.2,
+   "q1_pct_ca": 34.38,
+   "q3_pct_ca": 103.49,
+   "refs": 307,
+   "famille": "autre"
+  },
+  {
+   "activite": "Objets artisanaux",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Objets connectés (commerce de détail)",
+   "naf": [
+    "4741Z",
+    "4792J",
+    "4740Y"
+   ],
+   "ratio_moyen_pct_ca": 47.5,
+   "q1_pct_ca": 10.71,
+   "q3_pct_ca": 37.37,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Objets d'art",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Occasion (commerce de détail)",
+   "naf": [
+    "4779Z",
+    "4791Y",
+    "4792J",
+    "4779G",
+    "4779H"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 13.89,
+   "q3_pct_ca": 41.77,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Onglerie",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Optique",
+   "naf": [
+    "4778A",
+    "4792J",
+    "4774G"
+   ],
+   "ratio_moyen_pct_ca": 54.8,
+   "q1_pct_ca": 23.79,
+   "q3_pct_ca": 77.17,
+   "refs": 482,
+   "famille": "autre"
+  },
+  {
+   "activite": "Or (achat)",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Ordinateurs (commerce de détail)",
+   "naf": [
+    "4741Z",
+    "4792J",
+    "4740Y"
+   ],
+   "ratio_moyen_pct_ca": 47.5,
+   "q1_pct_ca": 10.71,
+   "q3_pct_ca": 37.37,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Oriental (restaurant)",
+   "naf": [
+    "5610A",
+    "5611G"
+   ],
+   "ratio_moyen_pct_ca": 76.1,
+   "q1_pct_ca": 45.0,
+   "q3_pct_ca": 95.11,
+   "refs": 4716,
+   "famille": "restauration_assise"
+  },
+  {
+   "activite": "Orthopédiques, articles (commerce de détail)",
+   "naf": [
+    "4774Z",
+    "4792J",
+    "4774H"
+   ],
+   "ratio_moyen_pct_ca": 51.3,
+   "q1_pct_ca": 21.49,
+   "q3_pct_ca": 58.4,
+   "refs": 100,
+   "famille": "autre"
+  },
+  {
+   "activite": "Orthèses, prothèses (commerce de détail)",
+   "naf": [
+    "4774Z",
+    "4792J",
+    "4774H"
+   ],
+   "ratio_moyen_pct_ca": 51.3,
+   "q1_pct_ca": 21.49,
+   "q3_pct_ca": 58.4,
+   "refs": 100,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pages web, conception",
+   "naf": [
+    "6201Z",
+    "6210Y"
+   ],
+   "ratio_moyen_pct_ca": 53.4,
+   "q1_pct_ca": 13.85,
+   "q3_pct_ca": 54.87,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pain et pâtisserie auto produite (détail)",
+   "naf": [
+    "1071C",
+    "1071H"
+   ],
+   "ratio_moyen_pct_ca": 65.9,
+   "q1_pct_ca": 41.15,
+   "q3_pct_ca": 89.17,
+   "refs": 1680,
+   "famille": "boulangerie_patisserie"
+  },
+  {
+   "activite": "Pain et pâtisserie non auto produite (détail)",
+   "naf": [
+    "4724Z",
+    "4724Y",
+    "4792J"
+   ],
+   "ratio_moyen_pct_ca": 60.6,
+   "q1_pct_ca": 28.73,
+   "q3_pct_ca": 77.41,
+   "refs": 113,
+   "famille": "boulangerie_patisserie"
+  },
+  {
+   "activite": "Pains (cuisson et vente au détail)",
+   "naf": [
+    "1071B",
+    "4724Y"
+   ],
+   "ratio_moyen_pct_ca": 70.4,
+   "q1_pct_ca": 45.13,
+   "q3_pct_ca": 90.08,
+   "refs": 28,
+   "famille": "boulangerie_patisserie"
+  },
+  {
+   "activite": "Panneaux publicitaires, aménagement",
+   "naf": [
+    "7311Z",
+    "7311Y"
+   ],
+   "ratio_moyen_pct_ca": 48.3,
+   "q1_pct_ca": 11.22,
+   "q3_pct_ca": 44.03,
+   "refs": 92,
+   "famille": "autre"
+  },
+  {
+   "activite": "Papeterie",
+   "naf": [
+    "4762Z",
+    "4792J",
+    "4792H",
+    "4762Y"
+   ],
+   "ratio_moyen_pct_ca": 73.8,
+   "q1_pct_ca": 36.84,
+   "q3_pct_ca": 103.53,
+   "refs": 214,
+   "famille": "autre"
+  },
+  {
+   "activite": "Parapluies (commerce de gros)",
+   "naf": [
+    "4642Z",
+    "4642Y"
+   ],
+   "ratio_moyen_pct_ca": 53.1,
+   "q1_pct_ca": 13.52,
+   "q3_pct_ca": 73.37,
+   "refs": 26,
+   "famille": "autre"
+  },
+  {
+   "activite": "Parasols (location)",
+   "naf": [
+    "7721Z",
+    "7721Y"
+   ],
+   "ratio_moyen_pct_ca": 73.4,
+   "q1_pct_ca": 21.62,
+   "q3_pct_ca": 115.46,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Parcage des véhicules",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Parcs de loisirs",
+   "naf": [
+    "9329Z",
+    "9329Y",
+    "8425Y",
+    "9311Y",
+    "9312Y",
+    "9319Y",
+    "9699H"
+   ],
+   "ratio_moyen_pct_ca": 75.9,
+   "q1_pct_ca": 26.04,
+   "q3_pct_ca": 93.04,
+   "refs": 104,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pare-brise automobiles",
+   "naf": [
+    "4520A",
+    "9531G",
+    "9540Y"
+   ],
+   "ratio_moyen_pct_ca": 48.8,
+   "q1_pct_ca": 17.72,
+   "q3_pct_ca": 49.56,
+   "refs": 994,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Parfumerie-esthétique",
+   "naf": [
+    "4775Z",
+    "4792J",
+    "4775Y"
+   ],
+   "ratio_moyen_pct_ca": 45.6,
+   "q1_pct_ca": 23.8,
+   "q3_pct_ca": 58.73,
+   "refs": 96,
+   "famille": "autre"
+  },
+  {
+   "activite": "Partitions de musique (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Paysagiste, aménagement",
+   "naf": [
+    "8130Z",
+    "8130Y"
+   ],
+   "ratio_moyen_pct_ca": 38.7,
+   "q1_pct_ca": 10.28,
+   "q3_pct_ca": 43.71,
+   "refs": 127,
+   "famille": "autre"
+  },
+  {
+   "activite": "Peinture-papier peint- vitrerie-déco",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Perruques (commerce de détail)",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Perçage corporel",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pharmacie",
+   "naf": [
+    "4773Z",
+    "4792J",
+    "4773Y"
+   ],
+   "ratio_moyen_pct_ca": 76.9,
+   "q1_pct_ca": 64.51,
+   "q3_pct_ca": 90.75,
+   "refs": 1084,
+   "famille": "autre"
+  },
+  {
+   "activite": "Photocopie",
+   "naf": [
+    "8219Z",
+    "1812Y",
+    "8210Y"
+   ],
+   "ratio_moyen_pct_ca": 60.8,
+   "q1_pct_ca": 25.32,
+   "q3_pct_ca": 79.83,
+   "refs": 34,
+   "famille": "autre"
+  },
+  {
+   "activite": "Photographie (laboratoires de développement)",
+   "naf": [
+    "7420Z",
+    "1812Y",
+    "7420Y"
+   ],
+   "ratio_moyen_pct_ca": 34.7,
+   "q1_pct_ca": 14.06,
+   "q3_pct_ca": 45.66,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Photographie aérienne (production)",
+   "naf": [
+    "7420Z",
+    "1812Y",
+    "7420Y"
+   ],
+   "ratio_moyen_pct_ca": 34.7,
+   "q1_pct_ca": 14.06,
+   "q3_pct_ca": 45.66,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Photographie d'édition (production)",
+   "naf": [
+    "7420Z",
+    "1812Y",
+    "7420Y"
+   ],
+   "ratio_moyen_pct_ca": 34.7,
+   "q1_pct_ca": 14.06,
+   "q3_pct_ca": 45.66,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Photographie de classe (production)",
+   "naf": [
+    "7420Z",
+    "1812Y",
+    "7420Y"
+   ],
+   "ratio_moyen_pct_ca": 34.7,
+   "q1_pct_ca": 14.06,
+   "q3_pct_ca": 45.66,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Photographie de mariage (production)",
+   "naf": [
+    "7420Z",
+    "1812Y",
+    "7420Y"
+   ],
+   "ratio_moyen_pct_ca": 34.7,
+   "q1_pct_ca": 14.06,
+   "q3_pct_ca": 45.66,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Photographie de mode (production)",
+   "naf": [
+    "7420Z",
+    "1812Y",
+    "7420Y"
+   ],
+   "ratio_moyen_pct_ca": 34.7,
+   "q1_pct_ca": 14.06,
+   "q3_pct_ca": 45.66,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Photographie immobilière (production)",
+   "naf": [
+    "7420Z",
+    "1812Y",
+    "7420Y"
+   ],
+   "ratio_moyen_pct_ca": 34.7,
+   "q1_pct_ca": 14.06,
+   "q3_pct_ca": 45.66,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Photographie, matériel de (commerce de détail)",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Phytosanitaires, produits (commerce de détail)",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Pianos (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Piercing (studio)",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Piles (commerce de détail)",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Ping pong, raquettes (commerce de détail)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Piscines (construction)",
+   "naf": [
+    "4399D",
+    "4399H",
+    "4350Y",
+    "4299Y",
+    "4322H",
+    "8122Y",
+    "4342J",
+    "4342H"
+   ],
+   "ratio_moyen_pct_ca": 40.8,
+   "q1_pct_ca": 12.82,
+   "q3_pct_ca": 52.39,
+   "refs": 25,
+   "famille": "autre"
+  },
+  {
+   "activite": "Piscines en kit (commerce de détail)",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pistes de danse",
+   "naf": [
+    "9329Z",
+    "9329Y",
+    "8425Y",
+    "9311Y",
+    "9312Y",
+    "9319Y",
+    "9699H"
+   ],
+   "ratio_moyen_pct_ca": 75.9,
+   "q1_pct_ca": 26.04,
+   "q3_pct_ca": 93.04,
+   "refs": 104,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pizza (camion à)",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Pizza (restauration)",
+   "naf": [
+    "5610A",
+    "5611G"
+   ],
+   "ratio_moyen_pct_ca": 76.1,
+   "q1_pct_ca": 45.0,
+   "q3_pct_ca": 95.11,
+   "refs": 4716,
+   "famille": "restauration_assise"
+  },
+  {
+   "activite": "Pizzeria",
+   "naf": [
+    "5610A",
+    "5611G"
+   ],
+   "ratio_moyen_pct_ca": 76.1,
+   "q1_pct_ca": 45.0,
+   "q3_pct_ca": 95.11,
+   "refs": 4716,
+   "famille": "restauration_assise"
+  },
+  {
+   "activite": "Pièces automobiles (vente)",
+   "naf": [
+    "4532Z",
+    "4792G",
+    "4782Y"
+   ],
+   "ratio_moyen_pct_ca": 30.0,
+   "q1_pct_ca": 13.07,
+   "q3_pct_ca": 41.06,
+   "refs": 107,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Pièces de monnaie",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Plages",
+   "naf": [
+    "9329Z",
+    "9329Y",
+    "8425Y",
+    "9311Y",
+    "9312Y",
+    "9319Y",
+    "9699H"
+   ],
+   "ratio_moyen_pct_ca": 75.9,
+   "q1_pct_ca": 26.04,
+   "q3_pct_ca": 93.04,
+   "refs": 104,
+   "famille": "autre"
+  },
+  {
+   "activite": "Plans, tirage de",
+   "naf": [
+    "8219Z",
+    "1812Y",
+    "8210Y"
+   ],
+   "ratio_moyen_pct_ca": 60.8,
+   "q1_pct_ca": 25.32,
+   "q3_pct_ca": 79.83,
+   "refs": 34,
+   "famille": "autre"
+  },
+  {
+   "activite": "Plantes (commerce de détail)",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Plats cuisinés-traiteurs",
+   "naf": [
+    "5621Z",
+    "5621Y"
+   ],
+   "ratio_moyen_pct_ca": 51.3,
+   "q1_pct_ca": 25.36,
+   "q3_pct_ca": 70.71,
+   "refs": 185,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pneu (commerce de gros)",
+   "naf": [
+    "4531Z",
+    "4618Y",
+    "4672Y"
+   ],
+   "ratio_moyen_pct_ca": 39.3,
+   "q1_pct_ca": 10.75,
+   "q3_pct_ca": 42.02,
+   "refs": 39,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pneus (vente)",
+   "naf": [
+    "4532Z",
+    "4792G",
+    "4782Y"
+   ],
+   "ratio_moyen_pct_ca": 30.0,
+   "q1_pct_ca": 13.07,
+   "q3_pct_ca": 41.06,
+   "refs": 107,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Point chaud (pain)",
+   "naf": [
+    "4724Z",
+    "4724Y",
+    "4792J"
+   ],
+   "ratio_moyen_pct_ca": 60.6,
+   "q1_pct_ca": 28.73,
+   "q3_pct_ca": 77.41,
+   "refs": 113,
+   "famille": "boulangerie_patisserie"
+  },
+  {
+   "activite": "Poissonnerie",
+   "naf": [
+    "4723Z",
+    "4792J",
+    "4723Y"
+   ],
+   "ratio_moyen_pct_ca": 34.9,
+   "q1_pct_ca": 12.59,
+   "q3_pct_ca": 52.63,
+   "refs": 55,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pole Danse sexy (club)",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Pompes funèbres",
+   "naf": [
+    "9603Z",
+    "9630Y"
+   ],
+   "ratio_moyen_pct_ca": 52.4,
+   "q1_pct_ca": 20.0,
+   "q3_pct_ca": 64.05,
+   "refs": 77,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pompes funèbres, services fournis",
+   "naf": [
+    "9603Z",
+    "9630Y"
+   ],
+   "ratio_moyen_pct_ca": 52.4,
+   "q1_pct_ca": 20.0,
+   "q3_pct_ca": 64.05,
+   "refs": 77,
+   "famille": "autre"
+  },
+  {
+   "activite": "Porcelaine (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Portails en bois ou plastiques (montage)",
+   "naf": [
+    "4332A",
+    "4332G"
+   ],
+   "ratio_moyen_pct_ca": 29.7,
+   "q1_pct_ca": 10.42,
+   "q3_pct_ca": 31.21,
+   "refs": 94,
+   "famille": "autre"
+  },
+  {
+   "activite": "Porteur",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pose de talons",
+   "naf": [
+    "9523Z",
+    "9523Y"
+   ],
+   "ratio_moyen_pct_ca": 72.9,
+   "q1_pct_ca": 33.34,
+   "q3_pct_ca": 100.69,
+   "refs": 41,
+   "famille": "autre"
+  },
+  {
+   "activite": "Postiches (commerce de détail)",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Poterie (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pressing - Nettoyage à sec",
+   "naf": [
+    "9601B",
+    "5320H",
+    "9691Y",
+    "9610H"
+   ],
+   "ratio_moyen_pct_ca": 76.2,
+   "q1_pct_ca": 34.38,
+   "q3_pct_ca": 103.49,
+   "refs": 307,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pret à porter",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Primeur de fruits et légumes",
+   "naf": [
+    "4721Z",
+    "4721Y",
+    "4792J"
+   ],
+   "ratio_moyen_pct_ca": 40.4,
+   "q1_pct_ca": 20.8,
+   "q3_pct_ca": 52.57,
+   "refs": 166,
+   "famille": "autre"
+  },
+  {
+   "activite": "Privé (club)",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Produits de beauté (commerce de détail)",
+   "naf": [
+    "4775Z",
+    "4792J",
+    "4775Y"
+   ],
+   "ratio_moyen_pct_ca": 45.6,
+   "q1_pct_ca": 23.8,
+   "q3_pct_ca": 58.73,
+   "refs": 96,
+   "famille": "autre"
+  },
+  {
+   "activite": "Produits de la mer (commerce de détail)",
+   "naf": [
+    "4723Z",
+    "4792J",
+    "4723Y"
+   ],
+   "ratio_moyen_pct_ca": 34.9,
+   "q1_pct_ca": 12.59,
+   "q3_pct_ca": 52.63,
+   "refs": 55,
+   "famille": "autre"
+  },
+  {
+   "activite": "Produits non alimentaires",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Produits non alimentaires (vente de)",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Produits phytosanitaires (commerce de détail)",
+   "naf": [
+    "4776Z",
+    "4792J",
+    "4776Y"
+   ],
+   "ratio_moyen_pct_ca": 39.4,
+   "q1_pct_ca": 19.3,
+   "q3_pct_ca": 51.62,
+   "refs": 249,
+   "famille": "fleuriste"
+  },
+  {
+   "activite": "Prospectus, distribution",
+   "naf": [
+    "7311Z",
+    "7311Y"
+   ],
+   "ratio_moyen_pct_ca": 48.3,
+   "q1_pct_ca": 11.22,
+   "q3_pct_ca": 44.03,
+   "refs": 92,
+   "famille": "autre"
+  },
+  {
+   "activite": "Prothèses auditives (commerce de détail)",
+   "naf": [
+    "4774Z",
+    "4792J",
+    "4774H"
+   ],
+   "ratio_moyen_pct_ca": 51.3,
+   "q1_pct_ca": 21.49,
+   "q3_pct_ca": 58.4,
+   "refs": 100,
+   "famille": "autre"
+  },
+  {
+   "activite": "Prothèses dentaires (laboratoire de)",
+   "naf": [
+    "4774Z",
+    "4792J",
+    "4774H"
+   ],
+   "ratio_moyen_pct_ca": 51.3,
+   "q1_pct_ca": 21.49,
+   "q3_pct_ca": 58.4,
+   "refs": 100,
+   "famille": "autre"
+  },
+  {
+   "activite": "Prothèses, orthèses (commerce de détail)",
+   "naf": [
+    "4774Z",
+    "4792J",
+    "4774H"
+   ],
+   "ratio_moyen_pct_ca": 51.3,
+   "q1_pct_ca": 21.49,
+   "q3_pct_ca": 58.4,
+   "refs": 100,
+   "famille": "autre"
+  },
+  {
+   "activite": "Prêt-à-porter - Vêtement",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Prêt-à-porter de luxe",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Psychologue",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pub Show-Girls (club)",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Publicité (agence de)",
+   "naf": [
+    "7311Z",
+    "7311Y"
+   ],
+   "ratio_moyen_pct_ca": 48.3,
+   "q1_pct_ca": 11.22,
+   "q3_pct_ca": 44.03,
+   "refs": 92,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pâtés, préparation artisanale",
+   "naf": [
+    "1013B",
+    "1013H"
+   ],
+   "ratio_moyen_pct_ca": 34.6,
+   "q1_pct_ca": 17.13,
+   "q3_pct_ca": 45.3,
+   "refs": 85,
+   "famille": "autre"
+  },
+  {
+   "activite": "Pêche, articles de (commerce de détail)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Quincaillerie",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Radio-taxis",
+   "naf": [
+    "4932Z",
+    "4933G",
+    "4933H",
+    "5232Y"
+   ],
+   "ratio_moyen_pct_ca": 64.2,
+   "q1_pct_ca": 30.66,
+   "q3_pct_ca": 76.92,
+   "refs": 145,
+   "famille": "autre"
+  },
+  {
+   "activite": "Religion (articles)",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Repassage, de détail",
+   "naf": [
+    "9601B",
+    "5320H",
+    "9691Y",
+    "9610H"
+   ],
+   "ratio_moyen_pct_ca": 76.2,
+   "q1_pct_ca": 34.38,
+   "q3_pct_ca": 103.49,
+   "refs": 307,
+   "famille": "autre"
+  },
+  {
+   "activite": "Restaurant",
+   "naf": [
+    "5610A",
+    "5611G"
+   ],
+   "ratio_moyen_pct_ca": 76.1,
+   "q1_pct_ca": 45.0,
+   "q3_pct_ca": 95.11,
+   "refs": 4716,
+   "famille": "restauration_assise"
+  },
+  {
+   "activite": "Restauration",
+   "naf": [
+    "5610A",
+    "5611G"
+   ],
+   "ratio_moyen_pct_ca": 76.1,
+   "q1_pct_ca": 45.0,
+   "q3_pct_ca": 95.11,
+   "refs": 4716,
+   "famille": "restauration_assise"
+  },
+  {
+   "activite": "Restauration rapide - Fast-foods",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Rides, traitement anti",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Rillettes, préparation artisanale",
+   "naf": [
+    "1013B",
+    "1013H"
+   ],
+   "ratio_moyen_pct_ca": 34.6,
+   "q1_pct_ca": 17.13,
+   "q3_pct_ca": 45.3,
+   "refs": 85,
+   "famille": "autre"
+  },
+  {
+   "activite": "Robes de mariée (commerce de détail)",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Routage, activités de",
+   "naf": [
+    "8219Z",
+    "1812Y",
+    "8210Y"
+   ],
+   "ratio_moyen_pct_ca": 60.8,
+   "q1_pct_ca": 25.32,
+   "q3_pct_ca": 79.83,
+   "refs": 34,
+   "famille": "autre"
+  },
+  {
+   "activite": "Réparation de cycles- motocycles",
+   "naf": [
+    "4540Z",
+    "4618Y",
+    "4792G",
+    "9540Y",
+    "4673Y",
+    "4783Y",
+    "9532Y"
+   ],
+   "ratio_moyen_pct_ca": 19.0,
+   "q1_pct_ca": 8.28,
+   "q3_pct_ca": 24.16,
+   "refs": 90,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Réunionnais (restaurant)",
+   "naf": [
+    "5610A",
+    "5611G"
+   ],
+   "ratio_moyen_pct_ca": 76.1,
+   "q1_pct_ca": 45.0,
+   "q3_pct_ca": 95.11,
+   "refs": 4716,
+   "famille": "restauration_assise"
+  },
+  {
+   "activite": "Salamis, préparation artisanale",
+   "naf": [
+    "1013B",
+    "1013H"
+   ],
+   "ratio_moyen_pct_ca": 34.6,
+   "q1_pct_ca": 17.13,
+   "q3_pct_ca": 45.3,
+   "refs": 85,
+   "famille": "autre"
+  },
+  {
+   "activite": "Salle de sport",
+   "naf": [
+    "9313Z",
+    "9313Y"
+   ],
+   "ratio_moyen_pct_ca": 67.2,
+   "q1_pct_ca": 37.59,
+   "q3_pct_ca": 84.66,
+   "refs": 70,
+   "famille": "autre"
+  },
+  {
+   "activite": "Salon de thé",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Sandwicherie",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Sanitaires (commerce de détail)",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Saucisses, préparation artisanale",
+   "naf": [
+    "1013B",
+    "1013H"
+   ],
+   "ratio_moyen_pct_ca": 34.6,
+   "q1_pct_ca": 17.13,
+   "q3_pct_ca": 45.3,
+   "refs": 85,
+   "famille": "autre"
+  },
+  {
+   "activite": "Saunas (commerce de détail)",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Saunas et bains de vapeur",
+   "naf": [
+    "9604Z",
+    "9623Y"
+   ],
+   "ratio_moyen_pct_ca": 63.9,
+   "q1_pct_ca": 28.22,
+   "q3_pct_ca": 83.09,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Savons (commerce de détail)",
+   "naf": [
+    "4775Z",
+    "4792J",
+    "4775Y"
+   ],
+   "ratio_moyen_pct_ca": 45.6,
+   "q1_pct_ca": 23.8,
+   "q3_pct_ca": 58.73,
+   "refs": 96,
+   "famille": "autre"
+  },
+  {
+   "activite": "Scooter de mer (location)",
+   "naf": [
+    "7721Z",
+    "7721Y"
+   ],
+   "ratio_moyen_pct_ca": 73.4,
+   "q1_pct_ca": 21.62,
+   "q3_pct_ca": 115.46,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Secrétariat (service de)",
+   "naf": [
+    "8219Z",
+    "1812Y",
+    "8210Y"
+   ],
+   "ratio_moyen_pct_ca": 60.8,
+   "q1_pct_ca": 25.32,
+   "q3_pct_ca": 79.83,
+   "refs": 34,
+   "famille": "autre"
+  },
+  {
+   "activite": "Secrétariat, service de",
+   "naf": [
+    "8219Z",
+    "1812Y",
+    "8210Y"
+   ],
+   "ratio_moyen_pct_ca": 60.8,
+   "q1_pct_ca": 25.32,
+   "q3_pct_ca": 79.83,
+   "refs": 34,
+   "famille": "autre"
+  },
+  {
+   "activite": "Serres et vérandas pour particuliers, montage",
+   "naf": [
+    "4332B",
+    "4324Y",
+    "4332H"
+   ],
+   "ratio_moyen_pct_ca": 25.3,
+   "q1_pct_ca": 9.2,
+   "q3_pct_ca": 27.95,
+   "refs": 66,
+   "famille": "autre"
+  },
+  {
+   "activite": "Serres, montage",
+   "naf": [
+    "4332A",
+    "4332G"
+   ],
+   "ratio_moyen_pct_ca": 29.7,
+   "q1_pct_ca": 10.42,
+   "q3_pct_ca": 31.21,
+   "refs": 94,
+   "famille": "autre"
+  },
+  {
+   "activite": "Serrurerie, talon- minute",
+   "naf": [
+    "4332B",
+    "4324Y",
+    "4332H"
+   ],
+   "ratio_moyen_pct_ca": 25.3,
+   "q1_pct_ca": 9.2,
+   "q3_pct_ca": 27.95,
+   "refs": 66,
+   "famille": "autre"
+  },
+  {
+   "activite": "Serrurerie, travaux",
+   "naf": [
+    "4332B",
+    "4324Y",
+    "4332H"
+   ],
+   "ratio_moyen_pct_ca": 25.3,
+   "q1_pct_ca": 9.2,
+   "q3_pct_ca": 27.95,
+   "refs": 66,
+   "famille": "autre"
+  },
+  {
+   "activite": "Sex-shop",
+   "naf": [
+    "4719B",
+    "4791Y",
+    "4712H"
+   ],
+   "ratio_moyen_pct_ca": 47.2,
+   "q1_pct_ca": 13.9,
+   "q3_pct_ca": 56.82,
+   "refs": 76,
+   "famille": "autre"
+  },
+  {
+   "activite": "Ski, vente (commerce de détail)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Skis (location)",
+   "naf": [
+    "7721Z",
+    "7721Y"
+   ],
+   "ratio_moyen_pct_ca": 73.4,
+   "q1_pct_ca": 21.62,
+   "q3_pct_ca": 115.46,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Snack",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Snow-board (commerce de détail)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Soins de beauté",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Soins de manucure",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Soins des pieds à vocation esthétique",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Soins du visage et de la peau",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Soins et dressage (animaux de compagnie)",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Solariums",
+   "naf": [
+    "9604Z",
+    "9623Y"
+   ],
+   "ratio_moyen_pct_ca": 63.9,
+   "q1_pct_ca": 28.22,
+   "q3_pct_ca": 83.09,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Solderie",
+   "naf": [
+    "4779Z",
+    "4791Y",
+    "4792J",
+    "4779G",
+    "4779H"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 13.89,
+   "q3_pct_ca": 41.77,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Sommiers (commerce de détail)",
+   "naf": [
+    "4759A",
+    "4792J",
+    "4755G"
+   ],
+   "ratio_moyen_pct_ca": 26.4,
+   "q1_pct_ca": 11.51,
+   "q3_pct_ca": 30.87,
+   "refs": 190,
+   "famille": "autre"
+  },
+  {
+   "activite": "sophrologue",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Spirites, activités",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Sport, articles de (commerce de détail)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Sports (salle de)",
+   "naf": [
+    "9313Z",
+    "9313Y"
+   ],
+   "ratio_moyen_pct_ca": 67.2,
+   "q1_pct_ca": 37.59,
+   "q3_pct_ca": 84.66,
+   "refs": 70,
+   "famille": "autre"
+  },
+  {
+   "activite": "Stations thermales",
+   "naf": [
+    "9604Z",
+    "9623Y"
+   ],
+   "ratio_moyen_pct_ca": 63.9,
+   "q1_pct_ca": 28.22,
+   "q3_pct_ca": 83.09,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Street food (restauration rapide)",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Strip-tease (club)",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Stylos (commerce de détail)",
+   "naf": [
+    "4762Z",
+    "4792J",
+    "4792H",
+    "4762Y"
+   ],
+   "ratio_moyen_pct_ca": 73.8,
+   "q1_pct_ca": 36.84,
+   "q3_pct_ca": 103.53,
+   "refs": 214,
+   "famille": "autre"
+  },
+  {
+   "activite": "Supermarché",
+   "naf": [
+    "4711D",
+    "4711J",
+    "4791Y"
+   ],
+   "ratio_moyen_pct_ca": 29.1,
+   "q1_pct_ca": 12.95,
+   "q3_pct_ca": 27.23,
+   "refs": 254,
+   "famille": "autre"
+  },
+  {
+   "activite": "Supérette alimentaire",
+   "naf": [
+    "4711C",
+    "4711H",
+    "4791Y"
+   ],
+   "ratio_moyen_pct_ca": 29.9,
+   "q1_pct_ca": 14.64,
+   "q3_pct_ca": 32.88,
+   "refs": 276,
+   "famille": "autre"
+  },
+  {
+   "activite": "Supérettes (120 => 400m²)",
+   "naf": [
+    "1013B",
+    "1013H"
+   ],
+   "ratio_moyen_pct_ca": 34.6,
+   "q1_pct_ca": 17.13,
+   "q3_pct_ca": 45.3,
+   "refs": 85,
+   "famille": "autre"
+  },
+  {
+   "activite": "Surdité (commerce de détail)",
+   "naf": [
+    "4774Z",
+    "4792J",
+    "4774H"
+   ],
+   "ratio_moyen_pct_ca": 51.3,
+   "q1_pct_ca": 21.49,
+   "q3_pct_ca": 58.4,
+   "refs": 100,
+   "famille": "autre"
+  },
+  {
+   "activite": "Surf (commerce de détail)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Sushis (commerce de détail)",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Systèmes de sécurité (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Sécurité, système de (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Sépulture, préparation des corps",
+   "naf": [
+    "9603Z",
+    "9630Y"
+   ],
+   "ratio_moyen_pct_ca": 52.4,
+   "q1_pct_ca": 20.0,
+   "q3_pct_ca": 64.05,
+   "refs": 77,
+   "famille": "autre"
+  },
+  {
+   "activite": "Tabac (vente de)",
+   "naf": [
+    "4726Z",
+    "4726Y",
+    "4792H"
+   ],
+   "ratio_moyen_pct_ca": 107.1,
+   "q1_pct_ca": 73.99,
+   "q3_pct_ca": 136.47,
+   "refs": 101,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Tacos (restauration)",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Talons, pose de",
+   "naf": [
+    "9523Z",
+    "9523Y"
+   ],
+   "ratio_moyen_pct_ca": 72.9,
+   "q1_pct_ca": 33.34,
+   "q3_pct_ca": 100.69,
+   "refs": 41,
+   "famille": "autre"
+  },
+  {
+   "activite": "Tatoo",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Tatouage (studio)",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Taxis",
+   "naf": [
+    "4932Z",
+    "4933G",
+    "4933H",
+    "5232Y"
+   ],
+   "ratio_moyen_pct_ca": 64.2,
+   "q1_pct_ca": 30.66,
+   "q3_pct_ca": 76.92,
+   "refs": 145,
+   "famille": "autre"
+  },
+  {
+   "activite": "Teinturerie en pressing",
+   "naf": [
+    "9601B",
+    "5320H",
+    "9691Y",
+    "9610H"
+   ],
+   "ratio_moyen_pct_ca": 76.2,
+   "q1_pct_ca": 34.38,
+   "q3_pct_ca": 103.49,
+   "refs": 307,
+   "famille": "autre"
+  },
+  {
+   "activite": "Tennis, raquettes (commerce de détail)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Textile (commerce de détail)",
+   "naf": [
+    "4751Z",
+    "4792J",
+    "4751Y"
+   ],
+   "ratio_moyen_pct_ca": 39.6,
+   "q1_pct_ca": 15.29,
+   "q3_pct_ca": 43.59,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Thé (débit)",
+   "naf": [
+    "5630Z",
+    "5630Y"
+   ],
+   "ratio_moyen_pct_ca": 100.3,
+   "q1_pct_ca": 60.12,
+   "q3_pct_ca": 121.04,
+   "refs": 984,
+   "famille": "bar_cafe_tabac"
+  },
+  {
+   "activite": "Thé (salon)",
+   "naf": [
+    "5610C",
+    "5611J",
+    "5612Y"
+   ],
+   "ratio_moyen_pct_ca": 64.8,
+   "q1_pct_ca": 32.4,
+   "q3_pct_ca": 85.82,
+   "refs": 2083,
+   "famille": "restauration_rapide"
+  },
+  {
+   "activite": "Thé (vente de)",
+   "naf": [
+    "4729Z",
+    "4792J",
+    "4727G",
+    "4727H"
+   ],
+   "ratio_moyen_pct_ca": 53.9,
+   "q1_pct_ca": 22.83,
+   "q3_pct_ca": 66.68,
+   "refs": 248,
+   "famille": "autre"
+  },
+  {
+   "activite": "Timbres-poste",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Tirage de plans",
+   "naf": [
+    "8219Z",
+    "1812Y",
+    "8210Y"
+   ],
+   "ratio_moyen_pct_ca": 60.8,
+   "q1_pct_ca": 25.32,
+   "q3_pct_ca": 79.83,
+   "refs": 34,
+   "famille": "autre"
+  },
+  {
+   "activite": "Tissus",
+   "naf": [
+    "4751Z",
+    "4792J",
+    "4751Y"
+   ],
+   "ratio_moyen_pct_ca": 39.6,
+   "q1_pct_ca": 15.29,
+   "q3_pct_ca": 43.59,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Toilettage canin",
+   "naf": [
+    "9609Z",
+    "9699H",
+    "9699G"
+   ],
+   "ratio_moyen_pct_ca": 58.6,
+   "q1_pct_ca": 26.21,
+   "q3_pct_ca": 69.76,
+   "refs": 75,
+   "famille": "autre"
+  },
+  {
+   "activite": "Tombes et mausolées, entretien",
+   "naf": [
+    "9603Z",
+    "9630Y"
+   ],
+   "ratio_moyen_pct_ca": 52.4,
+   "q1_pct_ca": 20.0,
+   "q3_pct_ca": 64.05,
+   "refs": 77,
+   "famille": "autre"
+  },
+  {
+   "activite": "Tondeuses à gazon (commerce de détail)",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Training (article de) (commerce de détail)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Traitement anti-rides",
+   "naf": [
+    "9602B",
+    "9622Y"
+   ],
+   "ratio_moyen_pct_ca": 60.1,
+   "q1_pct_ca": 34.6,
+   "q3_pct_ca": 80.79,
+   "refs": 327,
+   "famille": "coiffure_esthetique"
+  },
+  {
+   "activite": "Traitement de texte",
+   "naf": [
+    "8219Z",
+    "1812Y",
+    "8210Y"
+   ],
+   "ratio_moyen_pct_ca": 60.8,
+   "q1_pct_ca": 25.32,
+   "q3_pct_ca": 79.83,
+   "refs": 34,
+   "famille": "autre"
+  },
+  {
+   "activite": "Transcription de documents",
+   "naf": [
+    "8219Z",
+    "1812Y",
+    "8210Y"
+   ],
+   "ratio_moyen_pct_ca": 60.8,
+   "q1_pct_ca": 25.32,
+   "q3_pct_ca": 79.83,
+   "refs": 34,
+   "famille": "autre"
+  },
+  {
+   "activite": "Transport de voyageurs",
+   "naf": [
+    "4932Z",
+    "4933G",
+    "4933H",
+    "5232Y"
+   ],
+   "ratio_moyen_pct_ca": 64.2,
+   "q1_pct_ca": 30.66,
+   "q3_pct_ca": 76.92,
+   "refs": 145,
+   "famille": "autre"
+  },
+  {
+   "activite": "Transport par ambulance",
+   "naf": [
+    "8690A",
+    "8692Y"
+   ],
+   "ratio_moyen_pct_ca": 50.3,
+   "q1_pct_ca": 20.31,
+   "q3_pct_ca": 67.91,
+   "refs": 181,
+   "famille": "autre"
+  },
+  {
+   "activite": "Trottinette (commerce de détail)",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Turcs (Bains)",
+   "naf": [
+    "9604Z",
+    "9623Y"
+   ],
+   "ratio_moyen_pct_ca": 63.9,
+   "q1_pct_ca": 28.22,
+   "q3_pct_ca": 83.09,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Téléphonie mobile",
+   "naf": [
+    "4742Z",
+    "4792J",
+    "4740Y"
+   ],
+   "ratio_moyen_pct_ca": 25.2,
+   "q1_pct_ca": 9.0,
+   "q3_pct_ca": 29.8,
+   "refs": 56,
+   "famille": "autre"
+  },
+  {
+   "activite": "Ustensiles ménagers (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Vaisselle (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Vaisselle jetable (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Vannerie (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Vapotage",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Vapoteuses (commerce de détail)",
+   "naf": [
+    "4778C",
+    "4792J",
+    "4755H",
+    "4769Y",
+    "4763Y",
+    "4778H"
+   ],
+   "ratio_moyen_pct_ca": 48.0,
+   "q1_pct_ca": 15.64,
+   "q3_pct_ca": 61.01,
+   "refs": 338,
+   "famille": "autre"
+  },
+  {
+   "activite": "Vente aux enchères (commerce de détail)",
+   "naf": [
+    "4779Z",
+    "4791Y",
+    "4792J",
+    "4779G",
+    "4779H"
+   ],
+   "ratio_moyen_pct_ca": 39.5,
+   "q1_pct_ca": 13.89,
+   "q3_pct_ca": 41.77,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Vernis (commerce de détail)",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Verrerie (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Viandes y compris volaille (détail)",
+   "naf": [
+    "4722Z",
+    "4792J",
+    "4722Y"
+   ],
+   "ratio_moyen_pct_ca": 32.7,
+   "q1_pct_ca": 16.38,
+   "q3_pct_ca": 41.44,
+   "refs": 561,
+   "famille": "autre"
+  },
+  {
+   "activite": "Viandes, produits à base de (détail)",
+   "naf": [
+    "4722Z",
+    "4792J",
+    "4722Y"
+   ],
+   "ratio_moyen_pct_ca": 32.7,
+   "q1_pct_ca": 16.38,
+   "q3_pct_ca": 41.44,
+   "refs": 561,
+   "famille": "autre"
+  },
+  {
+   "activite": "Vidéo (production)",
+   "naf": [
+    "7420Z",
+    "1812Y",
+    "7420Y"
+   ],
+   "ratio_moyen_pct_ca": 34.7,
+   "q1_pct_ca": 14.06,
+   "q3_pct_ca": 45.66,
+   "refs": 42,
+   "famille": "autre"
+  },
+  {
+   "activite": "Viennoiseries (cuisson et vente au détail)",
+   "naf": [
+    "1071B",
+    "4724Y"
+   ],
+   "ratio_moyen_pct_ca": 70.4,
+   "q1_pct_ca": 45.13,
+   "q3_pct_ca": 90.08,
+   "refs": 28,
+   "famille": "boulangerie_patisserie"
+  },
+  {
+   "activite": "Vins à emporter",
+   "naf": [
+    "4725Z",
+    "4792J",
+    "4725Y"
+   ],
+   "ratio_moyen_pct_ca": 44.3,
+   "q1_pct_ca": 17.74,
+   "q3_pct_ca": 55.0,
+   "refs": 157,
+   "famille": "autre"
+  },
+  {
+   "activite": "Violons (commerce de détail)",
+   "naf": [
+    "4759B",
+    "4792J",
+    "4752G",
+    "4752H",
+    "4755H",
+    "4769Y"
+   ],
+   "ratio_moyen_pct_ca": 41.6,
+   "q1_pct_ca": 12.99,
+   "q3_pct_ca": 46.58,
+   "refs": 115,
+   "famille": "autre"
+  },
+  {
+   "activite": "Visites à domicile, personnes âgées",
+   "naf": [
+    "8810A",
+    "8810G"
+   ],
+   "ratio_moyen_pct_ca": 28.0,
+   "q1_pct_ca": 14.11,
+   "q3_pct_ca": 35.36,
+   "refs": 32,
+   "famille": "autre"
+  },
+  {
+   "activite": "Visites à domicile, personnes âhandicapées",
+   "naf": [
+    "8810A",
+    "8810G"
+   ],
+   "ratio_moyen_pct_ca": 28.0,
+   "q1_pct_ca": 14.11,
+   "q3_pct_ca": 35.36,
+   "refs": 32,
+   "famille": "autre"
+  },
+  {
+   "activite": "Voiliers (location)",
+   "naf": [
+    "7721Z",
+    "7721Y"
+   ],
+   "ratio_moyen_pct_ca": 73.4,
+   "q1_pct_ca": 21.62,
+   "q3_pct_ca": 115.46,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Voitures (détail et gros)",
+   "naf": [
+    "4511Z",
+    "4618Y",
+    "4671G",
+    "4781Y",
+    "4792G"
+   ],
+   "ratio_moyen_pct_ca": 32.3,
+   "q1_pct_ca": 10.37,
+   "q3_pct_ca": 35.36,
+   "refs": 391,
+   "famille": "autre"
+  },
+  {
+   "activite": "Voitures (réparation)",
+   "naf": [
+    "4520A",
+    "9531G",
+    "9540Y"
+   ],
+   "ratio_moyen_pct_ca": 48.8,
+   "q1_pct_ca": 17.72,
+   "q3_pct_ca": 49.56,
+   "refs": 994,
+   "famille": "garage_carrosserie"
+  },
+  {
+   "activite": "Volailles (commerce de détail)",
+   "naf": [
+    "4722Z",
+    "4792J",
+    "4722Y"
+   ],
+   "ratio_moyen_pct_ca": 32.7,
+   "q1_pct_ca": 16.38,
+   "q3_pct_ca": 41.44,
+   "refs": 561,
+   "famille": "autre"
+  },
+  {
+   "activite": "Voyage, articles de (commerce de détail)",
+   "naf": [
+    "4772B",
+    "4792J",
+    "4772H"
+   ],
+   "ratio_moyen_pct_ca": 52.6,
+   "q1_pct_ca": 17.03,
+   "q3_pct_ca": 64.37,
+   "refs": 52,
+   "famille": "autre"
+  },
+  {
+   "activite": "Véhicules automobiles (détail et gros)",
+   "naf": [
+    "4511Z",
+    "4618Y",
+    "4671G",
+    "4781Y",
+    "4792G"
+   ],
+   "ratio_moyen_pct_ca": 32.3,
+   "q1_pct_ca": 10.37,
+   "q3_pct_ca": 35.36,
+   "refs": 391,
+   "famille": "autre"
+  },
+  {
+   "activite": "Véhicules automobiles (location)",
+   "naf": [
+    "7711A",
+    "7711Y"
+   ],
+   "ratio_moyen_pct_ca": 38.4,
+   "q1_pct_ca": 13.22,
+   "q3_pct_ca": 54.99,
+   "refs": 60,
+   "famille": "autre"
+  },
+  {
+   "activite": "Vélo (vente de)",
+   "naf": [
+    "4764Z",
+    "4792J",
+    "4763Y"
+   ],
+   "ratio_moyen_pct_ca": 41.4,
+   "q1_pct_ca": 14.79,
+   "q3_pct_ca": 60.53,
+   "refs": 209,
+   "famille": "autre"
+  },
+  {
+   "activite": "Vélos (location)",
+   "naf": [
+    "7721Z",
+    "7721Y"
+   ],
+   "ratio_moyen_pct_ca": 73.4,
+   "q1_pct_ca": 21.62,
+   "q3_pct_ca": 115.46,
+   "refs": 54,
+   "famille": "autre"
+  },
+  {
+   "activite": "Vérandas, montage",
+   "naf": [
+    "4332A",
+    "4332G"
+   ],
+   "ratio_moyen_pct_ca": 29.7,
+   "q1_pct_ca": 10.42,
+   "q3_pct_ca": 31.21,
+   "refs": 94,
+   "famille": "autre"
+  },
+  {
+   "activite": "Vêtements (commerce de détail)",
+   "naf": [
+    "4771Z",
+    "4792J",
+    "4771Y"
+   ],
+   "ratio_moyen_pct_ca": 47.1,
+   "q1_pct_ca": 16.93,
+   "q3_pct_ca": 57.66,
+   "refs": 805,
+   "famille": "autre"
+  },
+  {
+   "activite": "Vêtements, accessoires (commerce de gros)",
+   "naf": [
+    "4642Z",
+    "4642Y"
+   ],
+   "ratio_moyen_pct_ca": 53.1,
+   "q1_pct_ca": 13.52,
+   "q3_pct_ca": 73.37,
+   "refs": 26,
+   "famille": "autre"
+  },
+  {
+   "activite": "Écailler",
+   "naf": [
+    "4723Z",
+    "4792J",
+    "4723Y"
+   ],
+   "ratio_moyen_pct_ca": 34.9,
+   "q1_pct_ca": 12.59,
+   "q3_pct_ca": 52.63,
+   "refs": 55,
+   "famille": "autre"
+  },
+  {
+   "activite": "Électroménager, HI-FI, TV, vidéo, radio",
+   "naf": [
+    "4754Z",
+    "4792J",
+    "4754Y"
+   ],
+   "ratio_moyen_pct_ca": 20.8,
+   "q1_pct_ca": 8.8,
+   "q3_pct_ca": 21.97,
+   "refs": 40,
+   "famille": "autre"
+  },
+  {
+   "activite": "Émaux (commerce de détail)",
+   "naf": [
+    "4752A",
+    "4792J",
+    "4752G"
+   ],
+   "ratio_moyen_pct_ca": 30.9,
+   "q1_pct_ca": 11.45,
+   "q3_pct_ca": 38.39,
+   "refs": 82,
+   "famille": "autre"
+  },
+  {
+   "activite": "Épicerie en libre- service",
+   "naf": [
+    "4729Z",
+    "4792J",
+    "4727G",
+    "4727H"
+   ],
+   "ratio_moyen_pct_ca": 53.9,
+   "q1_pct_ca": 22.83,
+   "q3_pct_ca": 66.68,
+   "refs": 248,
+   "famille": "autre"
+  },
+  {
+   "activite": "Épicerie fine",
+   "naf": [
+    "4729Z",
+    "4792J",
+    "4727G",
+    "4727H"
+   ],
+   "ratio_moyen_pct_ca": 53.9,
+   "q1_pct_ca": 22.83,
+   "q3_pct_ca": 66.68,
+   "refs": 248,
+   "famille": "autre"
+  }
+ ]
+}
