@@ -52,17 +52,18 @@ function memeVoie(libelleApi: string | null | undefined, voieBAN?: string): bool
   return tokens.some((t) => cible.includes(t));
 }
 
-/** Sociétés immatriculées EXACTEMENT à l'adresse (numéro de voie + CP + nom de voie). */
+/** Sociétés immatriculées à une adresse — recherche par TEXTE d'adresse (comme annuaire-entreprises / société.com),
+ *  bien plus fiable que la géoloc pour les petits commerces. Filtrée sur numéro (±2) + CP + voie. */
 export async function societesAAdresse(
-  lat: number, lon: number, ref?: { numero?: string; voie?: string; cp?: string },
+  adresse: string, ref?: { numero?: string; voie?: string; cp?: string },
 ): Promise<SocieteCandidate[]> {
   try {
-    const r = await fetch(`${API_ENT}/near_point?lat=${lat}&long=${lon}&radius=0.06&per_page=50`);
+    const r = await fetch(`${API_ENT}/search?q=${encodeURIComponent(adresse)}&per_page=25`);
     if (!r.ok) return [];
     const d = await r.json();
     const numRefN = ref?.numero != null && /^\d+/.test(String(ref.numero)) ? parseInt(String(ref.numero), 10) : null;
     const cpRef = ref?.cp ?? null;
-    const TOLERANCE = 2; // on accepte le numéro cherché à +/- 2 (adresses d'angle, décalages)
+    const TOLERANCE = 2; // numéro cherché à +/- 2 (adresses d'angle, décalages)
 
     const matchAdresse = (x: any): boolean => {
       if (!x) return false;
@@ -80,11 +81,11 @@ export async function societesAAdresse(
     for (const e of (d?.results ?? [])) {
       const etabsAll = [...(e.matching_etablissements ?? []), e.siege].filter(Boolean);
       const matched = etabsAll.filter(matchAdresse);
-      if (!matched.length) continue; // pas à l'adresse exacte -> écarté
+      if (!matched.length) continue;
       const etab = matched.find((x: any) => x.etat_administratif === "A") ?? matched[0];
       const key = e.siren ?? etab.siret ?? "";
       if (seen.has(key)) continue; seen.add(key);
-      const ens = (etab.liste_enseignes ?? [])[0] ?? e.nom_commercial ?? null;
+      const ens = (etab.liste_enseignes ?? [])[0] ?? e.nom_commercial ?? e.siege?.nom_commercial ?? null;
       const fin = e.finances ? (Object.values(e.finances).slice(-1)[0] as any) : null;
       res.push({
         siren: e.siren ?? null,
@@ -97,7 +98,7 @@ export async function societesAAdresse(
         ca: fin?.ca ?? null,
       });
     }
-    // tri par proximité du numéro cherché, puis actifs d'abord
+    // tri par proximité du numéro, actifs d'abord
     const numOf = (a: SocieteCandidate) => { const m = String(a.adresse ?? "").match(/\d+/); return m ? parseInt(m[0], 10) : 9999; };
     res.sort((a, b) => Math.abs(numOf(a) - (numRefN ?? 0)) - Math.abs(numOf(b) - (numRefN ?? 0)));
     return [...res.filter((c) => c.actif), ...res.filter((c) => !c.actif)].slice(0, 15);
