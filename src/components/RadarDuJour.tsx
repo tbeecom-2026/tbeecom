@@ -41,6 +41,12 @@ const DEPARTEMENTS: { code: string; label: string }[] = [
   { code: "77", label: "77 · Seine-et-Marne" },
 ];
 
+const ETATS: { code: string; label: string }[] = [
+  { code: "tous", label: "Redressement + liquidation" },
+  { code: "redressement", label: "Redressement seul" },
+  { code: "liquidation", label: "Liquidation seule" },
+];
+
 function fmtDate(s: string | null): string {
   if (!s) return "—";
   const d = new Date(s);
@@ -91,6 +97,7 @@ async function ajouterEnLead(it: RadarItem) {
 export default function RadarDuJour() {
   const [jours, setJours] = useState<1 | 7>(1);
   const [departement, setDepartement] = useState<string>("tous");
+  const [etatFiltre, setEtatFiltre] = useState<string>("tous");
   const [familles, setFamilles] = useState<FamilleMetier[]>([]);
   const [items, setItems] = useState<RadarItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,8 +137,10 @@ export default function RadarDuJour() {
   const parType = useMemo(() => {
     const g: Record<RadarType, RadarItem[]> = { difficulte: [], cession: [], immatriculation: [] };
     for (const it of itemsVisibles) g[it.type].push(it);
+    // Filtre État (redressement / liquidation) : ne concerne que les difficultés
+    if (etatFiltre !== "tous") g.difficulte = g.difficulte.filter((it) => it.etat === etatFiltre);
     return g;
-  }, [itemsVisibles]);
+  }, [itemsVisibles, etatFiltre]);
 
   function toggleFamille(f: FamilleMetier) {
     setFamilles((prev) => (prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]));
@@ -145,6 +154,18 @@ export default function RadarDuJour() {
           Radar du jour — Île-de-France
         </CardTitle>
         <div className="flex items-center gap-2">
+          <select
+            value={etatFiltre}
+            onChange={(e) => setEtatFiltre(e.target.value)}
+            className="text-xs bg-secondary border border-border rounded px-2 py-1 text-foreground"
+            title="Filtrer par état de procédure (onglet Difficultés)"
+          >
+            {ETATS.map((et) => (
+              <option key={et.code} value={et.code}>
+                {et.label}
+              </option>
+            ))}
+          </select>
           <select
             value={departement}
             onChange={(e) => setDepartement(e.target.value)}
