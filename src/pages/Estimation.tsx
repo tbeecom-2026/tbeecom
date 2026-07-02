@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,14 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Calculator, Loader2, FileText, AlertTriangle, Search } from "lucide-react";
+import { Calculator, Loader2, FileText, AlertTriangle, Search, CheckCircle2, Building2, X, UserPlus, Save } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/contexts/AuthContext";
 import { getAgence } from "@/lib/agence";
 import { openMandat } from "@/lib/generateMandat";
 import { estimationFonds } from "@/lib/avisValeur";
+import { tvaFrFromSiren } from "@/lib/rechercheEntreprise";
+import { autocompleteAdresse, societesAAdresse, type AdresseSuggestion, type SocieteCandidate } from "@/lib/adresseEntreprises";
 import baremes from "@/config/baremes_fdc.json";
 import {
   estimer, CRITERES_SCORE, COEF_ZONE, ZONE_LABEL,
@@ -22,6 +25,11 @@ import { genererAvisValeurV2Html } from "@/lib/avisValeurV2";
 
 interface BaremeRow { activite: string; naf: string[]; ratio_moyen_pct_ca: number; q1_pct_ca: number; q3_pct_ca: number; refs: number; famille: string; }
 const ACTIVITES = (baremes as any).activites as BaremeRow[];
+function baremeParNaf(naf: string | null): BaremeRow | null {
+  if (!naf) return null;
+  const code = naf.replace(/\./g, "").toUpperCase();
+  return ACTIVITES.find((a) => a.naf.some((n) => n.toUpperCase() === code)) ?? null;
+}
 
 const eur = (n: number | null | undefined) =>
   n == null ? "—" : new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -40,8 +48,10 @@ const fiabColor: Record<ResultatEstimation["fiabilite"], string> = {
 
 export default function Estimation() {
   const [params] = useSearchParams();
+  const { user } = useAuth();
+  const mandatId = params.get("mandatId");
 
-  // Activité (recherche dans le barème)
+  // Barème
   const [query, setQuery] = useState("");
   const [openList, setOpenList] = useState(false);
   const [bareme, setBareme] = useState<BaremeRow | null>(null);
@@ -52,14 +62,27 @@ export default function Estimation() {
   }, [query]);
 
   const [zone, setZone] = useState<ZoneGeo>("ville_moyenne");
-  const [adresse, setAdresse] = useState(params.get("adresse") ?? "");
   const [enseigne, setEnseigne] = useState(params.get("enseigne") ?? "");
+
+  // Adresse + autocomplétion
+  const [adresse, setAdresse] = useState(params.get("adresse") ?? "");
+  const [adrSug, setAdrSug] = useState<AdresseSuggestion[]>([]);
+  const [showAdr, setShowAdr] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const debounce = useRef<any>(null);
+
+  // Sociétés à l'adresse
+  const [societes, setSocietes] = useState<SocieteCandidate[]>([]);
+  const [loadingSoc, setLoadingSoc] = useState(false);
+  const [soc, setSoc] = useState<SocieteCandidate | null>(null);
+  const [savingContact, setSavingContact] = useState(false);
+  const [contactId, setContactId] = useState<string | null>(null);
+  const [savingMandat, setSavingMandat] = useState(false);
 
   // CA 3 ans
   const [caN, setCaN] = useState(params.get("ca") ?? "");
   const [caN1, setCaN1] = useState("");
   const [caN2, setCaN2] = useState("");
-
   // Rentabilité
   const [ebe, setEbe] = useState("");
   const [remuReintegree, setRemuReintegree] = useState("");
@@ -67,7 +90,6 @@ export default function Estimation() {
   const [proprietaireMurs, setProprietaireMurs] = useState(false);
   const [loyerMarcheMurs, setLoyerMarcheMurs] = useState("");
   const [autresRetraitements, setAutresRetraitements] = useState("");
-
   // Bail
   const [loyer, setLoyer] = useState("");
   const [loyerTVA, setLoyerTVA] = useState<"HT" | "TTC">("HT");
@@ -85,19 +107,15 @@ export default function Estimation() {
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState<ResultatEstimation | null>(null);
   const [entree, setEntree] = useState<EntreeEstimation | null>(null);
-  const [comparables, setComparables] = useState<any[]>([]);
 
-  // Pré-remplissage depuis un mandat
   useEffect(() => {
-    const id = params.get("mandatId");
-    if (!id) return;
+    if (!mandatId) return;
     (async () => {
-      const { data } = await supabase.from("mandats").select("*").eq("id", id).single();
+      const { data } = await supabase.from("mandats").select("*").eq("id", mandatId).single();
       if (!data) return;
-      const m: any = data;
-      const at = m.attributs ?? {};
+      const m: any = data; const at = m.attributs ?? {};
       if (m.ca_annuel) setCaN(String(m.ca_annuel));
-      if (m.enseigne && !enseigne) setEnseigne(String(m.enseigne));
+      if (m.enseigne) setEnseigne(String(m.enseigne));
       if (!adresse) setAdresse([m.adresse, m.code_postal, m.commune].filter(Boolean).join(" "));
       const loyerAn = at.loyer_annuel ?? (m.loyer_mensuel ? m.loyer_mensuel * 12 : null);
       if (loyerAn) setLoyer(String(loyerAn));
@@ -109,80 +127,114 @@ export default function Estimation() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function onAdresseChange(v: string) {
+    setAdresse(v); setSoc(null); setContactId(null); setShowAdr(true);
+    if (debounce.current) clearTimeout(debounce.current);
+    debounce.current = setTimeout(async () => setAdrSug(await autocompleteAdresse(v)), 250);
+  }
+
+  async function choisirAdresse(s: AdresseSuggestion) {
+    setAdresse(s.label); setAdrSug([]); setShowAdr(false);
+    setCoords({ lat: s.lat, lon: s.lon });
+    setLoadingSoc(true); setSocietes([]); setSoc(null);
+    try {
+      const list = await societesAAdresse(s.lat, s.lon, { numero: s.housenumber, voie: s.street });
+      setSocietes(list);
+      if (!list.length) toast.info("Aucune société trouvée à cette adresse — saisie manuelle possible.");
+    } finally { setLoadingSoc(false); }
+  }
+
+  function choisirSociete(c: SocieteCandidate) {
+    setSoc(c); setSocietes([]); setContactId(null);
+    if (c.enseigne || c.denomination) setEnseigne(c.enseigne || c.denomination || "");
+    const b = baremeParNaf(c.naf);
+    if (b) { setBareme(b); setQuery(b.activite); }
+    if (c.ca && !num(caN)) setCaN(String(c.ca));
+  }
+
+  async function enregistrerContact() {
+    if (!soc) return;
+    setSavingContact(true);
+    try {
+      if (soc.siren) {
+        const { data } = await supabase.from("contacts").select("id").eq("siren", soc.siren).limit(1);
+        if (data && data.length) { setContactId(data[0].id); toast.success("Société déjà en contact — reliée."); setSavingContact(false); return; }
+      }
+      const row: any = {
+        societe: soc.denomination, siren: soc.siren, siret: soc.siret,
+        code_naf: soc.naf, num_tva: tvaFrFromSiren(soc.siren),
+        adresse, roles: ["vendeur"], type_contact: "societe", user_id: user?.id,
+      };
+      const { data, error } = await supabase.from("contacts").insert(row).select("id").single();
+      if (error) throw error;
+      setContactId(data.id); toast.success("Société enregistrée dans les contacts.");
+    } catch (e: any) { toast.error("Échec enregistrement contact", { description: e?.message }); }
+    finally { setSavingContact(false); }
+  }
+
+  async function enregistrerSurMandat() {
+    if (!mandatId) return;
+    setSavingMandat(true);
+    try {
+      const { data: cur } = await supabase.from("mandats").select("attributs").eq("id", mandatId).single();
+      const at: any = { ...((cur as any)?.attributs ?? {}) };
+      if (soc?.siren) at.siren = soc.siren;
+      if (res) at.estimation = {
+        valeur_centrale: res.valeurCentrale, bas: res.fourchetteBasse, haut: res.fourchetteHaute,
+        activite: bareme?.activite, date: new Date().toISOString().slice(0, 10),
+      };
+      const upd: any = { attributs: at };
+      if (enseigne) upd.enseigne = enseigne;
+      if (bareme?.activite) upd.nature_activite = bareme.activite;
+      const { error } = await supabase.from("mandats").update(upd).eq("id", mandatId);
+      if (error) throw error;
+      toast.success("Enregistré sur la fiche du bien.");
+    } catch (e: any) { toast.error("Échec de l'enregistrement", { description: e?.message }); }
+    finally { setSavingMandat(false); }
+  }
+
   function setScore(k: CritereKey, v: number) { setScores((p) => ({ ...p, [k]: v })); }
 
   async function run() {
     if (!bareme) { toast.error("Choisis d'abord l'activité (barème)."); return; }
-    if (num(caN) == null && num(caN1) == null && num(caN2) == null) {
-      toast.error("Renseigne au moins un chiffre d'affaires."); return;
-    }
+    if (num(caN) == null && num(caN1) == null && num(caN2) == null) { toast.error("Renseigne au moins un chiffre d'affaires."); return; }
     setLoading(true);
     try {
-      // Méthode C : comparables BODACC (médiane), best-effort
       let comparableMedian: number | null = null;
-      let comps: any[] = [];
       try {
         const cp = (adresse.match(/\b\d{5}\b/) ?? [])[0];
         if (adresse.trim() || cp) {
-          const e = await estimationFonds({
-            famille: bareme.famille as any,
-            adresse: adresse.trim() || undefined,
-            zone: cp ? { codePostal: cp } : undefined,
-            ca: num(caN) ?? undefined,
-          });
+          const e = await estimationFonds({ famille: bareme.famille as any, adresse: adresse.trim() || undefined, zone: cp ? { codePostal: cp } : undefined, ca: num(caN) ?? undefined });
           comparableMedian = e.stats.n >= 3 ? e.stats.median : null;
-          comps = e.comparables ?? [];
         }
-      } catch { /* comparables indisponibles : on continue */ }
+      } catch { /* comparables indisponibles */ }
 
       const ent: EntreeEstimation = {
         famille: (bareme.famille as Famille) ?? "autre",
         bareme: { activite: bareme.activite, ratio_moyen_pct_ca: bareme.ratio_moyen_pct_ca, q1_pct_ca: bareme.q1_pct_ca, q3_pct_ca: bareme.q3_pct_ca, refs: bareme.refs },
         caN: num(caN), caN1: num(caN1), caN2: num(caN2),
-        ebeComptable: num(ebe),
-        reintegrationRemunerationDirigeant: num(remuReintegree),
-        salaireDirigeantNormatif: num(salaireNormatif),
-        proprietaireMurs,
-        loyerMarcheSiProprietaire: num(loyerMarcheMurs),
-        autresRetraitements: num(autresRetraitements),
-        loyerAnnuel: num(loyer),
-        chargesAnnuelles: num(charges),
-        taxeFonciere: num(taxeFonciere),
-        dureeRestanteAnnees: num(dureeBail),
-        valeurLocativeMarcheAnnuelle: num(vlm),
-        valeurMaterielAjoutee: num(materiel),
-        comparableMedian,
-        zone,
-        scores,
+        ebeComptable: num(ebe), reintegrationRemunerationDirigeant: num(remuReintegree),
+        salaireDirigeantNormatif: num(salaireNormatif), proprietaireMurs, loyerMarcheSiProprietaire: num(loyerMarcheMurs),
+        autresRetraitements: num(autresRetraitements), loyerAnnuel: num(loyer), chargesAnnuelles: num(charges),
+        taxeFonciere: num(taxeFonciere), dureeRestanteAnnees: num(dureeBail), valeurLocativeMarcheAnnuelle: num(vlm),
+        valeurMaterielAjoutee: num(materiel), comparableMedian, zone, scores,
       };
-      setEntree(ent);
-      setRes(estimer(ent));
-      setComparables(comps.slice(0, 12));
-    } catch (e: any) {
-      toast.error("Estimation impossible", { description: e?.message });
-    } finally {
-      setLoading(false);
-    }
+      setEntree(ent); setRes(estimer(ent));
+    } catch (e: any) { toast.error("Estimation impossible", { description: e?.message }); }
+    finally { setLoading(false); }
   }
 
   async function genererPDF() {
     if (!res || !entree) return;
     try {
       const agence = await getAgence();
-      const html = genererAvisValeurV2Html(entree, res, {
-        enseigne: enseigne || undefined, adresse: adresse || undefined, agence: agence ?? undefined,
-      });
-      openMandat(html);
-    } catch (e: any) {
-      toast.error("Impossible de générer le PDF", { description: e?.message });
-    }
+      openMandat(genererAvisValeurV2Html(entree, res, { enseigne: enseigne || undefined, adresse: adresse || undefined, agence: agence ?? undefined }));
+    } catch (e: any) { toast.error("Impossible de générer le PDF", { description: e?.message }); }
   }
 
   const N = (label: string, val: string, set: (v: string) => void, ph = "") => (
-    <div className="space-y-1">
-      <Label className="text-xs">{label}</Label>
-      <Input value={val} onChange={(e) => set(e.target.value)} placeholder={ph} inputMode="numeric" />
-    </div>
+    <div className="space-y-1"><Label className="text-xs">{label}</Label>
+      <Input value={val} onChange={(e) => set(e.target.value)} placeholder={ph} inputMode="numeric" /></div>
   );
 
   return (
@@ -195,52 +247,100 @@ export default function Estimation() {
         </div>
       </div>
 
-      {/* Activité + zone */}
       <Card className="bg-slate-800 border-slate-700">
-        <CardHeader><CardTitle className="text-base">Activité & localisation</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">Localisation & société</CardTitle></CardHeader>
         <CardContent className="space-y-4">
+          {/* Adresse (autocomplétion) */}
+          <div className="space-y-1 relative">
+            <Label className="text-xs">Adresse du fonds</Label>
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
+              <Input className="pl-8" value={adresse} onChange={(e) => onAdresseChange(e.target.value)}
+                onFocus={() => setShowAdr(true)} placeholder="Commence à taper : 96 boulevard de la République, Saint-Cloud…" />
+            </div>
+            {showAdr && adrSug.length > 0 && (
+              <div className="absolute z-30 mt-1 w-full max-h-64 overflow-auto rounded border border-slate-600 bg-slate-900 shadow-lg">
+                {adrSug.map((s, i) => (
+                  <button key={i} type="button" className="block w-full text-left px-3 py-1.5 text-sm hover:bg-slate-700 text-slate-100"
+                    onClick={() => choisirAdresse(s)}>{s.label}</button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sociétés à l'adresse */}
+          {loadingSoc && <div className="text-xs text-slate-400 flex items-center gap-2"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Recherche des sociétés à cette adresse…</div>}
+          {societes.length > 0 && !soc && (
+            <div className="rounded border border-slate-600 bg-slate-900/60 divide-y divide-slate-700">
+              <div className="px-3 py-1.5 text-xs text-slate-400">Sociétés immatriculées à cette adresse — choisis la bonne :</div>
+              {societes.map((c, i) => (
+                <button key={i} type="button" className="block w-full text-left px-3 py-2 text-sm hover:bg-slate-700" onClick={() => choisirSociete(c)}>
+                  <div className="text-slate-100 font-medium flex items-center gap-2"><Building2 className="h-3.5 w-3.5 text-primary" />{c.enseigne || c.denomination}{!c.actif && <span className="text-red-400 text-xs">(cessée)</span>}</div>
+                  <div className="text-xs text-slate-400">{c.denomination} · SIREN {c.siren ?? "—"} · NAF {c.naf ?? "—"}{c.ca ? ` · CA ${eur(c.ca)}` : ""}</div>
+                  <div className="text-[11px] text-slate-500">{c.adresse}</div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Société confirmée */}
+          {soc && (
+            <div className="rounded-lg border border-emerald-600/50 bg-emerald-950/30 p-3">
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
+                <div className="flex-1 text-sm">
+                  <div className="font-semibold text-emerald-100">{soc.enseigne || soc.denomination}</div>
+                  <div className="text-xs text-slate-300">{soc.denomination} · SIREN {soc.siren ?? "—"} · NAF {soc.naf ?? "—"}</div>
+                  <div className="text-xs text-slate-400">{soc.adresse}{soc.ca ? ` · CA publié : ${eur(soc.ca)} (à vérifier)` : ""}</div>
+                </div>
+                <Button type="button" size="sm" variant="ghost" onClick={() => { setSoc(null); setContactId(null); }}><X className="h-4 w-4" /></Button>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <Button type="button" size="sm" variant="outline" onClick={enregistrerContact} disabled={savingContact || !!contactId}>
+                  <UserPlus className="mr-1 h-3.5 w-3.5" />{contactId ? "Contact enregistré ✓" : savingContact ? "…" : "Enregistrer comme contact"}
+                </Button>
+                {mandatId && (
+                  <Button type="button" size="sm" variant="outline" onClick={enregistrerSurMandat} disabled={savingMandat}>
+                    <Save className="mr-1 h-3.5 w-3.5" />{savingMandat ? "…" : "Enregistrer sur la fiche du bien"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Enseigne + Activité + Zone */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1"><Label className="text-xs">Enseigne</Label><Input value={enseigne} onChange={(e) => setEnseigne(e.target.value)} /></div>
             <div className="space-y-1 relative">
               <Label className="text-xs">Activité (barème) *</Label>
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
-                <Input
-                  className="pl-8"
-                  value={bareme ? bareme.activite : query}
+                <Input className="pl-8" value={bareme ? bareme.activite : query}
                   onChange={(e) => { setBareme(null); setQuery(e.target.value); setOpenList(true); }}
-                  onFocus={() => setOpenList(true)}
-                  placeholder="Rechercher : pizzeria, coiffeur, garage…"
-                />
+                  onFocus={() => setOpenList(true)} placeholder="pizzeria, coiffeur, garage…" />
               </div>
               {openList && matches.length > 0 && !bareme && (
                 <div className="absolute z-20 mt-1 w-full max-h-64 overflow-auto rounded border border-slate-600 bg-slate-900 shadow-lg">
                   {matches.map((a, i) => (
-                    <button key={i} type="button"
-                      className="block w-full text-left px-3 py-1.5 text-sm hover:bg-slate-700"
+                    <button key={i} type="button" className="block w-full text-left px-3 py-1.5 text-sm hover:bg-slate-700"
                       onClick={() => { setBareme(a); setOpenList(false); setQuery(a.activite); }}>
                       <span className="text-slate-100">{a.activite}</span>
-                      <span className="text-slate-500 text-xs"> · {a.ratio_moyen_pct_ca}% CA (Q1 {a.q1_pct_ca}–Q3 {a.q3_pct_ca})</span>
+                      <span className="text-slate-500 text-xs"> · {a.ratio_moyen_pct_ca}% CA</span>
                     </button>
                   ))}
                 </div>
               )}
-              {bareme && (
-                <p className="text-[11px] text-slate-400">Barème : {bareme.ratio_moyen_pct_ca}% du CA (Q1 {bareme.q1_pct_ca} – Q3 {bareme.q3_pct_ca}, {bareme.refs} réf.)</p>
-              )}
+              {bareme && <p className="text-[11px] text-slate-400">Barème : {bareme.ratio_moyen_pct_ca}% du CA (Q1 {bareme.q1_pct_ca} – Q3 {bareme.q3_pct_ca}, {bareme.refs} réf.)</p>}
             </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Zone géographique</Label>
               <Select value={zone} onValueChange={(v) => setZone(v as ZoneGeo)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {ZONES.map((z) => <SelectItem key={z} value={z}>{ZONE_LABEL[z]} (×{COEF_ZONE[z].toFixed(2)})</SelectItem>)}
-                </SelectContent>
+                <SelectContent>{ZONES.map((z) => <SelectItem key={z} value={z}>{ZONE_LABEL[z]} (×{COEF_ZONE[z].toFixed(2)})</SelectItem>)}</SelectContent>
               </Select>
             </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1"><Label className="text-xs">Enseigne</Label><Input value={enseigne} onChange={(e) => setEnseigne(e.target.value)} /></div>
-            <div className="space-y-1"><Label className="text-xs">Adresse (pour les comparables)</Label><Input value={adresse} onChange={(e) => setAdresse(e.target.value)} placeholder="100 rue Montorgueil 75002 Paris" /></div>
           </div>
         </CardContent>
       </Card>
@@ -265,14 +365,12 @@ export default function Estimation() {
             {N("Salaire dirigeant de marché (déduit)", salaireNormatif, setSalaireNormatif)}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-            <div className="space-y-1">
-              <Label className="text-xs">Propriétaire des murs</Label>
-              <div className="flex items-center gap-2 h-10"><Switch checked={proprietaireMurs} onCheckedChange={setProprietaireMurs} /><span className="text-xs text-slate-400">{proprietaireMurs ? "Oui" : "Non"}</span></div>
-            </div>
+            <div className="space-y-1"><Label className="text-xs">Propriétaire des murs</Label>
+              <div className="flex items-center gap-2 h-10"><Switch checked={proprietaireMurs} onCheckedChange={setProprietaireMurs} /><span className="text-xs text-slate-400">{proprietaireMurs ? "Oui" : "Non"}</span></div></div>
             {proprietaireMurs && N("Loyer de marché (déduit)", loyerMarcheMurs, setLoyerMarcheMurs)}
             {N("Autres retraitements (±)", autresRetraitements, setAutresRetraitements)}
           </div>
-          <p className="text-[11px] text-slate-500">EBE retraité = EBE comptable + rémunération réintégrée − salaire de marché − loyer de marché (si propriétaire) ± autres. Laisser vide si l'EBE n'est pas connu (estimation basée sur le CA).</p>
+          <p className="text-[11px] text-slate-500">EBE retraité = EBE comptable + rémunération réintégrée − salaire de marché − loyer de marché (si propriétaire) ± autres. Laisser vide si l'EBE n'est pas connu.</p>
         </CardContent>
       </Card>
 
@@ -281,34 +379,22 @@ export default function Estimation() {
         <CardHeader><CardTitle className="text-base">Bail commercial</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">Loyer annuel</Label>
-              <div className="flex gap-2">
-                <Input value={loyer} onChange={(e) => setLoyer(e.target.value)} inputMode="numeric" placeholder="30000" />
-                <Select value={loyerTVA} onValueChange={(v) => setLoyerTVA(v as any)}>
-                  <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="HT">HT</SelectItem><SelectItem value="TTC">TTC</SelectItem></SelectContent>
-                </Select>
-              </div>
-            </div>
+            <div className="space-y-1"><Label className="text-xs">Loyer annuel</Label>
+              <div className="flex gap-2"><Input value={loyer} onChange={(e) => setLoyer(e.target.value)} inputMode="numeric" placeholder="30000" />
+                <Select value={loyerTVA} onValueChange={(v) => setLoyerTVA(v as any)}><SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="HT">HT</SelectItem><SelectItem value="TTC">TTC</SelectItem></SelectContent></Select></div></div>
             {N("Charges annuelles", charges, setCharges)}
             {N("Taxe foncière annuelle", taxeFonciere, setTaxeFonciere)}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {N("Durée restante du bail (années)", dureeBail, setDureeBail, "6")}
-            <div className="space-y-1">
-              <Label className="text-xs">Valeur locative de marché (loyer annuel)</Label>
-              <div className="flex gap-2">
-                <Input value={vlm} onChange={(e) => setVlm(e.target.value)} inputMode="numeric" placeholder="32000" />
-                <Select value={vlmTVA} onValueChange={(v) => setVlmTVA(v as any)}>
-                  <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="HT">HT</SelectItem><SelectItem value="TTC">TTC</SelectItem></SelectContent>
-                </Select>
-              </div>
-            </div>
+            <div className="space-y-1"><Label className="text-xs">Valeur locative de marché (loyer annuel)</Label>
+              <div className="flex gap-2"><Input value={vlm} onChange={(e) => setVlm(e.target.value)} inputMode="numeric" placeholder="32000" />
+                <Select value={vlmTVA} onValueChange={(v) => setVlmTVA(v as any)}><SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="HT">HT</SelectItem><SelectItem value="TTC">TTC</SelectItem></SelectContent></Select></div></div>
             {N("Valeur du matériel à ajouter (optionnel)", materiel, setMateriel)}
           </div>
-          <p className="text-[11px] text-slate-500">Le loyer et la valeur locative de marché sont comparés sur la même base (HT conseillé). Un loyer sous le marché crée un droit au bail ; un bail proche du terme fait courir un risque de déplafonnement.</p>
+          <p className="text-[11px] text-slate-500">Loyer et valeur locative comparés sur la même base (HT conseillé). Un loyer sous le marché crée un droit au bail ; un bail proche du terme fait courir un risque de déplafonnement.</p>
         </CardContent>
       </Card>
 
@@ -332,7 +418,6 @@ export default function Estimation() {
         {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Calcul…</> : <><Calculator className="mr-2 h-4 w-4" /> Estimer la valeur</>}
       </Button>
 
-      {/* Résultat */}
       {res && (
         <>
           <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-primary/40">
@@ -358,10 +443,7 @@ export default function Estimation() {
             {[res.methodeA, res.methodeB, res.methodeC].map((m, i) => (
               <Card key={i} className="bg-slate-800 border-slate-700">
                 <CardHeader className="pb-2"><CardTitle className="text-sm">{m.libelle}</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="text-xl font-bold text-slate-100">{eur(m.valeur)}</div>
-                  <p className="text-[11px] text-slate-400 mt-1">{m.detail}</p>
-                </CardContent>
+                <CardContent><div className="text-xl font-bold text-slate-100">{eur(m.valeur)}</div><p className="text-[11px] text-slate-400 mt-1">{m.detail}</p></CardContent>
               </Card>
             ))}
           </div>
@@ -377,7 +459,10 @@ export default function Estimation() {
             </CardContent>
           </Card>
 
-          <Button onClick={genererPDF} size="lg" className="w-full"><FileText className="mr-2 h-4 w-4" /> Générer le PDF (avis de valeur)</Button>
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={genererPDF} size="lg" className="flex-1"><FileText className="mr-2 h-4 w-4" /> Générer le PDF (avis de valeur)</Button>
+            {mandatId && <Button onClick={enregistrerSurMandat} size="lg" variant="outline" disabled={savingMandat}><Save className="mr-2 h-4 w-4" /> Enregistrer sur la fiche du bien</Button>}
+          </div>
         </>
       )}
     </div>
