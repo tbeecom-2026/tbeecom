@@ -9,6 +9,20 @@ import { formatDate, formatEuros, getStatutBadge } from "@/lib/formatters";
 import { getMandatDateState, getVenduClass } from "@/lib/mandatStatus";
 import type { Mandat } from "@/types/database";
 import { familleMetier } from "@/lib/metier";
+import questionnaires from "@/config/questionnaires_metiers.json";
+const ATTR_LABELS: Record<string, string> = (() => {
+  const map: Record<string, string> = {};
+  const cfg: any = questionnaires;
+  for (const b of cfg.champs_communs?.blocs ?? []) for (const fld of b.champs ?? []) map[fld.key] = fld.label;
+  for (const k of Object.keys(cfg.metiers ?? {})) for (const fld of cfg.metiers[k].champs ?? []) map[fld.key] = fld.label;
+  return map;
+})();
+const ATTR_HIDE = new Set(["famille_metier", "issue_mandat"]);
+const fmtAttr = (v: any) =>
+  Array.isArray(v) ? v.join(", ")
+  : typeof v === "boolean" ? (v ? "Oui" : "Non")
+  : typeof v === "number" ? new Intl.NumberFormat("fr-FR").format(v)
+  : String(v);
 // -- Helpers ---------------------------------------------------------------
 const hasVal = (v: any) => v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0);
 const fmtSurface = (v: number | null | undefined) =>
@@ -111,12 +125,18 @@ export default function MandatDetail() {
   const fromMandat = params.get("fromMandat");
   const [mandat, setMandat] = useState<Mandat | null>(null);
   const [loading, setLoading] = useState(true);
+  const [acquereurs, setAcquereurs] = useState<any[]>([]);
   useEffect(() => {
     if (!id) return;
     (async () => {
       setLoading(true);
       const { data } = await supabase.from("mandats").select("*").eq("id", id).single();
       setMandat((data as Mandat) ?? null);
+      const { data: rapps } = await supabase
+        .from("rapprochements")
+        .select("*, recherche:recherches(*, contact:contacts(*))")
+        .eq("mandat_id", id);
+      setAcquereurs((rapps as any[]) ?? []);
       setLoading(false);
     })();
   }, [id]);
@@ -343,6 +363,82 @@ export default function MandatDetail() {
           }
         />
       </InfoCard>
+      {/* 9ter. COMPLÉMENTS (attributs / questionnaire métier) */}
+      {hasVal(m.attributs) &&
+        Object.entries(m.attributs as any).some(([k, v]) => !ATTR_HIDE.has(k) && hasVal(v)) && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Compléments (questionnaire métier)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Object.entries(m.attributs as any)
+                  .filter(([k, v]) => !ATTR_HIDE.has(k) && hasVal(v))
+                  .map(([k, v]) => (
+                    <Row key={k} label={ATTR_LABELS[k] ?? k} value={fmtAttr(v)} />
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      {/* 9bis. ACQUÉREURS ASSOCIÉS */}
+      <Card>
+        <CardHeader className="pb-3 flex-row items-center justify-between">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Acquéreurs associés
+          </CardTitle>
+          <Button variant="outline" size="sm" onClick={() => navigate("/acquereurs")}>
+            Voir les acquéreurs
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {acquereurs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Aucun acquéreur associé. Depuis la fiche d'un acquéreur, utilisez « Proposer un mandat » pour le rattacher à ce bien.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-muted-foreground border-b border-border">
+                    <th className="pb-2 pr-4">Acquéreur</th>
+                    <th className="pb-2 pr-4">Budget</th>
+                    <th className="pb-2 pr-4">Téléphone</th>
+                    <th className="pb-2">Statut</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {acquereurs.map((r) => {
+                    const c = r.recherche?.contact;
+                    const budget =
+                      hasVal(r.recherche?.budget_max)
+                        ? `jusqu'à ${formatEuros(r.recherche.budget_max)}`
+                        : hasVal(r.recherche?.budget_min)
+                          ? `dès ${formatEuros(r.recherche.budget_min)}`
+                          : "—";
+                    return (
+                      <tr
+                        key={r.id}
+                        className="border-b border-border/50 cursor-pointer hover:bg-secondary/40"
+                        onClick={() => r.recherche_id && navigate(`/acquereurs/${r.recherche_id}`)}
+                      >
+                        <td className="py-2 pr-4 text-primary">
+                          {c ? `${c.nom ?? ""} ${c.prenom ?? ""}`.trim() || "Acquéreur" : "Acquéreur"}
+                        </td>
+                        <td className="py-2 pr-4">{budget}</td>
+                        <td className="py-2 pr-4">{c?.telephone ?? "—"}</td>
+                        <td className="py-2"><Badge variant="outline">{r.statut ?? "—"}</Badge></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
       {/* 10. DESCRIPTION */}
       {hasVal(m.description) && (
         <Card>
