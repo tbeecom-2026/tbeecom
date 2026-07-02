@@ -143,6 +143,7 @@ export default function Prospection() {
   const [filtreStatut, setFiltreStatut] = useState<string>("all");
   const [filtreFamille, setFiltreFamille] = useState<string>("all");
   const [filtreDossier, setFiltreDossier] = useState<string>("all");
+  const [filtreVille, setFiltreVille] = useState<string>("");
   const [leadToDelete, setLeadToDelete] = useState<any | null>(null);
 
   // --- Détail lead ---
@@ -772,6 +773,15 @@ export default function Prospection() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Ville / code postal</Label>
+                <Input
+                  value={filtreVille}
+                  onChange={(e) => setFiltreVille(e.target.value)}
+                  placeholder="Ex: Nancy ou 54000"
+                  className="w-48"
+                />
+              </div>
             </div>
 
             <div className="rounded-lg border border-slate-700 overflow-hidden">
@@ -790,10 +800,18 @@ export default function Prospection() {
                   </tr>
                 </thead>
                 <tbody>
-                  {mesLeads.length === 0 && (
+                  {(() => {
+                    const vq = filtreVille.trim().toLowerCase();
+                    const mesLeadsFiltres = vq
+                      ? mesLeads.filter((l) =>
+                          `${l.code_postal ?? ""} ${l.commune ?? ""}`.toLowerCase().includes(vq)
+                        )
+                      : mesLeads;
+                    return (<>
+                  {mesLeadsFiltres.length === 0 && (
                     <tr><td colSpan={9} className="p-6 text-center text-slate-400">Aucun lead enregistré</td></tr>
                   )}
-                  {mesLeads.map((l) => (
+                  {mesLeadsFiltres.map((l) => (
                     <tr key={l.id} className="border-t border-slate-700 hover:bg-slate-800/40">
                       <td className="p-2 cursor-pointer" onClick={() => ouvrirDetail(l)}>
                         <div className="font-medium text-slate-100">{l.denomination ?? "—"}</div>
@@ -850,6 +868,8 @@ export default function Prospection() {
                       </td>
                     </tr>
                   ))}
+                    </>);
+                  })()}
                 </tbody>
               </table>
             </div>
