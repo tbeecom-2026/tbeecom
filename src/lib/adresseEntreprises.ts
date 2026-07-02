@@ -41,50 +41,65 @@ export interface SocieteCandidate {
 const norm = (s: string) =>
   (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
 
-/** Sociétés implantées près d'un point (adresse). ref permet de filtrer sur le numéro de voie exact. */
+/** Types de voie génériques à ignorer dans la comparaison du nom de voie. */
+const TYPE_VOIE = new Set(["BOULEVARD","BD","AVENUE","AV","RUE","PLACE","PL","ALLEE","IMPASSE","CHEMIN","ROUTE","QUAI","COURS","VOIE","PASSAGE","SQUARE","DE","DU","DES","LA","LE","LES","D","L","ET","AUX","SUR"]);
+
+function memeVoie(libelleApi: string | null | undefined, voieBAN?: string): boolean {
+  if (!voieBAN) return true;
+  const tokens = norm(voieBAN).split(/\s+/).filter((w) => w.length > 2 && !TYPE_VOIE.has(w));
+  if (!tokens.length) return true;
+  const cible = norm(libelleApi ?? "");
+  return tokens.some((t) => cible.includes(t));
+}
+
+/** Sociétés immatriculées EXACTEMENT à l'adresse (numéro de voie + CP + nom de voie). */
 export async function societesAAdresse(
-  lat: number, lon: number, ref?: { numero?: string; voie?: string },
+  lat: number, lon: number, ref?: { numero?: string; voie?: string; cp?: string },
 ): Promise<SocieteCandidate[]> {
   try {
-    const r = await fetch(`${API_ENT}/near_point?lat=${lat}&long=${lon}&radius=0.08&per_page=25`);
+    const r = await fetch(`${API_ENT}/near_point?lat=${lat}&long=${lon}&radius=0.06&per_page=50`);
     if (!r.ok) return [];
     const d = await r.json();
-    const out: SocieteCandidate[] = [];
+    const numRefN = ref?.numero != null && /^\d+/.test(String(ref.numero)) ? parseInt(String(ref.numero), 10) : null;
+    const cpRef = ref?.cp ?? null;
+    const TOLERANCE = 2; // on accepte le numéro cherché à +/- 2 (adresses d'angle, décalages)
+
+    const matchAdresse = (x: any): boolean => {
+      if (!x) return false;
+      let numOk = true;
+      if (numRefN != null) {
+        const n = parseInt(String(x.numero_voie ?? ""), 10);
+        numOk = isFinite(n) && Math.abs(n - numRefN) <= TOLERANCE;
+      }
+      const cpOk = cpRef ? String(x.code_postal ?? "") === cpRef : true;
+      return numOk && cpOk && memeVoie(x.libelle_voie ?? x.adresse, ref?.voie);
+    };
+
+    const res: SocieteCandidate[] = [];
+    const seen = new Set<string>();
     for (const e of (d?.results ?? [])) {
-      const etabs = (e.matching_etablissements ?? []).filter((x: any) => x?.etat_administratif === "A");
-      const etab = etabs[0] ?? e.siege;
-      if (!etab) continue;
+      const etabsAll = [...(e.matching_etablissements ?? []), e.siege].filter(Boolean);
+      const matched = etabsAll.filter(matchAdresse);
+      if (!matched.length) continue; // pas à l'adresse exacte -> écarté
+      const etab = matched.find((x: any) => x.etat_administratif === "A") ?? matched[0];
+      const key = e.siren ?? etab.siret ?? "";
+      if (seen.has(key)) continue; seen.add(key);
       const ens = (etab.liste_enseignes ?? [])[0] ?? e.nom_commercial ?? null;
       const fin = e.finances ? (Object.values(e.finances).slice(-1)[0] as any) : null;
-      out.push({
+      res.push({
         siren: e.siren ?? null,
         siret: etab.siret ?? null,
         denomination: e.nom_complet ?? e.nom_raison_sociale ?? null,
         enseigne: ens,
         naf: etab.activite_principale ?? e.activite_principale ?? null,
         adresse: etab.adresse ?? null,
-        actif: (e.etat_administratif ?? "A") === "A" && (etab.etat_administratif ?? "A") === "A",
+        actif: (etab.etat_administratif ?? "A") === "A",
         ca: fin?.ca ?? null,
       });
     }
-    // Filtre sur le numéro de voie (adresse exacte) si dispo, avec repli
-    let list = out;
-    if (ref?.numero) {
-      const rx = new RegExp(`(^|\\D)${ref.numero}(\\D|$)`);
-      const exact = out.filter((c) => c.adresse && rx.test(c.adresse));
-      if (ref.voie) {
-        const v = norm(ref.voie).split(/\s+/).filter((w) => w.length > 3)[0];
-        const exact2 = exact.filter((c) => c.adresse && norm(c.adresse).includes(v ?? ""));
-        if (exact2.length) list = exact2;
-        else if (exact.length) list = exact;
-      } else if (exact.length) list = exact;
-    }
-    // Dédupe par SIREN, actifs d'abord
-    const seen = new Set<string>(); const res: SocieteCandidate[] = [];
-    for (const c of [...list.filter((c) => c.actif), ...list.filter((c) => !c.actif)]) {
-      const k = c.siren ?? c.siret ?? JSON.stringify(c);
-      if (seen.has(k)) continue; seen.add(k); res.push(c);
-    }
-    return res.slice(0, 15);
+    // tri par proximité du numéro cherché, puis actifs d'abord
+    const numOf = (a: SocieteCandidate) => { const m = String(a.adresse ?? "").match(/\d+/); return m ? parseInt(m[0], 10) : 9999; };
+    res.sort((a, b) => Math.abs(numOf(a) - (numRefN ?? 0)) - Math.abs(numOf(b) - (numRefN ?? 0)));
+    return [...res.filter((c) => c.actif), ...res.filter((c) => !c.actif)].slice(0, 15);
   } catch { return []; }
 }

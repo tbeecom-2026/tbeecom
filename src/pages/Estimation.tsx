@@ -138,9 +138,9 @@ export default function Estimation() {
     setCoords({ lat: s.lat, lon: s.lon });
     setLoadingSoc(true); setSocietes([]); setSoc(null);
     try {
-      const list = await societesAAdresse(s.lat, s.lon, { numero: s.housenumber, voie: s.street });
+      const list = await societesAAdresse(s.lat, s.lon, { numero: s.housenumber, voie: s.street, cp: s.postcode });
       setSocietes(list);
-      if (!list.length) toast.info("Aucune société trouvée à cette adresse — saisie manuelle possible.");
+      if (!list.length) toast.info("Aucune société immatriculée à cette adresse exacte — saisie manuelle possible.");
     } finally { setLoadingSoc(false); }
   }
 
