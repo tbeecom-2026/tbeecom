@@ -178,6 +178,7 @@ export default function MandatDetail() {
   const isCommerce = !!m.categorie && /fonds de commerce|entreprise/i.test(m.categorie);
   const estimParams = new URLSearchParams();
   estimParams.set("famille", familleMetier(m.nature_activite, m.type_commerce));
+  estimParams.set("mandatId", String(m.id));
   if (hasVal(m.adresse)) estimParams.set("adresse", String(m.adresse));
   if (hasVal(m.code_postal)) estimParams.set("codePostal", String(m.code_postal));
   if (hasVal(m.ca_annuel)) estimParams.set("ca", String(m.ca_annuel));

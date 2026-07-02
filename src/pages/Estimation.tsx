@@ -1,142 +1,189 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import {
-  Calculator,
-  Loader2,
-  ExternalLink,
-  FileText,
-  AlertTriangle,
-} from "lucide-react";
-import { METIER_LABEL, type FamilleMetier } from "@/lib/metier";
-import {
-  estimationFonds,
-  genererAvisValeurHtml,
-  type Estimation,
-  type ZoneEstim,
-} from "@/lib/avisValeur";
+import { Calculator, Loader2, FileText, AlertTriangle, Search } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 import { getAgence } from "@/lib/agence";
 import { openMandat } from "@/lib/generateMandat";
+import { estimationFonds } from "@/lib/avisValeur";
+import baremes from "@/config/baremes_fdc.json";
+import {
+  estimer, CRITERES_SCORE, COEF_ZONE, ZONE_LABEL,
+  type EntreeEstimation, type ResultatEstimation, type ZoneGeo, type Famille, type CritereKey,
+} from "@/lib/estimation";
+import { genererAvisValeurV2Html } from "@/lib/avisValeurV2";
 
-const FAMILLES: FamilleMetier[] = [
-  "restauration_assise",
-  "restauration_rapide",
-  "bar_cafe_tabac",
-  "boulangerie_patisserie",
-  "fleuriste",
-  "coiffure_esthetique",
-  "garage_carrosserie",
-  "autre",
-];
+interface BaremeRow { activite: string; naf: string[]; ratio_moyen_pct_ca: number; q1_pct_ca: number; q3_pct_ca: number; refs: number; famille: string; }
+const ACTIVITES = (baremes as any).activites as BaremeRow[];
 
 const eur = (n: number | null | undefined) =>
-  n == null
-    ? "—"
-    : new Intl.NumberFormat("fr-FR", {
-        style: "currency",
-        currency: "EUR",
-        maximumFractionDigits: 0,
-      }).format(n);
-
-const fiabBadge: Record<Estimation["fiabilite"], string> = {
-  faible: "bg-red-700 text-white",
-  moyenne: "bg-amber-600 text-white",
-  bonne: "bg-emerald-700 text-white",
+  n == null ? "—" : new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+const num = (s: string): number | null => {
+  const n = Number(String(s ?? "").replace(/\s/g, "").replace(",", "."));
+  return String(s ?? "").trim() !== "" && isFinite(n) ? n : null;
+};
+const NOTES = [
+  { v: 2, l: "Très favorable" }, { v: 1, l: "Favorable" }, { v: 0, l: "Neutre" },
+  { v: -1, l: "Défavorable" }, { v: -2, l: "Très défavorable" },
+];
+const ZONES = Object.keys(COEF_ZONE) as ZoneGeo[];
+const fiabColor: Record<ResultatEstimation["fiabilite"], string> = {
+  faible: "bg-red-700 text-white", moyenne: "bg-amber-600 text-white", bonne: "bg-emerald-700 text-white",
 };
 
 export default function Estimation() {
   const [params] = useSearchParams();
 
-  const [famille, setFamille] = useState<FamilleMetier>(
-    (params.get("famille") as FamilleMetier) || "restauration_assise",
-  );
-  const [adresseInput, setAdresseInput] = useState(params.get("adresse") ?? "");
-  const [niveau, setNiveau] = useState<"cp" | "dep">(
-    params.get("departement") && !params.get("codePostal") ? "dep" : "cp",
-  );
-  const [codePostal, setCodePostal] = useState(params.get("codePostal") ?? "");
-  const [departement, setDepartement] = useState(params.get("departement") ?? "");
-  const [ca, setCa] = useState<string>(params.get("ca") ?? "");
-  const [moisRetour, setMoisRetour] = useState<number>(24);
+  // Activité (recherche dans le barème)
+  const [query, setQuery] = useState("");
+  const [openList, setOpenList] = useState(false);
+  const [bareme, setBareme] = useState<BaremeRow | null>(null);
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return ACTIVITES.filter((a) => a.activite.toLowerCase().includes(q)).slice(0, 40);
+  }, [query]);
 
-  const enseigne = params.get("enseigne") ?? "";
+  const [zone, setZone] = useState<ZoneGeo>("ville_moyenne");
+  const [adresse, setAdresse] = useState(params.get("adresse") ?? "");
+  const [enseigne, setEnseigne] = useState(params.get("enseigne") ?? "");
+
+  // CA 3 ans
+  const [caN, setCaN] = useState(params.get("ca") ?? "");
+  const [caN1, setCaN1] = useState("");
+  const [caN2, setCaN2] = useState("");
+
+  // Rentabilité
+  const [ebe, setEbe] = useState("");
+  const [remuReintegree, setRemuReintegree] = useState("");
+  const [salaireNormatif, setSalaireNormatif] = useState("");
+  const [proprietaireMurs, setProprietaireMurs] = useState(false);
+  const [loyerMarcheMurs, setLoyerMarcheMurs] = useState("");
+  const [autresRetraitements, setAutresRetraitements] = useState("");
+
+  // Bail
+  const [loyer, setLoyer] = useState("");
+  const [loyerTVA, setLoyerTVA] = useState<"HT" | "TTC">("HT");
+  const [charges, setCharges] = useState("");
+  const [taxeFonciere, setTaxeFonciere] = useState("");
+  const [dureeBail, setDureeBail] = useState("");
+  const [vlm, setVlm] = useState("");
+  const [vlmTVA, setVlmTVA] = useState<"HT" | "TTC">("HT");
+  const [materiel, setMateriel] = useState("");
+
+  const [scores, setScores] = useState<Record<CritereKey, number>>(
+    Object.fromEntries(CRITERES_SCORE.map((c) => [c.key, 0])) as Record<CritereKey, number>,
+  );
 
   const [loading, setLoading] = useState(false);
-  const [est, setEst] = useState<Estimation | null>(null);
+  const [res, setRes] = useState<ResultatEstimation | null>(null);
+  const [entree, setEntree] = useState<EntreeEstimation | null>(null);
+  const [comparables, setComparables] = useState<any[]>([]);
 
-  // Auto-estimer si l'URL contient déjà adresse ou zone
+  // Pré-remplissage depuis un mandat
   useEffect(() => {
-    if ((adresseInput.trim() || codePostal || departement) && !est) {
-      void run();
-    }
+    const id = params.get("mandatId");
+    if (!id) return;
+    (async () => {
+      const { data } = await supabase.from("mandats").select("*").eq("id", id).single();
+      if (!data) return;
+      const m: any = data;
+      const at = m.attributs ?? {};
+      if (m.ca_annuel) setCaN(String(m.ca_annuel));
+      if (m.enseigne && !enseigne) setEnseigne(String(m.enseigne));
+      if (!adresse) setAdresse([m.adresse, m.code_postal, m.commune].filter(Boolean).join(" "));
+      const loyerAn = at.loyer_annuel ?? (m.loyer_mensuel ? m.loyer_mensuel * 12 : null);
+      if (loyerAn) setLoyer(String(loyerAn));
+      const chAn = at.charges_annuelles ?? (m.charges_mensuelles ? m.charges_mensuelles * 12 : null);
+      if (chAn) setCharges(String(chAn));
+      if (at.taxe_fonciere_montant) setTaxeFonciere(String(at.taxe_fonciere_montant));
+      if (at.murs_meme_proprietaire === "Oui") setProprietaireMurs(true);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function setScore(k: CritereKey, v: number) { setScores((p) => ({ ...p, [k]: v })); }
+
   async function run() {
-    const adr = adresseInput.trim();
-    if (!adr) {
-      if (niveau === "cp" && !codePostal.trim()) {
-        toast.error("Renseigne une adresse ou un code postal");
-        return;
-      }
-      if (niveau === "dep" && !departement.trim()) {
-        toast.error("Renseigne une adresse ou un département");
-        return;
-      }
+    if (!bareme) { toast.error("Choisis d'abord l'activité (barème)."); return; }
+    if (num(caN) == null && num(caN1) == null && num(caN2) == null) {
+      toast.error("Renseigne au moins un chiffre d'affaires."); return;
     }
     setLoading(true);
     try {
-      const caNum = ca.trim() ? Number(ca.replace(/\s/g, "").replace(",", ".")) : null;
-      const caFinal = caNum && caNum > 0 ? caNum : null;
-      let res: Estimation;
-      if (adr) {
-        res = await estimationFonds({ famille, adresse: adr, ca: caFinal, moisRetour });
-      } else {
-        const zone: ZoneEstim =
-          niveau === "cp"
-            ? { codePostal: codePostal.trim() }
-            : { departement: departement.trim() };
-        res = await estimationFonds({ famille, zone, ca: caFinal, moisRetour });
-      }
-      setEst(res);
+      // Méthode C : comparables BODACC (médiane), best-effort
+      let comparableMedian: number | null = null;
+      let comps: any[] = [];
+      try {
+        const cp = (adresse.match(/\b\d{5}\b/) ?? [])[0];
+        if (adresse.trim() || cp) {
+          const e = await estimationFonds({
+            famille: bareme.famille as any,
+            adresse: adresse.trim() || undefined,
+            zone: cp ? { codePostal: cp } : undefined,
+            ca: num(caN) ?? undefined,
+          });
+          comparableMedian = e.stats.n >= 3 ? e.stats.median : null;
+          comps = e.comparables ?? [];
+        }
+      } catch { /* comparables indisponibles : on continue */ }
+
+      const ent: EntreeEstimation = {
+        famille: (bareme.famille as Famille) ?? "autre",
+        bareme: { activite: bareme.activite, ratio_moyen_pct_ca: bareme.ratio_moyen_pct_ca, q1_pct_ca: bareme.q1_pct_ca, q3_pct_ca: bareme.q3_pct_ca, refs: bareme.refs },
+        caN: num(caN), caN1: num(caN1), caN2: num(caN2),
+        ebeComptable: num(ebe),
+        reintegrationRemunerationDirigeant: num(remuReintegree),
+        salaireDirigeantNormatif: num(salaireNormatif),
+        proprietaireMurs,
+        loyerMarcheSiProprietaire: num(loyerMarcheMurs),
+        autresRetraitements: num(autresRetraitements),
+        loyerAnnuel: num(loyer),
+        chargesAnnuelles: num(charges),
+        taxeFonciere: num(taxeFonciere),
+        dureeRestanteAnnees: num(dureeBail),
+        valeurLocativeMarcheAnnuelle: num(vlm),
+        valeurMaterielAjoutee: num(materiel),
+        comparableMedian,
+        zone,
+        scores,
+      };
+      setEntree(ent);
+      setRes(estimer(ent));
+      setComparables(comps.slice(0, 12));
     } catch (e: any) {
-      console.error(e);
-      toast.error("Estimation indisponible", { description: e?.message });
+      toast.error("Estimation impossible", { description: e?.message });
     } finally {
       setLoading(false);
     }
   }
 
-  async function genererDocument() {
-    if (!est) return;
+  async function genererPDF() {
+    if (!res || !entree) return;
     try {
       const agence = await getAgence();
-      const html = genererAvisValeurHtml(est, {
-        enseigne: enseigne || undefined,
-        adresse: adresseInput.trim() || undefined,
-        agence: agence ?? undefined,
+      const html = genererAvisValeurV2Html(entree, res, {
+        enseigne: enseigne || undefined, adresse: adresse || undefined, agence: agence ?? undefined,
       });
       openMandat(html);
     } catch (e: any) {
-      console.error(e);
-      toast.error("Impossible de générer le document", { description: e?.message });
+      toast.error("Impossible de générer le PDF", { description: e?.message });
     }
   }
 
-  const fourchette = est?.fourchette_retenue;
+  const N = (label: string, val: string, set: (v: string) => void, ph = "") => (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      <Input value={val} onChange={(e) => set(e.target.value)} placeholder={ph} inputMode="numeric" />
+    </div>
+  );
 
   return (
     <div className="space-y-4 max-w-6xl">
@@ -144,276 +191,193 @@ export default function Estimation() {
         <Calculator className="h-6 w-6 text-primary" />
         <div>
           <h1 className="text-xl font-bold">Estimation d'un fonds de commerce</h1>
-          <p className="text-xs text-slate-400">
-            Avis de valeur indicatif basé sur les cessions BODACC + multiples du CA.
-          </p>
+          <p className="text-xs text-slate-400">Méthode croisée : % du CA (barème) · multiple d'EBE retraité · comparables · ajustée du bail et de la localisation.</p>
         </div>
       </div>
 
-      {/* Formulaire */}
+      {/* Activité + zone */}
       <Card className="bg-slate-800 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-base">Paramètres</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle className="text-base">Activité & localisation</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">Activité</Label>
-              <Select value={famille} onValueChange={(v) => setFamille(v as FamilleMetier)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {FAMILLES.map((f) => (
-                    <SelectItem key={f} value={f}>
-                      {METIER_LABEL[f]}
-                    </SelectItem>
+            <div className="space-y-1 relative">
+              <Label className="text-xs">Activité (barème) *</Label>
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
+                <Input
+                  className="pl-8"
+                  value={bareme ? bareme.activite : query}
+                  onChange={(e) => { setBareme(null); setQuery(e.target.value); setOpenList(true); }}
+                  onFocus={() => setOpenList(true)}
+                  placeholder="Rechercher : pizzeria, coiffeur, garage…"
+                />
+              </div>
+              {openList && matches.length > 0 && !bareme && (
+                <div className="absolute z-20 mt-1 w-full max-h-64 overflow-auto rounded border border-slate-600 bg-slate-900 shadow-lg">
+                  {matches.map((a, i) => (
+                    <button key={i} type="button"
+                      className="block w-full text-left px-3 py-1.5 text-sm hover:bg-slate-700"
+                      onClick={() => { setBareme(a); setOpenList(false); setQuery(a.activite); }}>
+                      <span className="text-slate-100">{a.activite}</span>
+                      <span className="text-slate-500 text-xs"> · {a.ratio_moyen_pct_ca}% CA (Q1 {a.q1_pct_ca}–Q3 {a.q3_pct_ca})</span>
+                    </button>
                   ))}
+                </div>
+              )}
+              {bareme && (
+                <p className="text-[11px] text-slate-400">Barème : {bareme.ratio_moyen_pct_ca}% du CA (Q1 {bareme.q1_pct_ca} – Q3 {bareme.q3_pct_ca}, {bareme.refs} réf.)</p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Zone géographique</Label>
+              <Select value={zone} onValueChange={(v) => setZone(v as ZoneGeo)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ZONES.map((z) => <SelectItem key={z} value={z}>{ZONE_LABEL[z]} (×{COEF_ZONE[z].toFixed(2)})</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs">Adresse du fonds (recommandé)</Label>
-              <Input
-                value={adresseInput}
-                onChange={(e) => setAdresseInput(e.target.value)}
-                placeholder="100 rue Montorgueil 75002 Paris"
-              />
-            </div>
           </div>
-
-          <div className="rounded border border-slate-700 p-3 space-y-2">
-            <div className="text-xs text-slate-400">ou estimer par zone (si pas d'adresse)</div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Niveau</Label>
-                <Tabs value={niveau} onValueChange={(v) => setNiveau(v as "cp" | "dep")}>
-                  <TabsList className="bg-slate-900">
-                    <TabsTrigger value="cp">Code postal</TabsTrigger>
-                    <TabsTrigger value="dep">Département</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">
-                  {niveau === "cp" ? "Code postal" : "Département (n°)"}
-                </Label>
-                {niveau === "cp" ? (
-                  <Input
-                    value={codePostal}
-                    onChange={(e) => setCodePostal(e.target.value)}
-                    placeholder="75017"
-                    maxLength={5}
-                  />
-                ) : (
-                  <Input
-                    value={departement}
-                    onChange={(e) => setDepartement(e.target.value)}
-                    placeholder="75"
-                    maxLength={3}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">CA HT annuel (facultatif)</Label>
-              <Input
-                value={ca}
-                onChange={(e) => setCa(e.target.value)}
-                placeholder="350000"
-                inputMode="numeric"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Période (mois)</Label>
-              <Input
-                type="number"
-                min={6}
-                max={60}
-                value={moisRetour}
-                onChange={(e) => setMoisRetour(Number(e.target.value) || 24)}
-              />
-            </div>
-            <div className="flex items-end">
-              <Button onClick={run} disabled={loading} className="w-full">
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Estimation…
-                  </>
-                ) : (
-                  <>
-                    <Calculator className="mr-2 h-4 w-4" /> Estimer
-                  </>
-                )}
-              </Button>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1"><Label className="text-xs">Enseigne</Label><Input value={enseigne} onChange={(e) => setEnseigne(e.target.value)} /></div>
+            <div className="space-y-1"><Label className="text-xs">Adresse (pour les comparables)</Label><Input value={adresse} onChange={(e) => setAdresse(e.target.value)} placeholder="100 rue Montorgueil 75002 Paris" /></div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Résultats */}
-      {est && (
+      {/* CA */}
+      <Card className="bg-slate-800 border-slate-700">
+        <CardHeader><CardTitle className="text-base">Chiffre d'affaires HT</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {N("CA dernier exercice (N)", caN, setCaN, "350000")}
+          {N("CA N-1", caN1, setCaN1)}
+          {N("CA N-2", caN2, setCaN2)}
+        </CardContent>
+      </Card>
+
+      {/* Rentabilité */}
+      <Card className="bg-slate-800 border-slate-700">
+        <CardHeader><CardTitle className="text-base">Rentabilité (EBE retraité)</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {N("EBE comptable", ebe, setEbe, "60000")}
+            {N("Rémunération dirigeant réintégrée", remuReintegree, setRemuReintegree)}
+            {N("Salaire dirigeant de marché (déduit)", salaireNormatif, setSalaireNormatif)}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+            <div className="space-y-1">
+              <Label className="text-xs">Propriétaire des murs</Label>
+              <div className="flex items-center gap-2 h-10"><Switch checked={proprietaireMurs} onCheckedChange={setProprietaireMurs} /><span className="text-xs text-slate-400">{proprietaireMurs ? "Oui" : "Non"}</span></div>
+            </div>
+            {proprietaireMurs && N("Loyer de marché (déduit)", loyerMarcheMurs, setLoyerMarcheMurs)}
+            {N("Autres retraitements (±)", autresRetraitements, setAutresRetraitements)}
+          </div>
+          <p className="text-[11px] text-slate-500">EBE retraité = EBE comptable + rémunération réintégrée − salaire de marché − loyer de marché (si propriétaire) ± autres. Laisser vide si l'EBE n'est pas connu (estimation basée sur le CA).</p>
+        </CardContent>
+      </Card>
+
+      {/* Bail */}
+      <Card className="bg-slate-800 border-slate-700">
+        <CardHeader><CardTitle className="text-base">Bail commercial</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Loyer annuel</Label>
+              <div className="flex gap-2">
+                <Input value={loyer} onChange={(e) => setLoyer(e.target.value)} inputMode="numeric" placeholder="30000" />
+                <Select value={loyerTVA} onValueChange={(v) => setLoyerTVA(v as any)}>
+                  <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="HT">HT</SelectItem><SelectItem value="TTC">TTC</SelectItem></SelectContent>
+                </Select>
+              </div>
+            </div>
+            {N("Charges annuelles", charges, setCharges)}
+            {N("Taxe foncière annuelle", taxeFonciere, setTaxeFonciere)}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {N("Durée restante du bail (années)", dureeBail, setDureeBail, "6")}
+            <div className="space-y-1">
+              <Label className="text-xs">Valeur locative de marché (loyer annuel)</Label>
+              <div className="flex gap-2">
+                <Input value={vlm} onChange={(e) => setVlm(e.target.value)} inputMode="numeric" placeholder="32000" />
+                <Select value={vlmTVA} onValueChange={(v) => setVlmTVA(v as any)}>
+                  <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="HT">HT</SelectItem><SelectItem value="TTC">TTC</SelectItem></SelectContent>
+                </Select>
+              </div>
+            </div>
+            {N("Valeur du matériel à ajouter (optionnel)", materiel, setMateriel)}
+          </div>
+          <p className="text-[11px] text-slate-500">Le loyer et la valeur locative de marché sont comparés sur la même base (HT conseillé). Un loyer sous le marché crée un droit au bail ; un bail proche du terme fait courir un risque de déplafonnement.</p>
+        </CardContent>
+      </Card>
+
+      {/* Scoring */}
+      <Card className="bg-slate-800 border-slate-700">
+        <CardHeader><CardTitle className="text-base">Grille d'appréciation (place la valeur dans le barème)</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {CRITERES_SCORE.map((c) => (
+            <div key={c.key} className="flex items-center justify-between gap-3">
+              <Label className="text-xs flex-1">{c.label}</Label>
+              <Select value={String(scores[c.key])} onValueChange={(v) => setScore(c.key, Number(v))}>
+                <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                <SelectContent>{NOTES.map((n) => <SelectItem key={n.v} value={String(n.v)}>{n.l}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Button onClick={run} disabled={loading} size="lg" className="w-full">
+        {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Calcul…</> : <><Calculator className="mr-2 h-4 w-4" /> Estimer la valeur</>}
+      </Button>
+
+      {/* Résultat */}
+      {res && (
         <>
           <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-primary/40">
             <CardContent className="py-6 text-center space-y-2">
-              <div className="text-xs uppercase tracking-wider text-slate-400">
-                Fourchette de valorisation
-              </div>
-              <div className="text-3xl font-bold text-primary">
-                {fourchette
-                  ? `${eur(fourchette.bas)} — ${eur(fourchette.haut)}`
-                  : "Données insuffisantes"}
-              </div>
+              <div className="text-xs uppercase tracking-wider text-slate-400">Valeur vénale estimée du fonds</div>
+              <div className="text-3xl font-bold text-primary">{eur(res.fourchetteBasse)} — {eur(res.fourchetteHaute)}</div>
+              <div className="text-emerald-400 font-semibold">Valeur centrale : {eur(res.valeurCentrale)}</div>
               <div className="flex items-center justify-center gap-2 text-xs">
-                <span className="text-slate-400">Fiabilité :</span>
-                <Badge className={fiabBadge[est.fiabilite]}>{est.fiabilite}</Badge>
-                <span className="text-slate-400">· {est.stats.n} comparable(s)</span>
+                <span className="text-slate-400">Fiabilité :</span><Badge className={fiabColor[res.fiabilite]}>{res.fiabilite}</Badge>
+                <span className="text-slate-400">· score {(res.scoreGlobal * 100).toFixed(0)}% · zone ×{res.coefZone.toFixed(2)} · bail ×{res.coefBail.toFixed(2)}</span>
               </div>
-              <div className="text-xs text-slate-400">
-                {est.mode === "proximite"
-                  ? `Comparables dans un rayon de ${est.rayon_km} km de ${est.cible_label}`
-                  : `Zone : ${est.cible_label}`}
-              </div>
-              <p className="text-[11px] text-slate-500 italic max-w-2xl mx-auto pt-1">
-                Comparables locaux datés — la valeur finale dépend de l'emplacement précis,
-                du bail et de la rentabilité, à apprécier à dire d'expert.
-              </p>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Comparables */}
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-base">Comparables BODACC</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {est.fourchette_comparables ? (
-                  <div className="text-sm text-slate-300 mb-3">
-                    Médiane : <b className="text-slate-100">{eur(est.stats.median)}</b> · Q1–Q3{" "}
-                    {eur(est.fourchette_comparables.bas)} —{" "}
-                    {eur(est.fourchette_comparables.haut)}
-                  </div>
-                ) : (
-                  <div className="text-xs text-amber-400 flex items-center gap-1 mb-3">
-                    <AlertTriangle className="h-3.5 w-3.5" />
-                    Trop peu de comparables ({est.stats.n}). Élargissez la zone.
-                  </div>
-                )}
-
-                <div className="rounded border border-slate-700 overflow-hidden">
-                  <table className="w-full text-xs">
-                    <thead className="bg-slate-900 text-slate-400">
-                      <tr>
-                        <th className="text-left p-2">Enseigne</th>
-                        <th className="text-left p-2">Lieu</th>
-                        {est.mode === "proximite" && (
-                          <th className="text-right p-2">Distance</th>
-                        )}
-                        <th className="text-right p-2">Prix</th>
-                        <th className="text-left p-2">Date</th>
-                        <th className="p-2"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {est.comparables.length === 0 && (
-                        <tr>
-                          <td
-                            colSpan={est.mode === "proximite" ? 6 : 5}
-                            className="p-4 text-center text-slate-400"
-                          >
-                            Aucun comparable
-                          </td>
-                        </tr>
-                      )}
-                      {est.comparables.slice(0, 15).map((c, i) => (
-                        <tr key={i} className="border-t border-slate-700">
-                          <td className="p-2 text-slate-200">{c.denomination ?? "—"}</td>
-                          <td className="p-2 text-slate-400">
-                            {c.ville ?? ""} {c.code_postal ?? ""}
-                          </td>
-                          {est.mode === "proximite" && (
-                            <td className="p-2 text-right text-slate-300">
-                              {c.distance_km != null ? `${c.distance_km} km` : "—"}
-                            </td>
-                          )}
-                          <td className="p-2 text-right text-slate-100 font-medium">
-                            {eur(c.prix)}
-                          </td>
-                          <td className="p-2 text-slate-400">{c.date ?? ""}</td>
-                          <td className="p-2">
-                            {c.url && (
-                              <a
-                                href={c.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline"
-                              >
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
+          {res.alertes.length > 0 && (
+            <Card className="bg-amber-950/40 border-amber-700/60">
+              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-amber-300"><AlertTriangle className="h-4 w-4" /> Points de vigilance ({res.alertes.length})</CardTitle></CardHeader>
+              <CardContent><ul className="list-disc pl-5 text-xs text-amber-200/90 space-y-1">{res.alertes.map((a, i) => <li key={i}>{a}</li>)}</ul></CardContent>
             </Card>
+          )}
 
-            {/* Multiple CA + réserves */}
-            <div className="space-y-4">
-              {est.multiple_ca && (
-                <Card className="bg-slate-800 border-slate-700">
-                  <CardHeader>
-                    <CardTitle className="text-base">Multiple du CA</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <div className="text-slate-300">
-                      CA HT : <b className="text-slate-100">{eur(est.multiple_ca.ca)}</b>
-                    </div>
-                    <div className="text-slate-300">
-                      Application :{" "}
-                      <b className="text-slate-100">
-                        {Math.round(est.multiple_ca.pct_bas * 100)} % –{" "}
-                        {Math.round(est.multiple_ca.pct_haut * 100)} %
-                      </b>{" "}
-                      du CA
-                    </div>
-                    <div className="text-lg text-primary font-semibold pt-2">
-                      {eur(est.multiple_ca.bas)} — {eur(est.multiple_ca.haut)}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              <Card className="bg-slate-800 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-base">Réserves</CardTitle>
-                </CardHeader>
-                <CardContent className="text-xs text-slate-400 space-y-2">
-                  <p>
-                    Avis indicatif à partir de données publiques. Ce n'est pas une expertise.
-                    La valeur réelle dépend de l'emplacement, du bail, du matériel, de l'EBE et
-                    des conditions de marché.
-                  </p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {[res.methodeA, res.methodeB, res.methodeC].map((m, i) => (
+              <Card key={i} className="bg-slate-800 border-slate-700">
+                <CardHeader className="pb-2"><CardTitle className="text-sm">{m.libelle}</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="text-xl font-bold text-slate-100">{eur(m.valeur)}</div>
+                  <p className="text-[11px] text-slate-400 mt-1">{m.detail}</p>
                 </CardContent>
               </Card>
-
-              <Button
-                onClick={genererDocument}
-                className="w-full"
-                size="lg"
-                variant="default"
-              >
-                <FileText className="mr-2 h-4 w-4" /> Générer le document
-              </Button>
-            </div>
+            ))}
           </div>
+
+          <Card className="bg-slate-800 border-slate-700">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Synthèse bail & pondération</CardTitle></CardHeader>
+            <CardContent className="text-xs text-slate-300 grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div>CA HT moyen<br /><b className="text-slate-100">{eur(res.caMoyen)}</b></div>
+              <div>Taux d'effort<br /><b className="text-slate-100">{res.tauxEffort != null ? (res.tauxEffort * 100).toFixed(1) + " %" : "—"}</b></div>
+              <div>EBE retraité<br /><b className="text-slate-100">{eur(res.ebeRetraite)}</b></div>
+              <div>Plancher droit au bail<br /><b className="text-slate-100">{eur(res.droitAuBailPlancher)}</b></div>
+              <div>Pondération A/B/C<br /><b className="text-slate-100">{(res.ponderation.A * 100).toFixed(0)}/{(res.ponderation.B * 100).toFixed(0)}/{(res.ponderation.C * 100).toFixed(0)}</b></div>
+            </CardContent>
+          </Card>
+
+          <Button onClick={genererPDF} size="lg" className="w-full"><FileText className="mr-2 h-4 w-4" /> Générer le PDF (avis de valeur)</Button>
         </>
       )}
     </div>
