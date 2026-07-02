@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Calculator, Loader2, FileText, AlertTriangle, Search, CheckCircle2, Building2, X, UserPlus, Save, Info } from "lucide-react";
+import { Calculator, Loader2, FileText, AlertTriangle, Search, CheckCircle2, Building2, X, UserPlus, Save, Info, Upload } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,6 +38,21 @@ const num = (s: string): number | null => {
   const n = Number(String(s ?? "").replace(/\s/g, "").replace(",", "."));
   return String(s ?? "").trim() !== "" && isFinite(n) ? n : null;
 };
+function toBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(",")[1] ?? "");
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+const DOCS: { type: "bilan" | "bail" | "quittance"; slot: number; label: string }[] = [
+  { type: "bilan", slot: 1, label: "Bilan N (dernier)" },
+  { type: "bilan", slot: 2, label: "Bilan N-1" },
+  { type: "bilan", slot: 3, label: "Bilan N-2" },
+  { type: "bail", slot: 0, label: "Bail commercial" },
+  { type: "quittance", slot: 0, label: "Quittance de loyer" },
+];
 const NOTES = [
   { v: 2, l: "Très favorable" }, { v: 1, l: "Favorable" }, { v: 0, l: "Neutre" },
   { v: -1, l: "Défavorable" }, { v: -2, l: "Très défavorable" },
@@ -118,6 +133,7 @@ export default function Estimation() {
   );
 
   const [loading, setLoading] = useState(false);
+  const [imp, setImp] = useState<Record<string, "loading" | "ok" | "err" | undefined>>({});
   const [res, setRes] = useState<ResultatEstimation | null>(null);
   const [entree, setEntree] = useState<EntreeEstimation | null>(null);
 
@@ -204,6 +220,44 @@ export default function Estimation() {
       toast.success("Enregistré sur la fiche du bien.");
     } catch (e: any) { toast.error("Échec de l'enregistrement", { description: e?.message }); }
     finally { setSavingMandat(false); }
+  }
+
+  function appliquer(type: string, slot: number, fld: any) {
+    const S = (v: any) => (v != null && v !== "" ? String(v) : null);
+    if (type === "bilan") {
+      const ca = S(fld.ca);
+      if (slot === 1) { if (ca) setCaN(ca); if (fld.ebe != null) setEbe(String(fld.ebe)); if (fld.remuneration_dirigeant != null) setRemuReintegree(String(fld.remuneration_dirigeant)); }
+      else if (slot === 2 && ca) setCaN1(ca);
+      else if (slot === 3 && ca) setCaN2(ca);
+    } else if (type === "bail") {
+      if (fld.loyer_annuel != null) setLoyer(String(fld.loyer_annuel));
+      if (fld.charges_annuelles != null) setCharges(String(fld.charges_annuelles));
+      if (fld.taxe_fonciere != null) setTaxeFonciere(String(fld.taxe_fonciere));
+      if (fld.duree_bail_mois != null) setDureeBail(String(fld.duree_bail_mois));
+    } else if (type === "quittance") {
+      if (fld.loyer_annuel != null) setLoyer(String(fld.loyer_annuel));
+      if (fld.charges_annuelles != null) setCharges(String(fld.charges_annuelles));
+    }
+  }
+
+  async function importer(type: "bilan" | "bail" | "quittance", slot: number, file: File) {
+    const key = slot ? `${type}${slot}` : type;
+    setImp((p) => ({ ...p, [key]: "loading" }));
+    try {
+      const data = await toBase64(file);
+      const r = await fetch("/api/extraire", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ type, media_type: file.type || "application/pdf", data, filename: file.name }),
+      });
+      const d = await r.json();
+      if (!r.ok || d.error) throw new Error(d.error || `Erreur ${r.status}`);
+      appliquer(type, slot, d.fields || {});
+      setImp((p) => ({ ...p, [key]: "ok" }));
+      toast.success("Document lu — vérifie les montants pré-remplis.");
+    } catch (e: any) {
+      setImp((p) => ({ ...p, [key]: "err" }));
+      toast.error("Import impossible", { description: e?.message });
+    }
   }
 
   function setScore(k: CritereKey, v: number) { setScores((p) => ({ ...p, [k]: v })); }
@@ -354,6 +408,27 @@ export default function Estimation() {
                 <SelectContent>{ZONES.map((z) => <SelectItem key={z} value={z}>{ZONE_LABEL[z]} (×{COEF_ZONE[z].toFixed(2)})</SelectItem>)}</SelectContent>
               </Select>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Import IA */}
+      <Card className="bg-slate-800 border-slate-700">
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Upload className="h-4 w-4" /> Import automatique par IA</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-[11px] text-slate-400">Importe les documents : l'IA lit les <b>bilans</b> (CA + EBE calculé), le <b>bail</b> et la <b>quittance</b> (loyer, charges, durée) et pré-remplit les champs. Les montants restent à vérifier.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {DOCS.map((d) => {
+              const key = d.slot ? `${d.type}${d.slot}` : d.type;
+              const st = imp[key];
+              return (
+                <label key={key} className={`flex items-center justify-center gap-2 text-xs rounded border px-3 py-2 cursor-pointer transition ${st === "ok" ? "border-emerald-600 text-emerald-300" : st === "err" ? "border-red-600 text-red-300" : "border-slate-600 text-slate-200 hover:bg-slate-700"}`}>
+                  {st === "loading" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : st === "ok" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Upload className="h-3.5 w-3.5" />}
+                  {d.label}
+                  <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) importer(d.type, d.slot, file); e.currentTarget.value = ""; }} />
+                </label>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
