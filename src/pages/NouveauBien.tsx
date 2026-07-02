@@ -5,7 +5,7 @@
 // - Champs communs (colonnes de la table mandats) + champs specifiques au metier
 //   (stockes dans la colonne JSONB "attributs").
 // Pilote entierement par la config : src/config/questionnaires_metiers.json
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 import config from "@/config/questionnaires_metiers.json";
+import { calcHonoraires, type BaremeTranche } from "@/lib/honoraires";
 
 type Field = {
   key: string;
@@ -43,6 +44,17 @@ export default function NouveauBien() {
   const navigate = useNavigate();
   const [values, setValues] = useState<Record<string, any>>({ statut: "Prospection" });
   const [saving, setSaving] = useState(false);
+  const [bareme, setBareme] = useState<BaremeTranche[]>([]);
+  const [honorairesAuto, setHonorairesAuto] = useState(true);
+
+  useEffect(() => {
+    supabase
+      .from("bareme_honoraires")
+      .select("*")
+      .eq("type_trans", "fdc")
+      .order("ordre")
+      .then(({ data }) => setBareme((data as BaremeTranche[]) ?? []));
+  }, []);
 
   const categorie = values["categorie"];
   const famille = values["famille_metier"];
@@ -51,7 +63,26 @@ export default function NouveauBien() {
   const communBlocs: any[] = cfg.champs_communs.blocs;
 
   function setVal(key: string, v: any) {
-    setValues((prev) => ({ ...prev, [key]: v }));
+    setValues((prev) => {
+      const next: Record<string, any> = { ...prev, [key]: v };
+      // Calcul auto des honoraires depuis le prix net vendeur (barème FDC)
+      if (key === "prix_net_vendeur" && honorairesAuto && bareme.length) {
+        const net = typeof v === "number" ? v : Number(v);
+        const h = net ? calcHonoraires(net, bareme) : null;
+        if (h) {
+          next["honoraires_montant"] = h.montant;
+          next["prix_demande"] = net + h.montant; // FAI = net vendeur + honoraires
+        }
+      }
+      // Saisie manuelle des honoraires -> on réajuste le prix FAI
+      if (key === "honoraires_montant") {
+        const net = Number(prev["prix_net_vendeur"]);
+        if (net && typeof v === "number") next["prix_demande"] = net + v;
+      }
+      return next;
+    });
+    // Dès que l'utilisateur touche les honoraires, on coupe le calcul auto
+    if (key === "honoraires_montant") setHonorairesAuto(false);
   }
 
   // Affichage conditionnel : "cle = valeur"

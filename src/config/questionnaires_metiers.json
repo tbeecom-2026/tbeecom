@@ -103,7 +103,7 @@
         "titre": "Prix & honoraires",
         "champs": [
           { "key": "prix_demande", "label": "Prix demande (FAI)", "type": "number", "unite": "EUR", "colonne": "prix_demande" },
-          { "key": "prix_net_vendeur", "label": "Prix net vendeur", "type": "number", "unite": "EUR", "colonne": "prix_net_vendeur" },
+          { "key": "prix_net_vendeur", "label": "Prix net vendeur", "type": "number", "unite": "EUR", "colonne": "prix_net_vendeur", "aide": "Saisir le net vendeur calcule automatiquement les honoraires et le prix FAI selon le barème (modifiables ensuite)." },
           { "key": "honoraires_montant", "label": "Honoraires", "type": "number", "unite": "EUR", "colonne": "honoraires_montant" },
           { "key": "honoraires_charge", "label": "Honoraires a charge", "type": "select", "colonne": "honoraires_charge", "options": ["Acquereur", "Vendeur", "Partage"] }
         ]
