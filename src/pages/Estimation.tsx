@@ -46,12 +46,13 @@ function toBase64(file: File): Promise<string> {
     r.readAsDataURL(file);
   });
 }
-const DOCS: { type: "bilan" | "bail" | "quittance"; slot: number; label: string }[] = [
+const DOCS: { type: "bilan" | "bail" | "quittance" | "paie"; slot: number; label: string }[] = [
   { type: "bilan", slot: 1, label: "Bilan N (dernier)" },
   { type: "bilan", slot: 2, label: "Bilan N-1" },
   { type: "bilan", slot: 3, label: "Bilan N-2" },
   { type: "bail", slot: 0, label: "Bail commercial" },
   { type: "quittance", slot: 0, label: "Quittance de loyer" },
+  { type: "paie", slot: 0, label: "Fiches de paie (optionnel)" },
 ];
 const NOTES = [
   { v: 2, l: "Très favorable" }, { v: 1, l: "Favorable" }, { v: 0, l: "Neutre" },
@@ -134,6 +135,7 @@ export default function Estimation() {
 
   const [loading, setLoading] = useState(false);
   const [imp, setImp] = useState<Record<string, "loading" | "ok" | "err" | undefined>>({});
+  const [resumePaie, setResumePaie] = useState<string>("");
   const [res, setRes] = useState<ResultatEstimation | null>(null);
   const [entree, setEntree] = useState<EntreeEstimation | null>(null);
 
@@ -237,10 +239,17 @@ export default function Estimation() {
     } else if (type === "quittance") {
       if (fld.loyer_annuel != null) setLoyer(String(fld.loyer_annuel));
       if (fld.charges_annuelles != null) setCharges(String(fld.charges_annuelles));
+    } else if (type === "paie") {
+      if (fld.remuneration_dirigeant != null) setRemuReintegree(String(fld.remuneration_dirigeant));
+      const bits: string[] = [];
+      if (fld.effectif != null) bits.push(`${fld.effectif} salarié(s)`);
+      if (fld.masse_salariale_annuelle != null) bits.push(`masse salariale ${new Intl.NumberFormat("fr-FR").format(fld.masse_salariale_annuelle)} €/an`);
+      if (fld.contrats) bits.push(String(fld.contrats));
+      setResumePaie(bits.join(" · "));
     }
   }
 
-  async function importer(type: "bilan" | "bail" | "quittance", slot: number, file: File) {
+  async function importer(type: "bilan" | "bail" | "quittance" | "paie", slot: number, file: File) {
     const key = slot ? `${type}${slot}` : type;
     setImp((p) => ({ ...p, [key]: "loading" }));
     try {
@@ -430,6 +439,7 @@ export default function Estimation() {
               );
             })}
           </div>
+          {resumePaie && <p className="text-[11px] text-emerald-300/90">👥 {resumePaie} — utile pour « Équipe en place » et le retraitement de la rémunération.</p>}
         </CardContent>
       </Card>
 

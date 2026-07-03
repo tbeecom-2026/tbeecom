@@ -33,6 +33,14 @@ Extrais (montants en euros, entiers) :
 - "destination" : destination/activité autorisée par le bail (texte)
 Réponds UNIQUEMENT par un objet JSON avec ces clés (null si absent). Aucune phrase autour.`;
   }
+  if (type === "paie") {
+    return `Analyse ces FICHES DE PAIE / bulletins de salaire. Extrais (euros, entiers) :
+- "effectif" : nombre de salariés distincts
+- "masse_salariale_annuelle" : masse salariale annuelle brute totale estimée (mensuel x 12 si besoin)
+- "remuneration_dirigeant" : rémunération annuelle du dirigeant si un bulletin le concerne, sinon null
+- "contrats" : brève description (types de contrats, ancienneté) en une phrase
+Réponds UNIQUEMENT par un objet JSON avec ces clés (null si absent). Aucune phrase autour.`;
+  }
   return `Analyse cette QUITTANCE DE LOYER. Extrais (euros, entiers) :
 - "loyer_annuel" : loyer hors charges annualisé
 - "charges_annuelles" : charges annualisées
@@ -48,7 +56,8 @@ function parseJson(text: string): any {
 
 export async function onRequestPost(context: any): Promise<Response> {
   const { request, env } = context;
-  if (!env.ANTHROPIC_API_KEY) return json({ error: "Clé API IA non configurée (ANTHROPIC_API_KEY manquant dans Cloudflare)." }, 500);
+  const apiKey = env.ESTIMATION_TBC || env.ANTHROPIC_API_KEY;
+  if (!apiKey) return json({ error: "Clé API IA non configurée (variable ESTIMATION_TBC manquante dans Cloudflare)." }, 500);
 
   let body: any;
   try { body = await request.json(); } catch { return json({ error: "Requête invalide." }, 400); }
@@ -70,7 +79,7 @@ export async function onRequestPost(context: any): Promise<Response> {
   try {
     r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
+      headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
       body: JSON.stringify(payload),
     });
   } catch (e: any) { return json({ error: "Appel IA impossible : " + (e?.message ?? "réseau") }, 502); }
