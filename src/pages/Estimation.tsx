@@ -300,11 +300,11 @@ export default function Estimation() {
     finally { setLoading(false); }
   }
 
-  async function genererPDF() {
+  async function genererPDF(mode: "client" | "nego") {
     if (!res || !entree) return;
     try {
       const agence = await getAgence();
-      openMandat(genererAvisValeurV2Html(entree, res, { enseigne: enseigne || undefined, adresse: adresse || undefined, agence: agence ?? undefined }));
+      openMandat(genererAvisValeurV2Html(entree, res, { enseigne: enseigne || undefined, adresse: adresse || undefined, agence: agence ?? undefined }, mode));
     } catch (e: any) { toast.error("Impossible de générer le PDF", { description: e?.message }); }
   }
 
@@ -316,7 +316,7 @@ export default function Estimation() {
   return (
     <div className="space-y-4 max-w-6xl">
       <div className="flex items-center gap-3">
-        <Calculator className="h-6 w-6 text-primary" />
+        <Calculator className="h-6 w-6 text-accent" />
         <div>
           <h1 className="text-xl font-bold">Estimation d'un fonds de commerce</h1>
           <p className="text-xs text-slate-400">Méthode croisée : % du CA (barème) · multiple d'EBE retraité · comparables · ajustée du bail et de la localisation.</p>
@@ -351,7 +351,7 @@ export default function Estimation() {
               <div className="px-3 py-1.5 text-xs text-slate-400">Sociétés immatriculées à cette adresse — choisis la bonne :</div>
               {societes.map((c, i) => (
                 <button key={i} type="button" className="block w-full text-left px-3 py-2 text-sm hover:bg-slate-700" onClick={() => choisirSociete(c)}>
-                  <div className="text-slate-100 font-medium flex items-center gap-2"><Building2 className="h-3.5 w-3.5 text-primary" />{c.enseigne || c.denomination}{!c.actif && <span className="text-red-400 text-xs">(cessée)</span>}</div>
+                  <div className="text-slate-100 font-medium flex items-center gap-2"><Building2 className="h-3.5 w-3.5 text-accent" />{c.enseigne || c.denomination}{!c.actif && <span className="text-red-400 text-xs">(cessée)</span>}</div>
                   <div className="text-xs text-slate-400">{c.denomination} · SIREN {c.siren ?? "—"} · NAF {c.naf ?? "—"}{c.ca ? ` · CA ${eur(c.ca)}` : ""}</div>
                   <div className="text-[11px] text-slate-500">{c.adresse}</div>
                 </button>
@@ -363,7 +363,7 @@ export default function Estimation() {
           {soc && (
             <div className="rounded-lg border border-emerald-600/50 bg-emerald-950/30 p-3">
               <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
+                <CheckCircle2 className="h-5 w-5 text-accent mt-0.5 shrink-0" />
                 <div className="flex-1 text-sm">
                   <div className="font-semibold text-emerald-100">{soc.enseigne || soc.denomination}</div>
                   <div className="text-xs text-slate-300">{soc.denomination} · SIREN {soc.siren ?? "—"} · NAF {soc.naf ?? "—"}</div>
@@ -423,7 +423,7 @@ export default function Estimation() {
 
       {/* Import IA */}
       <Card className="bg-slate-800 border-slate-700">
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Upload className="h-4 w-4" /> Import automatique par IA</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Upload className="h-4 w-4 text-accent" /> Import automatique par IA</CardTitle></CardHeader>
         <CardContent className="space-y-2">
           <p className="text-[11px] text-slate-400">Importe les documents : l'IA lit les <b>bilans</b> (CA + EBE calculé), le <b>bail</b> et la <b>quittance</b> (loyer, charges, durée) et pré-remplit les champs. Les montants restent à vérifier.</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -507,7 +507,7 @@ export default function Estimation() {
                 {c.label}
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button type="button" className="text-slate-500 hover:text-slate-200"><Info className="h-3.5 w-3.5" /></button>
+                    <button type="button" className="text-accent/70 hover:text-accent"><Info className="h-3.5 w-3.5" /></button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs whitespace-pre-line leading-relaxed">{CRITERE_AIDE[c.key]}</TooltipContent>
                 </Tooltip>
@@ -542,7 +542,7 @@ export default function Estimation() {
 
           {res.alertes.length > 0 && (
             <Card className="bg-amber-950/40 border-amber-700/60">
-              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-amber-300"><AlertTriangle className="h-4 w-4" /> Points de vigilance ({res.alertes.length})</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-accent"><AlertTriangle className="h-4 w-4 text-accent" /> Points de vigilance ({res.alertes.length})</CardTitle></CardHeader>
               <CardContent><ul className="list-disc pl-5 text-xs text-amber-200/90 space-y-1">{res.alertes.map((a, i) => <li key={i}>{a}</li>)}</ul></CardContent>
             </Card>
           )}
@@ -568,8 +568,9 @@ export default function Estimation() {
           </Card>
 
           <div className="flex flex-wrap gap-3">
-            <Button onClick={genererPDF} size="lg" className="flex-1"><FileText className="mr-2 h-4 w-4" /> Générer le PDF (avis de valeur)</Button>
-            {mandatId && <Button onClick={enregistrerSurMandat} size="lg" variant="outline" disabled={savingMandat}><Save className="mr-2 h-4 w-4" /> Enregistrer sur la fiche du bien</Button>}
+            <Button onClick={() => genererPDF("client")} size="lg" className="flex-1"><FileText className="mr-2 h-4 w-4" /> PDF client (vendeur)</Button>
+            <Button onClick={() => genererPDF("nego")} size="lg" variant="outline"><FileText className="mr-2 h-4 w-4 text-accent" /> PDF interne (négociateur)</Button>
+            {mandatId && <Button onClick={enregistrerSurMandat} size="lg" variant="outline" disabled={savingMandat}><Save className="mr-2 h-4 w-4 text-accent" /> Enregistrer sur la fiche du bien</Button>}
           </div>
         </>
       )}
