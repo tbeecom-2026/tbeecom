@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Calculator, Loader2, FileText, AlertTriangle, Search, CheckCircle2, Building2, X, UserPlus, Save, Info, Upload } from "lucide-react";
+import { Calculator, Loader2, FileText, AlertTriangle, Search, CheckCircle2, Building2, X, UserPlus, Save, Info, Upload, ExternalLink } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
@@ -136,6 +136,7 @@ export default function Estimation() {
   const [loading, setLoading] = useState(false);
   const [imp, setImp] = useState<Record<string, "loading" | "ok" | "err" | undefined>>({});
   const [resumePaie, setResumePaie] = useState<string>("");
+  const [comparables, setComparables] = useState<any[]>([]);
   const [res, setRes] = useState<ResultatEstimation | null>(null);
   const [entree, setEntree] = useState<EntreeEstimation | null>(null);
 
@@ -277,11 +278,13 @@ export default function Estimation() {
     setLoading(true);
     try {
       let comparableMedian: number | null = null;
+      setComparables([]);
       try {
         const cp = (adresse.match(/\b\d{5}\b/) ?? [])[0];
         if (adresse.trim() || cp) {
           const e = await estimationFonds({ famille: bareme.famille as any, adresse: adresse.trim() || undefined, zone: cp ? { codePostal: cp } : undefined, ca: num(caN) ?? undefined });
           comparableMedian = e.stats.n >= 3 ? e.stats.median : null;
+          setComparables((e.comparables ?? []).slice(0, 15));
         }
       } catch { /* comparables indisponibles */ }
 
@@ -566,6 +569,36 @@ export default function Estimation() {
               <div>Pondération A/B/C<br /><b className="text-slate-100">{(res.ponderation.A * 100).toFixed(0)}/{(res.ponderation.B * 100).toFixed(0)}/{(res.ponderation.C * 100).toFixed(0)}</b></div>
             </CardContent>
           </Card>
+
+          {comparables.length > 0 && (
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Dernières cessions du quartier — même activité (BODACC)</CardTitle></CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead className="text-slate-400"><tr>
+                      <th className="text-left p-1">Enseigne</th><th className="text-left p-1">Activité</th><th className="text-left p-1">Lieu</th>
+                      <th className="text-right p-1">Distance</th><th className="text-right p-1">Prix</th><th className="text-left p-1">Date</th><th className="p-1"></th>
+                    </tr></thead>
+                    <tbody>
+                      {comparables.map((c, i) => (
+                        <tr key={i} className="border-t border-slate-700">
+                          <td className="p-1 text-slate-200">{c.denomination ?? "—"}</td>
+                          <td className="p-1 text-slate-400">{(c.activite ?? "").slice(0, 32)}</td>
+                          <td className="p-1 text-slate-400">{c.ville ?? ""} {c.code_postal ?? ""}</td>
+                          <td className="p-1 text-right text-slate-300">{c.distance_km != null ? `${c.distance_km} km` : "—"}</td>
+                          <td className="p-1 text-right text-slate-100 font-medium">{eur(c.prix)}</td>
+                          <td className="p-1 text-slate-400">{c.date ?? ""}</td>
+                          <td className="p-1">{c.url && <a href={c.url} target="_blank" rel="noreferrer" className="text-accent"><ExternalLink className="h-3 w-3" /></a>}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-2">Cessions publiées au BODACC, même famille d'activité, autour de l'adresse (méthode comparables / garde-fou).</p>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="flex flex-wrap gap-3">
             <Button onClick={() => genererPDF("client")} size="lg" className="flex-1"><FileText className="mr-2 h-4 w-4" /> PDF client (vendeur)</Button>

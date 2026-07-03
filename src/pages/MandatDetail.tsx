@@ -17,7 +17,7 @@ const ATTR_LABELS: Record<string, string> = (() => {
   for (const k of Object.keys(cfg.metiers ?? {})) for (const fld of cfg.metiers[k].champs ?? []) map[fld.key] = fld.label;
   return map;
 })();
-const ATTR_HIDE = new Set(["famille_metier", "issue_mandat"]);
+const ATTR_HIDE = new Set(["famille_metier", "issue_mandat", "estimation", "siren"]);
 const fmtAttr = (v: any) =>
   Array.isArray(v) ? v.join(", ")
   : typeof v === "boolean" ? (v ? "Oui" : "Non")
@@ -399,6 +399,25 @@ export default function MandatDetail() {
           }
         />
       </InfoCard>
+      {/* Estimation sauvegardée */}
+      {(m.attributs as any)?.estimation && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Dernière estimation</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm">
+            {(() => { const e = (m.attributs as any).estimation; return (
+              <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
+                <div><span className="text-muted-foreground text-xs">Valeur centrale </span><b className="text-primary text-lg">{formatEuros(e.valeur_centrale)}</b></div>
+                <div><span className="text-muted-foreground text-xs">Fourchette </span>{formatEuros(e.bas)} — {formatEuros(e.haut)}</div>
+                {e.activite && <div className="text-muted-foreground text-xs">{e.activite}</div>}
+                {e.date && <div className="text-muted-foreground text-xs">le {e.date}</div>}
+              </div>
+            ); })()}
+          </CardContent>
+        </Card>
+      )}
+
       {/* 9ter. COMPLÉMENTS (attributs / questionnaire métier) */}
       {hasVal(m.attributs) &&
         Object.entries(m.attributs as any).some(([k, v]) => !ATTR_HIDE.has(k) && hasVal(v)) && (
