@@ -65,7 +65,7 @@ const esc = (s: any) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&l
 const arr1000 = (n: number) => Math.round(n / 1000) * 1000;
 
 const FIAB_LABEL: Record<string, string> = {
-  A: "A — dossier complet", B: "B — dossier partiel", C: "C — un seul exercice", D: "D — déclaratif",
+  A: "A — dossier complet", B: "B — dossier partiel", C: "C — dossier incomplet", D: "D — déclaratif (aucun bilan)",
 };
 
 function documentsManquants(e: EntreeAvis): string[] {
