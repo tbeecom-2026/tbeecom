@@ -30,7 +30,7 @@ describe("moteur avis de valeur — cas bar Saint-Cloud", () => {
   it("deux scénarios produits", () => expect(r.scenarios).toHaveLength(2));
 
   const s1 = r.scenarios[0], s2 = r.scenarios[1];
-  it("S1 méthode A ≈ 156 500 €", () => expect(s1.methodes.A.valeur!).toBeGreaterThan(154000) && expect(s1.methodes.A.valeur!).toBeLessThan(159000));
+  it("S1 méthode A ≈ 156 500 €", () => { expect(s1.methodes.A.valeur!).toBeGreaterThan(154000); expect(s1.methodes.A.valeur!).toBeLessThan(159000); });
   it("S1 méthode B (SDE × 1,8) ≈ 82 000 €", () => { expect(s1.methodes.B.valeur!).toBeGreaterThan(79000); expect(s1.methodes.B.valeur!).toBeLessThan(84000); });
   it("S1 valeur centrale ≈ 124 000 €", () => { expect(s1.valeurCentrale!).toBeGreaterThan(120000); expect(s1.valeurCentrale!).toBeLessThan(128000); });
   it("S1 pondération 40/35/25", () => {
