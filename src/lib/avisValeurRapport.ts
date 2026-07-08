@@ -69,9 +69,9 @@ const FIAB_LABEL: Record<string, string> = {
 };
 
 function documentsManquants(e: EntreeAvis): string[] {
-  const nb = e.nbBilans ?? e.exercices.length;
+  const nb = e.nbExercices ?? e.exercices.length;
   const out: string[] = [];
-  if (nb < 3) out.push(`${3 - nb} bilan(s) manquant(s) sur 3`);
+  if (nb < 3) out.push(`analyse sur ${nb} exercice(s) — 3 années sont recommandées (un bilan en couvre 2, soit au moins 2 bilans)`);
   if (!e.documents?.bail) out.push("bail commercial non fourni");
   if (!e.documents?.quittance) out.push("quittance de loyer non fournie");
   if (!e.documents?.fichesPaie) out.push("fiches de paie non fournies");

@@ -42,7 +42,7 @@ export interface EntreeAvis {
   contentieuxBail?: boolean;             // idem
   dureeRestanteAnnees?: number | null;
   scores?: Record<string, number>;       // 10 critères, -2..+2
-  nbBilans?: number;                     // défaut = exercices.length
+  nbExercices?: number;                     // défaut = exercices.length
   documents?: { bail?: boolean; quittance?: boolean; fichesPaie?: boolean };
 }
 
@@ -102,16 +102,16 @@ function ebeNormaliseEx(ex: Exercice, loyerRef: number): number {
   return round(ex.ebe);
 }
 
-function ponderationSelonBilans(nbBilans: number, methodeBDispo: boolean): { A: number; B: number; C: number } {
-  if (nbBilans <= 0) return { A: 0.70, B: 0.0, C: 0.30 };
-  if (nbBilans === 1) return { A: 0.55, B: methodeBDispo ? 0.20 : 0, C: 0.25 };
+function ponderationSelonExercices(nbExercices: number, methodeBDispo: boolean): { A: number; B: number; C: number } {
+  if (nbExercices <= 0) return { A: 0.70, B: 0.0, C: 0.30 };
+  if (nbExercices === 1) return { A: 0.55, B: methodeBDispo ? 0.20 : 0, C: 0.25 };
   return { A: 0.40, B: methodeBDispo ? 0.35 : 0, C: 0.25 };
 }
 
 function construireScenario(
   nom: string, curseur: number, bareme: BaremeFdc, caMoyen: number | null,
   valeurB: number | null, detB: string, comparable: number | null,
-  nbBilans: number, largeur: number,
+  nbExercices: number, largeur: number,
 ): Scenario {
   const ratioPct = ratioDepuisCurseur(bareme, curseur);
   const vA = caMoyen != null ? round(caMoyen * ratioPct / 100) : null;
@@ -126,7 +126,7 @@ function construireScenario(
     C: { code: "C" as const, libelle: "Comparables de marché", valeur: vC, detail: vC != null ? "Médiane des cessions comparables (BODACC)" : "Pas de comparable exploitable" },
   };
 
-  const base = ponderationSelonBilans(nbBilans, valeurB != null);
+  const base = ponderationSelonExercices(nbExercices, valeurB != null);
   const dispo = { A: vA, B: valeurB, C: vC };
   let wsum = 0, acc = 0;
   (["A", "B", "C"] as const).forEach((k) => { if (dispo[k] != null && base[k] > 0) { acc += (dispo[k] as number) * base[k]; wsum += base[k]; } });
@@ -148,7 +148,7 @@ export function evaluerAvis(e: EntreeAvis): ResultatAvis {
   const alertes: string[] = [];
   const mentions: string[] = [];
   const exs = [...e.exercices].filter((x) => isPos(x.ca_ht)).sort((a, b) => a.annee - b.annee);
-  const nbBilans = e.nbBilans ?? exs.length;
+  const nbExercices = e.nbExercices ?? exs.length;
   const loyerRef = e.loyerReference ?? 0;
   const remu = (e.remunerationExploitant ?? 35000) * (e.nbExploitants ?? 1);
 
@@ -189,19 +189,19 @@ export function evaluerAvis(e: EntreeAvis): ResultatAvis {
   const tauxEffortS2 = (exN && isPos(exN.ca_ht) && e.loyerReclame) ? (e.loyerReclame as number) / (exN.ca_ht as number) : null;
 
   // Largeur de fourchette et fiabilité selon complétude
-  const largeur = nbBilans <= 0 ? 0.20 : nbBilans === 1 ? 0.15 : 0.10;
-  if (nbBilans === 2) mentions.push("L'analyse repose sur deux exercices au lieu de trois : la tendance du chiffre d'affaires est appréciée sur une seule variation annuelle.");
-  if (nbBilans === 1) mentions.push("Un seul exercice a été fourni : aucune tendance ne peut être établie, la fourchette est élargie à ±15 %. La production des deux exercices précédents est indispensable avant toute transaction.");
-  if (nbBilans <= 0) mentions.push("Aucun document comptable n'a été fourni : l'estimation repose sur un chiffre d'affaires déclaratif non vérifié. Ce document ne constitue qu'un ordre de grandeur.");
+  const largeur = nbExercices <= 0 ? 0.20 : nbExercices === 1 ? 0.15 : 0.10;
+  if (nbExercices === 2) mentions.push("L'analyse repose sur deux exercices au lieu de trois : la tendance du chiffre d'affaires est appréciée sur une seule variation annuelle.");
+  if (nbExercices === 1) mentions.push("Un seul exercice a été fourni : aucune tendance ne peut être établie, la fourchette est élargie à ±15 %. La production des deux exercices précédents est indispensable avant toute transaction.");
+  if (nbExercices <= 0) mentions.push("Aucun document comptable n'a été fourni : l'estimation repose sur un chiffre d'affaires déclaratif non vérifié. Ce document ne constitue qu'un ordre de grandeur.");
   if (!e.documents?.bail && e.documents?.quittance) mentions.push("Le bail commercial n'a pas été fourni : le loyer est connu par quittance mais la durée restante, la destination et les clauses sont inconnues. L'analyse du droit au bail est indicative.");
   if (!e.documents?.bail && !e.documents?.quittance) mentions.push("Ni bail ni quittance fournis : la charge locative retenue est déclarative. Le taux d'effort et le droit au bail ne peuvent être fiabilisés.");
   if (!e.documents?.fichesPaie) mentions.push("Les fiches de paie n'ont pas été fournies : la structure de la masse salariale (dont emplois familiaux éventuels) n'a pas pu être vérifiée.");
 
   const bail = !!e.documents?.bail, quittance = !!e.documents?.quittance;
   const fiabilite: ResultatAvis["fiabilite"] =
-    nbBilans >= 3 && bail && quittance ? "A"
-    : nbBilans >= 2 && (bail || quittance) ? "B"
-    : nbBilans >= 1 ? "C" : "D";
+    nbExercices >= 3 && bail && quittance ? "A"
+    : nbExercices >= 2 && (bail || quittance) ? "B"
+    : nbExercices >= 1 ? "C" : "D";
 
   // Double scénario
   const doubleScenario = !!(e.indemniteOccupation || e.contentieuxBail
@@ -213,14 +213,14 @@ export function evaluerAvis(e: EntreeAvis): ResultatAvis {
   const bS1 = valeurBpour(sde, 1.8);
   scenarios.push(construireScenario(
     doubleScenario ? "Scénario 1 — bail sécurisé" : "Valeur retenue",
-    e.curseurRetenu, e.bareme, caMoyen, bS1.v, bS1.det, e.comparableMedian ?? null, nbBilans, largeur,
+    e.curseurRetenu, e.bareme, caMoyen, bS1.v, bS1.det, e.comparableMedian ?? null, nbExercices, largeur,
   ));
   if (doubleScenario) {
     const sdeS2 = sde != null ? sde - surcoutS2 : null;
     const bS2 = valeurBpour(sdeS2, 1.6);
     scenarios.push(construireScenario(
       "Scénario 2 — loyer déplafonné",
-      clamp(e.curseurRetenu - (e.ecartCurseurS2 ?? 12), 0, 100), e.bareme, caMoyen, bS2.v, bS2.det, e.comparableMedian ?? null, nbBilans, largeur,
+      clamp(e.curseurRetenu - (e.ecartCurseurS2 ?? 12), 0, 100), e.bareme, caMoyen, bS2.v, bS2.det, e.comparableMedian ?? null, nbExercices, largeur,
     ));
   }
 
