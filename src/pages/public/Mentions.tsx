@@ -79,8 +79,8 @@ export default function Mentions() {
 
       <h2 id="hebergeur" className="font-display text-2xl text-primary mt-8 scroll-mt-24">6. Hébergeur</h2>
       <p className="mt-2 text-foreground/85">
-        Site conçu et hébergé via la plateforme Lovable.<br />
-        Hébergeur&nbsp;: <strong>[À COMPLÉTER&nbsp;: raison sociale, adresse et téléphone de l'hébergeur]</strong>.
+        Hébergeur&nbsp;: <strong>Cloudflare,&nbsp;Inc.</strong>, 101&nbsp;Townsend Street, San&nbsp;Francisco, CA&nbsp;94107,
+        États-Unis — <a href="https://www.cloudflare.com" className="underline">www.cloudflare.com</a>.
       </p>
 
       <h2 id="bareme" className="font-display text-2xl text-primary mt-8 scroll-mt-24">7. Barème des honoraires</h2>
